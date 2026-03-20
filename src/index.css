@@ -200,6 +200,30 @@
   .stagger-5 { animation-delay: 200ms; }
 }
 
+/* ===== Pulse Dot (connected indicator) ===== */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.4); }
+}
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* ===== Sidebar nav active left border ===== */
+.nav-active-border {
+  position: relative;
+}
+.nav-active-border::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 1px;
+  background: hsl(var(--sidebar-primary));
+}
+
 /* ===== Reduced Motion ===== */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
