@@ -1,0 +1,450 @@
+import { useState, useRef, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import {
+  Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
+  CheckCircle2, ArrowRight, ImageIcon
+} from 'lucide-react';
+
+export type ImageAngle =
+  | 'frente' | 'costas' | 'detalhe' | 'lateral'
+  | 'flat_lay' | 'textura' | 'look_completo' | 'personalizado';
+
+interface AngleOption {
+  id: ImageAngle;
+  label: string;
+  defaultChecked: boolean;
+}
+
+const ANGLE_OPTIONS: AngleOption[] = [
+  { id: 'frente', label: 'Frente', defaultChecked: true },
+  { id: 'costas', label: 'Costas', defaultChecked: true },
+  { id: 'detalhe', label: 'Detalhe', defaultChecked: true },
+  { id: 'lateral', label: 'Lateral', defaultChecked: false },
+  { id: 'flat_lay', label: 'Flat lay', defaultChecked: false },
+  { id: 'textura', label: 'Textura', defaultChecked: false },
+  { id: 'look_completo', label: 'Look completo', defaultChecked: false },
+  { id: 'personalizado', label: '+ Personalizado', defaultChecked: false },
+];
+
+export interface GeneratedImage {
+  angle: ImageAngle;
+  url: string;
+  isCover: boolean;
+}
+
+interface ImageGenerationStepProps {
+  images: GeneratedImage[];
+  onImagesChange: (images: GeneratedImage[]) => void;
+  onNext: () => void;
+  onSkip: () => void;
+}
+
+export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: ImageGenerationStepProps) {
+  const [prompt, setPrompt] = useState('');
+  const [customAngleText, setCustomAngleText] = useState('');
+  const [selectedAngles, setSelectedAngles] = useState<Set<ImageAngle>>(
+    new Set(ANGLE_OPTIONS.filter(a => a.defaultChecked).map(a => a.id))
+  );
+  const [generatingAngles, setGeneratingAngles] = useState<Set<ImageAngle>>(new Set());
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedCount, setGeneratedCount] = useState(0);
+  const [totalToGenerate, setTotalToGenerate] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const selectedCount = selectedAngles.size;
+  const hasAtLeastOneImage = images.length > 0;
+
+  const toggleAngle = (angle: ImageAngle) => {
+    setSelectedAngles(prev => {
+      const next = new Set(prev);
+      if (next.has(angle)) next.delete(angle);
+      else next.add(angle);
+      return next;
+    });
+  };
+
+  const generateImages = useCallback(async () => {
+    if (!prompt.trim() || selectedAngles.size === 0) return;
+
+    const angles = Array.from(selectedAngles);
+    setIsGenerating(true);
+    setGeneratingAngles(new Set(angles));
+    setGeneratedCount(0);
+    setTotalToGenerate(angles.length);
+
+    const results: GeneratedImage[] = [...images];
+
+    // Generate all in parallel
+    const promises = angles.map(async (angle) => {
+      try {
+        const { data, error } = await supabase.functions.invoke('generate-image', {
+          body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined },
+        });
+
+        if (error || data?.error) {
+          toast.error(`Erro ao gerar imagem (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`);
+          return null;
+        }
+
+        const imageUrl = data.imageUrl;
+
+        // Remove existing image for this angle
+        const idx = results.findIndex(img => img.angle === angle);
+        const newImage: GeneratedImage = {
+          angle,
+          url: imageUrl,
+          isCover: results.length === 0 && angle === angles[0],
+        };
+
+        if (idx >= 0) results[idx] = newImage;
+        else results.push(newImage);
+
+        setGeneratedCount(prev => prev + 1);
+        setGeneratingAngles(prev => {
+          const next = new Set(prev);
+          next.delete(angle);
+          return next;
+        });
+
+        return newImage;
+      } catch {
+        toast.error(`Erro ao gerar imagem (${angle})`);
+        return null;
+      }
+    });
+
+    await Promise.all(promises);
+
+    // Ensure at least one cover
+    if (results.length > 0 && !results.some(r => r.isCover)) {
+      results[0].isCover = true;
+    }
+
+    onImagesChange(results);
+    setIsGenerating(false);
+    setGeneratingAngles(new Set());
+
+    const successCount = results.length - images.length;
+    if (successCount > 0) {
+      toast.success(`${successCount} imagens geradas com sucesso ✓`);
+    }
+  }, [prompt, selectedAngles, customAngleText, images, onImagesChange]);
+
+  const regenerateAngle = useCallback(async (angle: ImageAngle) => {
+    if (!prompt.trim()) return;
+    setGeneratingAngles(new Set([angle]));
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-image', {
+        body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined },
+      });
+
+      if (error || data?.error) {
+        toast.error('Erro ao regenerar imagem');
+        return;
+      }
+
+      const updated = images.map(img =>
+        img.angle === angle ? { ...img, url: data.imageUrl } : img
+      );
+      onImagesChange(updated);
+      toast.success('Imagem regenerada!');
+    } catch {
+      toast.error('Erro ao regenerar imagem');
+    } finally {
+      setGeneratingAngles(new Set());
+    }
+  }, [prompt, customAngleText, images, onImagesChange]);
+
+  const removeImage = (angle: ImageAngle) => {
+    const updated = images.filter(img => img.angle !== angle);
+    if (updated.length > 0 && !updated.some(i => i.isCover)) {
+      updated[0].isCover = true;
+    }
+    onImagesChange(updated);
+  };
+
+  const setCover = (angle: ImageAngle) => {
+    const updated = images.map(img => ({ ...img, isCover: img.angle === angle }));
+    onImagesChange(updated);
+  };
+
+  const handleManualUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const validTypes = ['image/png', 'image/jpeg', 'image/webp'];
+    if (!validTypes.includes(file.type)) { toast.error('Formato inválido. Use PNG, JPG ou WEBP.'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = reader.result as string;
+      const newImage: GeneratedImage = {
+        angle: 'frente',
+        url,
+        isCover: images.length === 0,
+      };
+      onImagesChange([...images, newImage]);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Gallery slots - show selected angles + filled ones
+  const allSlots = Array.from(new Set([
+    ...images.map(i => i.angle),
+    ...Array.from(selectedAngles),
+  ]));
+
+  const coverImage = images.find(i => i.isCover);
+  const otherSlots = allSlots.filter(a => !coverImage || a !== coverImage.angle).slice(0, 4);
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* LEFT COLUMN — Generation controls */}
+      <div className="glass-card p-6 space-y-5">
+        <h3 className="font-display font-semibold text-foreground text-base">
+          Gerar imagens com IA
+        </h3>
+
+        {/* Prompt */}
+        <div>
+          <Label className="text-sm font-medium text-muted-foreground">Descreva o produto</Label>
+          <Textarea
+            value={prompt}
+            onChange={e => setPrompt(e.target.value.slice(0, 1000))}
+            placeholder="Ex: oversized denim jacket dark blue women white studio background"
+            rows={3}
+            className="mt-1.5 bg-secondary border-[hsl(var(--sidebar-border))] resize-none"
+            maxLength={1000}
+          />
+        </div>
+
+        {/* Angle checkboxes */}
+        <div>
+          <Label className="text-sm font-medium text-muted-foreground">Selecione os ângulos</Label>
+          <div className="grid grid-cols-2 gap-2 mt-2">
+            {ANGLE_OPTIONS.map(opt => (
+              <label
+                key={opt.id}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-secondary/50 border border-[hsl(var(--sidebar-border))] cursor-pointer hover:border-primary/40 transition-colors text-sm"
+              >
+                <Checkbox
+                  checked={selectedAngles.has(opt.id)}
+                  onCheckedChange={() => toggleAngle(opt.id)}
+                />
+                <span className="text-foreground/90">{opt.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Custom angle text */}
+        {selectedAngles.has('personalizado') && (
+          <div>
+            <Label className="text-sm font-medium text-muted-foreground">Texto personalizado</Label>
+            <Textarea
+              value={customAngleText}
+              onChange={e => setCustomAngleText(e.target.value.slice(0, 300))}
+              placeholder="Ex: modelo vestindo, ambiente externo..."
+              rows={2}
+              className="mt-1.5 bg-secondary border-[hsl(var(--sidebar-border))] resize-none"
+              maxLength={300}
+            />
+          </div>
+        )}
+
+        {/* Generate button */}
+        <Button
+          onClick={isGenerating && images.length > 0 ? undefined : generateImages}
+          disabled={isGenerating || !prompt.trim() || selectedAngles.size === 0}
+          className="w-full font-display font-semibold"
+        >
+          {isGenerating ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Gerando... {generatedCount}/{totalToGenerate}
+            </>
+          ) : images.length > 0 ? (
+            <>
+              <Sparkles className="w-4 h-4 mr-2" />
+              ✨ Regenerar tudo
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 mr-2" />
+              ✨ Gerar {selectedCount} {selectedCount === 1 ? 'imagem' : 'imagens'}
+            </>
+          )}
+        </Button>
+
+        {/* Counter */}
+        <p className="text-center text-[11px] text-muted-foreground">
+          8 de 20 gerações disponíveis hoje
+        </p>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-[hsl(var(--sidebar-border))]" />
+          <span className="text-xs text-muted-foreground">ou</span>
+          <div className="flex-1 h-px bg-[hsl(var(--sidebar-border))]" />
+        </div>
+
+        {/* Manual upload */}
+        <input ref={fileInputRef} type="file" accept=".png,.jpg,.jpeg,.webp" onChange={handleManualUpload} className="hidden" />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full border border-dashed border-[hsl(var(--sidebar-border))] rounded-lg py-3 flex items-center justify-center gap-2 text-muted-foreground text-sm hover:border-primary/50 hover:text-primary/80 transition-colors"
+        >
+          <Upload className="w-4 h-4" />
+          Fazer upload manual
+        </button>
+      </div>
+
+      {/* RIGHT COLUMN — Image gallery */}
+      <div className="glass-card p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display font-semibold text-foreground text-base">
+            Imagens do produto
+          </h3>
+          <span className="text-xs text-muted-foreground">{images.length} imagens</span>
+        </div>
+
+        {/* Gallery grid */}
+        <div className="grid grid-cols-3 gap-2 auto-rows-[140px]">
+          {/* Cover slot - spans 2 rows */}
+          <div className="row-span-2 col-span-1">
+            <ImageSlot
+              label="Capa"
+              angle={coverImage?.angle || 'frente'}
+              image={coverImage || null}
+              isGenerating={generatingAngles.has(coverImage?.angle || 'frente')}
+              onRegenerate={() => coverImage && regenerateAngle(coverImage.angle)}
+              onRemove={() => coverImage && removeImage(coverImage.angle)}
+              onSetCover={() => { }}
+              isCover
+              tall
+            />
+          </div>
+          {/* Other slots - 2x2 on right */}
+          {[0, 1, 2, 3].map(i => {
+            const angle = otherSlots[i];
+            const img = angle ? images.find(im => im.angle === angle) : null;
+            const label = angle ? ANGLE_OPTIONS.find(a => a.id === angle)?.label || angle : undefined;
+            return (
+              <ImageSlot
+                key={i}
+                label={label}
+                angle={angle}
+                image={img || null}
+                isGenerating={!!angle && generatingAngles.has(angle)}
+                onRegenerate={() => angle && regenerateAngle(angle)}
+                onRemove={() => angle && removeImage(angle)}
+                onSetCover={() => angle && setCover(angle)}
+                isCover={false}
+              />
+            );
+          })}
+        </div>
+
+        {/* Bottom navigation */}
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-[hsl(var(--sidebar-border))]">
+          <button onClick={onSkip} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+            Adicionar imagens depois
+          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Button
+                  onClick={onNext}
+                  disabled={!hasAtLeastOneImage}
+                >
+                  Próximo
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </TooltipTrigger>
+            {!hasAtLeastOneImage && (
+              <TooltipContent>
+                <p>Gere ou faça upload de pelo menos 1 imagem para continuar</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Image Slot sub-component ─── */
+interface ImageSlotProps {
+  label?: string;
+  angle?: ImageAngle;
+  image: GeneratedImage | null;
+  isGenerating: boolean;
+  onRegenerate: () => void;
+  onRemove: () => void;
+  onSetCover: () => void;
+  isCover: boolean;
+  tall?: boolean;
+}
+
+function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCover, isCover, tall }: ImageSlotProps) {
+  const [hovered, setHovered] = useState(false);
+
+  if (isGenerating) {
+    return (
+      <div className={`rounded-lg border border-primary/60 bg-[hsl(var(--sidebar-card))] flex flex-col items-center justify-center gap-2 animate-pulse ${tall ? 'h-full' : 'h-full'}`}>
+        <Loader2 className="w-5 h-5 animate-spin text-primary" />
+        <span className="text-[11px] text-muted-foreground">Gerando...</span>
+      </div>
+    );
+  }
+
+  if (image) {
+    return (
+      <div
+        className={`relative rounded-lg overflow-hidden bg-secondary group ${tall ? 'h-full' : 'h-full'}`}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        <img src={image.url} alt={label} className="w-full h-full object-cover" />
+        {/* Angle label pill */}
+        <span className="absolute top-1.5 left-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-black/60 text-white">
+          {label}
+        </span>
+        {/* Ready badge */}
+        <span className="absolute top-1.5 right-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-[hsl(var(--success))]/80 text-white flex items-center gap-0.5">
+          <CheckCircle2 className="w-3 h-3" /> Pronta
+        </span>
+        {/* Hover overlay */}
+        {hovered && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-2 animate-fade-in">
+            <button onClick={onRegenerate} className="p-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors" title="Regenerar">
+              <RefreshCw className="w-4 h-4" />
+            </button>
+            <button onClick={onRemove} className="p-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors" title="Remover">
+              <Trash2 className="w-4 h-4" />
+            </button>
+            {!isCover && (
+              <button onClick={onSetCover} className="p-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors" title="Definir como capa">
+                <Star className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Empty slot
+  return (
+    <div className={`rounded-lg border border-dashed border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-card))] flex flex-col items-center justify-center gap-1.5 ${tall ? 'h-full' : 'h-full'}`}>
+      <Plus className="w-5 h-5 text-muted-foreground/50" />
+      {label && <span className="text-[10px] text-muted-foreground/50">{label}</span>}
+    </div>
+  );
+}

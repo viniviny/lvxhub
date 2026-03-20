@@ -17,9 +17,19 @@ const initialForm: ProductFormData = {
   title: '',
   description: '',
   price: 0,
+  compareAtPrice: null,
+  cost: null,
   sizes: [],
   collection: '',
   imagePrompt: '',
+  variants: [],
+  inventoryPolicy: 'continue',
+  requiresShipping: true,
+  weight: 0,
+  weightUnit: 'kg',
+  countryOfOrigin: '',
+  selectedChannels: [],
+  tags: '',
 };
 
 export function ProductForm({ onGenerateImage, isGenerating, hasImage }: ProductFormProps) {
