@@ -14,3 +14,18 @@ verify_jwt = false
 
 [functions.shopify-exchange-token]
 verify_jwt = false
+
+[functions.shopify-get-locations]
+verify_jwt = false
+
+[functions.shopify-get-publications]
+verify_jwt = false
+
+[functions.shopify-set-inventory]
+verify_jwt = false
+
+[functions.shopify-publish-channels]
+verify_jwt = false
+
+[functions.shopify-get-themes]
+verify_jwt = false
