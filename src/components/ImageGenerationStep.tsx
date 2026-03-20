@@ -147,7 +147,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
       onImagesChange(updated);
       toast.success('Imagem regenerada!');
     } catch { toast.error('Erro ao regenerar imagem'); } finally { setGeneratingAngles(new Set()); }
-  }, [prompt, promptMode, customAngleText, referenceImage, images, onImagesChange]);
+  }, [prompt, promptMode, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
 
   const removeImage = (angle: ImageAngle) => {
     const updated = images.filter(img => img.angle !== angle);
