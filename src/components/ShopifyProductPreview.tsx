@@ -309,7 +309,7 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
     <div className="flex flex-col">
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-3">
-        <TooltipProvider delayDuration={200}>
+        
           <div className="inline-flex items-center bg-secondary/60 border border-[hsl(215,14%,19%)] rounded-full p-[3px] gap-0">
             {devices.map(d => {
               const Icon = d.icon;
