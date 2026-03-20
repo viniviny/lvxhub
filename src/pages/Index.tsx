@@ -138,7 +138,7 @@ const Index = () => {
           localPrice: form.price,
           baseCurrency: mc?.currency || 'BRL',
           language: mc?.language || null,
-          languageLabel: mc?.languageLabel || null,
+          languageLabel: activeStoreLang?.label || null,
           marketName: mc?.marketName || null,
         },
       });
