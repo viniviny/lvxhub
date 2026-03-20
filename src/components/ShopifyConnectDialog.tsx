@@ -25,11 +25,13 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected, onOpenOn
   const [isConnected, setIsConnected] = useState(false);
   const [shopName, setShopName] = useState('');
   const [errors, setErrors] = useState<{ domain?: string; clientId?: string; clientSecret?: string }>({});
+  const [marketPickerOpen, setMarketPickerOpen] = useState(false);
 
-  // Market config
-  const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(null);
+  // Default to US
+  const defaultCountry = COUNTRIES.find(c => c.code === 'US')!;
+  const [selectedCountryCode, setSelectedCountryCode] = useState<string>('US');
   const [selectedLanguage, setSelectedLanguage] = useState('en-US');
-  const [customCurrency, setCustomCurrency] = useState('');
+  const [customCurrency, setCustomCurrency] = useState('USD');
   const [decimalSep, setDecimalSep] = useState('.');
   const [thousandSep, setThousandSep] = useState(',');
   const [currencyPosition, setCurrencyPosition] = useState<'before' | 'after'>('before');
