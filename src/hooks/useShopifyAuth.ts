@@ -36,7 +36,11 @@ export function useShopifyAuth() {
     () => parseInt(localStorage.getItem(COUNT_KEY) || '0', 10)
   );
 
-  const isAuthenticated = !!accessToken;
+  const [isConnected, setIsConnected] = useState<boolean>(
+    () => localStorage.getItem(CONNECTED_KEY) === 'true'
+  );
+
+  const isAuthenticated = !!accessToken && isConnected;
   const hasSettings = !!settings?.storeDomain && !!settings?.clientId && !!settings?.clientSecret;
 
   const saveSettings = useCallback((s: ShopifySettings) => {
