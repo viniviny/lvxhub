@@ -38,9 +38,23 @@ export function useShopifyConnection() {
     fetchConnection();
   }, []);
 
-  const connect = useCallback((shopName: string, storeDomain: string) => {
-    // The edge function already saved to DB, just update local state
-    setConnection({ id: crypto.randomUUID(), shopName, storeDomain });
+  const connect = useCallback(async (shopName: string, storeDomain: string) => {
+    // Re-fetch from DB to get the real ID and confirm the connection
+    const { data } = await supabase
+      .from('shopify_connections')
+      .select('id, shop_name, store_domain')
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (data) {
+      setConnection({
+        id: data.id,
+        shopName: data.shop_name,
+        storeDomain: data.store_domain,
+      });
+    } else {
+      setConnection({ id: crypto.randomUUID(), shopName, storeDomain });
+    }
   }, []);
 
   const disconnect = useCallback(async () => {
