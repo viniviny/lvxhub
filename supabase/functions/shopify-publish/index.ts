@@ -38,7 +38,11 @@ serve(async (req) => {
     }
 
     const userId = claimsData.claims.sub;
-    const { title, description, price, sizes, collection, imageBase64, imageName } = await req.json();
+    const body = await req.json();
+    const { title, description, price, sizes, collection, imageBase64, imageName,
+      countryCode, countryFlag, countryName, currency: bodyCurrency, currencySymbol,
+      localPrice, baseCurrency, language: bodyLanguage, languageLabel, marketName, regionGroup, imageUrl: bodyImageUrl
+    } = body;
 
     // Input validation
     if (!title || typeof title !== 'string' || title.length > 255) {
