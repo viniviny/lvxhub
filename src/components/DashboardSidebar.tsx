@@ -14,10 +14,10 @@ interface DashboardSidebarProps {
 }
 
 const navItems: { id: DashboardView; label: string; icon: React.ReactNode }[] = [
-  { id: 'publish', label: 'Publicar Produto', icon: <Package className="w-4 h-4" /> },
-  { id: 'history', label: 'Histórico', icon: <ClipboardList className="w-4 h-4" /> },
-  { id: 'stores', label: 'Lojas', icon: <Store className="w-4 h-4" /> },
-  { id: 'settings', label: 'Configurações', icon: <Settings className="w-4 h-4" /> },
+  { id: 'publish', label: 'Publicar Produto', icon: <Package className="w-[18px] h-[18px]" /> },
+  { id: 'history', label: 'Histórico', icon: <ClipboardList className="w-[18px] h-[18px]" /> },
+  { id: 'stores', label: 'Lojas', icon: <Store className="w-[18px] h-[18px]" /> },
+  { id: 'settings', label: 'Configurações', icon: <Settings className="w-[18px] h-[18px]" /> },
 ];
 
 export function DashboardSidebar({
@@ -25,10 +25,10 @@ export function DashboardSidebar({
   currentView, onViewChange,
 }: DashboardSidebarProps) {
   return (
-    <aside className="w-64 flex-shrink-0 border-r border-border/50 bg-card/30 min-h-[calc(100vh-65px)] hidden lg:flex flex-col">
+    <aside className="w-[260px] flex-shrink-0 border-r border-border bg-sidebar min-h-[calc(100vh-57px)] hidden lg:flex flex-col">
       {/* Store selector */}
-      <div className="p-4 border-b border-border/50">
-        <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
+      <div className="px-4 pt-5 pb-4 border-b border-border">
+        <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest mb-2.5 block">
           Loja ativa
         </label>
         <StoreSelector
@@ -40,16 +40,16 @@ export function DashboardSidebar({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-3">
-        <ul className="space-y-1">
+      <nav className="flex-1 px-3 pt-3">
+        <ul className="space-y-0.5">
           {navItems.map(item => (
             <li key={item.id}>
               <button
                 onClick={() => onViewChange(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-[13px] font-medium transition-colors ${
                   currentView === item.id
-                    ? 'bg-primary/10 text-primary border border-primary/20'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent'
                 }`}
               >
                 {item.icon}
@@ -61,10 +61,10 @@ export function DashboardSidebar({
       </nav>
 
       {/* Add store shortcut */}
-      <div className="p-4 border-t border-border/50">
+      <div className="px-3 pb-4 pt-2 border-t border-border">
         <button
           onClick={onAddStore}
-          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-all"
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
         >
           <Plus className="w-4 h-4" />
           Adicionar loja

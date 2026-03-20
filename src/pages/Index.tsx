@@ -152,18 +152,18 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="w-full px-6 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <h1 className="font-display text-xl font-bold gradient-text flex items-center gap-1.5">
-              <Zap className="w-5 h-5 text-primary" />
+      <header className="border-b border-border bg-sidebar sticky top-0 z-10">
+        <div className="w-full px-5 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="font-display text-lg font-bold text-accent flex items-center gap-1.5">
+              <Zap className="w-5 h-5" />
               Publify
             </h1>
-            <Badge variant="secondary" className="text-[10px] px-2 py-0.5 font-display font-medium tracking-wide uppercase">
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-display font-medium tracking-wide uppercase border-border text-muted-foreground">
               beta
             </Badge>
             {publishedCount > 0 && (
-              <Badge variant="secondary" className="font-display ml-1">
+              <Badge variant="secondary" className="font-display text-xs">
                 <Package className="w-3 h-3 mr-1" />
                 {publishedCount}
               </Badge>
@@ -173,21 +173,21 @@ const Index = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9"
+              className="h-8 w-8"
               onClick={() => setShowOnboarding(true)}
               title="Como funciona?"
             >
-              <HelpCircle className="w-4.5 h-4.5" />
+              <HelpCircle className="w-4 h-4" />
             </Button>
             {stores.length > 0 && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9"
+                className="h-8 w-8"
                 onClick={() => setShowManagement(true)}
                 title="Gerenciar lojas"
               >
-                <Settings className="w-4.5 h-4.5" />
+                <Settings className="w-4 h-4" />
               </Button>
             )}
             <UserMenu />
