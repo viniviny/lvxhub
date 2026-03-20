@@ -242,7 +242,7 @@ export function OnboardingGuide({ open, onOpenChange }: OnboardingGuideProps) {
           >
             {isLast ? (
               <>
-                Começar configuração
+                Fechar
                 <ArrowRight className="w-4 h-4 ml-1.5" />
               </>
             ) : (
@@ -253,7 +253,6 @@ export function OnboardingGuide({ open, onOpenChange }: OnboardingGuideProps) {
             )}
           </Button>
         </div>
-      </div>
       </div>
       </DialogContent>
     </Dialog>
