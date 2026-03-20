@@ -1,5 +1,6 @@
 import { ShopifyStore } from '@/hooks/useStoreManager';
 import { StoreSelector } from '@/components/StoreSelector';
+import { Badge } from '@/components/ui/badge';
 import { Package, ClipboardList, Store, Settings, Plus, Layers, Globe } from 'lucide-react';
 
 export type DashboardView = 'publish' | 'history' | 'stores' | 'regions' | 'settings';
@@ -38,6 +39,23 @@ export function DashboardSidebar({
           onSelectStore={onSelectStore}
           onAddStore={onAddStore}
         />
+        {(() => {
+          const active = stores.find(s => s.id === activeStoreId) || stores.find(s => s.connected);
+          if (!active?.marketConfig) return null;
+          const mc = active.marketConfig;
+          return (
+            <div className="mt-2.5 flex items-center gap-2 px-1">
+              <span className="text-lg leading-none">{mc.countryFlag}</span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[12px] font-medium text-foreground truncate">{mc.marketName || mc.countryName}</span>
+                <span className="text-[11px] text-muted-foreground">{mc.currency} · {mc.language}</span>
+              </div>
+              <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0 border-primary/30 text-primary">
+                {mc.currencySymbol}
+              </Badge>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Navigation */}
