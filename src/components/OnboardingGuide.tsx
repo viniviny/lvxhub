@@ -85,9 +85,14 @@ export function OnboardingGuide({ open, onOpenChange }: OnboardingGuideProps) {
   const isLast = currentStep === steps.length - 1;
   const progress = ((currentStep + 1) / steps.length) * 100;
 
+  const handleClose = () => {
+    setCurrentStep(0);
+    onOpenChange(false);
+  };
+
   const goNext = () => {
     if (isLast) {
-      onComplete();
+      handleClose();
       return;
     }
     setDirection('next');
@@ -100,12 +105,9 @@ export function OnboardingGuide({ open, onOpenChange }: OnboardingGuideProps) {
     setCurrentStep(prev => prev - 1);
   };
 
-  const handleSkip = () => {
-    onComplete();
-  };
-
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else onOpenChange(v); }}>
+      <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0 overflow-hidden bg-background border-border">
       {/* Top bar */}
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2">
