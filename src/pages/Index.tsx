@@ -20,6 +20,8 @@ import { ShippingCard } from '@/components/ShippingCard';
 import { SalesChannels } from '@/components/SalesChannels';
 import { ReviewChecklist, getCanPublish } from '@/components/ReviewChecklist';
 import { ShopifyProductPreview } from '@/components/ShopifyProductPreview';
+import { SEOCard } from '@/components/SEOCard';
+import { ColorManager, ProductColor } from '@/components/ColorManager';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -33,7 +35,7 @@ import { getAILanguageByCode } from '@/data/languages';
 import {
   Send, Loader2, Upload, CheckCircle2, ExternalLink,
   Package, XCircle, Zap, HelpCircle, Store, Settings, Globe, Layers,
-  ArrowLeft, ArrowRight, Eye, ClipboardList
+  ArrowLeft, ArrowRight, Eye, ClipboardList, Check
 } from 'lucide-react';
 
 const initialForm: ProductFormData = {
@@ -65,6 +67,8 @@ const PUBLISH_STEPS = [
   'Finalizando...',
 ];
 
+const STEP_LABELS = ['Imagem', 'Detalhes', 'Variantes & Envio', 'Revisão'];
+
 const Index = () => {
   const {
     stores, activeStore, activeStoreId, hasConnectedStore, publishedCount,
@@ -84,6 +88,9 @@ const Index = () => {
   const [showGlobalPublish, setShowGlobalPublish] = useState(false);
   const [currentView, setCurrentView] = useState<DashboardView>('publish');
   const [form, setForm] = useState<ProductFormData>(initialForm);
+  const [seoTitle, setSeoTitle] = useState('');
+  const [seoDescription, setSeoDescription] = useState('');
+  const [colors, setColors] = useState<ProductColor[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
@@ -91,9 +98,24 @@ const Index = () => {
   const [publishStep, setPublishStep] = useState(0);
   const [publishResult, setPublishResult] = useState<{ title: string; shopifyUrl: string; imageUrl?: string } | null>(null);
   const [wizardStep, setWizardStep] = useState(1);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  const [publishStatus, setPublishStatus] = useState<'draft' | 'active' | 'scheduled'>('active');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currencySymbol = activeStore?.marketConfig?.currencySymbol || 'R$';
+
+  const markStepComplete = (step: number) => {
+    setCompletedSteps(prev => new Set([...prev, step]));
+  };
+
+  const goToStep = (step: number) => {
+    if (step < wizardStep) {
+      setWizardStep(step);
+    } else if (step === wizardStep + 1 || completedSteps.has(step - 1)) {
+      markStepComplete(wizardStep);
+      setWizardStep(step);
+    }
+  };
 
   // Sync variants from sizes
   const syncVariantsFromSizes = (sizes: ProductSize[]) => {
@@ -162,7 +184,6 @@ const Index = () => {
       const imageBase64 = await fileToBase64(imageFile);
       const mc = activeStore?.marketConfig;
 
-      // Simulate step progress
       const stepInterval = setInterval(() => {
         setPublishStep(prev => Math.min(prev + 1, PUBLISH_STEPS.length - 1));
       }, 1500);
@@ -229,7 +250,7 @@ const Index = () => {
   };
 
   const handleNewProduct = () => {
-    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setWizardStep(1);
+    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription('');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -255,7 +276,7 @@ const Index = () => {
   };
 
   const activeStoreLang = activeStore?.marketConfig?.language ? getAILanguageByCode(activeStore.marketConfig.language) : null;
-  const canPublish = getCanPublish(form, !!imageFile);
+  const canPublish = getCanPublish(form, !!imageFile || generatedImages.some(i => i.url));
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -291,70 +312,83 @@ const Index = () => {
       <RegionGroupManager open={showRegions} onOpenChange={setShowRegions} groups={groups} stores={stores} onAddGroup={addGroup} onUpdateGroup={updateGroup} onRemoveGroup={removeGroup} />
       <GlobalPublishFlow open={showGlobalPublish} onOpenChange={setShowGlobalPublish} stores={stores} groups={groups} activeStore={activeStore} basePrice={form.price} productTitle={form.title} convert={convert} onPublish={handlePublishToStore} />
 
-      {/* DASHBOARD — always show after login */}
+      {/* DASHBOARD */}
       <div className="flex-1 flex">
         <DashboardSidebar stores={stores} activeStoreId={activeStore?.id || null} onSelectStore={setActiveStore} onAddStore={handleAddStore} currentView={currentView} onViewChange={handleViewChange} />
 
-          <main className="flex-1 overflow-y-auto">
-            <div className="max-w-6xl mx-auto px-5 py-4">
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto px-4 py-3">
 
-              {/* PUBLISH VIEW */}
-              {currentView === 'publish' && !publishResult && !isPublishing && !hasConnectedStore && (
-                <div className="animate-fade-in py-10">
-                  <div className="glass-card p-10 text-center max-w-lg mx-auto">
-                    <div className="w-16 h-16 mx-auto rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6">
-                      <Zap className="w-8 h-8 text-primary" />
-                    </div>
-                    <h2 className="font-display text-2xl font-bold text-foreground mb-2">Conecte sua loja</h2>
-                    <p className="text-muted-foreground text-sm mb-6 max-w-sm mx-auto">Conecte uma loja Shopify para começar a publicar produtos.</p>
-                    <Button onClick={handleAddStore} size="lg" className="w-full font-display font-semibold text-base mb-4">
-                      <Globe className="w-4 h-4 mr-2" />Conectar ao Shopify
-                    </Button>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg bg-secondary/40"><span className="text-base">🌍</span><span className="text-[11px] text-muted-foreground font-medium">195 países</span></div>
-                      <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg bg-secondary/40"><span className="text-base">🏪</span><span className="text-[11px] text-muted-foreground font-medium">Múltiplas lojas</span></div>
-                      <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg bg-secondary/40"><span className="text-base">💱</span><span className="text-[11px] text-muted-foreground font-medium">Câmbio automático</span></div>
-                    </div>
+            {/* PUBLISH VIEW — No store connected */}
+            {currentView === 'publish' && !publishResult && !isPublishing && !hasConnectedStore && (
+              <div className="animate-fade-in py-10">
+                <div className="glass-card p-10 text-center max-w-lg mx-auto">
+                  <div className="w-16 h-16 mx-auto rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6">
+                    <Zap className="w-8 h-8 text-primary" />
+                  </div>
+                  <h2 className="font-display text-2xl font-bold text-foreground mb-2">Conecte sua loja</h2>
+                  <p className="text-muted-foreground text-sm mb-6 max-w-sm mx-auto">Conecte uma loja Shopify para começar a publicar produtos.</p>
+                  <Button onClick={handleAddStore} size="lg" className="w-full font-display font-semibold text-base mb-4">
+                    <Globe className="w-4 h-4 mr-2" />Conectar ao Shopify
+                  </Button>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg bg-secondary/40"><span className="text-base">🌍</span><span className="text-[11px] text-muted-foreground font-medium">195 países</span></div>
+                    <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg bg-secondary/40"><span className="text-base">🏪</span><span className="text-[11px] text-muted-foreground font-medium">Múltiplas lojas</span></div>
+                    <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg bg-secondary/40"><span className="text-base">💱</span><span className="text-[11px] text-muted-foreground font-medium">Câmbio automático</span></div>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {currentView === 'publish' && !publishResult && !isPublishing && hasConnectedStore && (
-                <div className="animate-fade-in">
-                  <div className="mb-3">
-                    <h2 className="font-display text-xl font-bold text-foreground">Publicar Produto</h2>
-                  </div>
+            {/* PUBLISH VIEW — With store */}
+            {currentView === 'publish' && !publishResult && !isPublishing && hasConnectedStore && (
+              <div className="animate-fade-in flex flex-col" style={{ minHeight: 'calc(100vh - 120px)' }}>
+                <div className="mb-2">
+                  <h2 className="font-display text-lg font-bold text-foreground leading-tight">Publicar Produto</h2>
+                </div>
 
-                  {/* Wizard steps indicator */}
-                  <div className="flex items-center gap-1.5 mb-3">
-                    {[1, 2, 3, 4].map(step => (
+                {/* Step tabs with completion states */}
+                <div className="flex items-center gap-1.5 mb-3">
+                  {[1, 2, 3, 4].map(step => {
+                    const isCompleted = completedSteps.has(step);
+                    const isCurrent = wizardStep === step;
+                    const isFuture = step > wizardStep && !isCompleted;
+
+                    return (
                       <button
                         key={step}
-                        onClick={() => setWizardStep(step)}
-                        className={`flex items-center gap-1 px-3 py-1 rounded-md text-[12px] font-medium transition-all ${
-                          wizardStep === step ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
+                        onClick={() => goToStep(step)}
+                        disabled={isFuture && !completedSteps.has(step - 1)}
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[12px] font-medium transition-all ${
+                          isCurrent
+                            ? 'bg-primary text-primary-foreground'
+                            : isCompleted
+                              ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] border border-[hsl(var(--success)/0.3)]'
+                              : 'bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed'
                         }`}
                       >
-                        <span className="w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[9px]">{step}</span>
-                        {step === 1 && 'Imagem'}
-                        {step === 2 && 'Detalhes'}
-                        {step === 3 && 'Variantes & Envio'}
-                        {step === 4 && 'Revisão'}
+                        {isCompleted && !isCurrent ? (
+                          <Check className="w-3 h-3" />
+                        ) : (
+                          <span className="w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[9px]">{step}</span>
+                        )}
+                        {STEP_LABELS[step - 1]}
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
+                </div>
 
-                  {/* STEP 1: AI Image Generation */}
+                {/* Step content */}
+                <div className="flex-1">
+                  {/* ═══ STEP 1: IMAGE ═══ */}
                   {wizardStep === 1 && (
                     <ImageGenerationStep
                       images={generatedImages}
                       onImagesChange={(imgs) => {
                         setGeneratedImages(imgs);
-                        // Set the cover image as the main imagePreview for publishing
                         const cover = imgs.find(i => i.isCover) || imgs[0];
                         if (cover) {
                           setImagePreview(cover.url);
-                          // Create a File from the base64 if needed for publishing
                           if (cover.url.startsWith('data:')) {
                             fetch(cover.url).then(r => r.blob()).then(blob => {
                               const file = new File([blob], 'product-image.png', { type: 'image/png' });
@@ -363,290 +397,342 @@ const Index = () => {
                           }
                         }
                       }}
-                      onNext={() => setWizardStep(2)}
-                      onSkip={() => setWizardStep(2)}
+                      onNext={() => { markStepComplete(1); setWizardStep(2); }}
+                      onSkip={() => { markStepComplete(1); setWizardStep(2); }}
                     />
                   )}
 
-                  {/* STEP 2: Details */}
+                  {/* ═══ STEP 2: DETAILS ═══ */}
                   {wizardStep === 2 && (
-                    <div className="space-y-6">
-                      <div className="glass-card p-6 space-y-5">
-                        <h3 className="font-display font-semibold text-sm uppercase tracking-wider text-muted-foreground">Detalhes do Produto</h3>
+                    <div className="grid grid-cols-[340px_1fr] gap-3">
+                      {/* LEFT — Product Details */}
+                      <div className="glass-card p-4 space-y-3">
+                        <h3 className="font-display font-semibold text-[13px] text-foreground">Detalhes do produto</h3>
+
                         <div>
-                          <Label className="text-sm font-medium text-muted-foreground">Título *</Label>
-                          <Input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value.slice(0, 255) }))} placeholder="Ex: Camiseta Urban Flow" className="mt-1.5 bg-secondary border-border" maxLength={255} />
+                          <Label className="text-xs font-medium text-muted-foreground">Título *</Label>
+                          <Input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value.slice(0, 255) }))} placeholder="Ex: Camiseta Urban Flow" className="mt-1 bg-secondary border-border text-xs h-8" maxLength={255} />
                         </div>
+
                         <div>
-                          <Label className="text-sm font-medium text-muted-foreground">Descrição</Label>
-                          <div className="mt-1.5">
+                          <Label className="text-xs font-medium text-muted-foreground">Descrição</Label>
+                          <div className="mt-1">
                             <RichTextEditor content={form.description} onChange={html => setForm(prev => ({ ...prev, description: html }))} placeholder="Descreva o produto..." />
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+
+                        <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <Label className="text-sm font-medium text-muted-foreground">Coleção</Label>
+                            <Label className="text-xs font-medium text-muted-foreground">Coleção</Label>
                             <Select value={form.collection} onValueChange={v => setForm(prev => ({ ...prev, collection: v }))}>
-                              <SelectTrigger className="mt-1.5 bg-secondary border-border"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                              <SelectTrigger className="mt-1 bg-secondary border-border text-xs h-8"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                               <SelectContent>{COLLECTIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                             </Select>
                           </div>
                           <div>
-                            <Label className="text-sm font-medium text-muted-foreground">Tags</Label>
-                            <Input value={form.tags} onChange={e => setForm(prev => ({ ...prev, tags: e.target.value }))} placeholder="streetwear, summer" className="mt-1.5 bg-secondary border-border" />
+                            <Label className="text-xs font-medium text-muted-foreground">Tags</Label>
+                            <Input value={form.tags} onChange={e => setForm(prev => ({ ...prev, tags: e.target.value }))} placeholder="streetwear, summer" className="mt-1 bg-secondary border-border text-xs h-8" />
                           </div>
                         </div>
                       </div>
 
-                      {/* Price section */}
-                      <div className="glass-card p-6">
-                        <h3 className="font-display font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Preços</h3>
-                        <PriceSection
-                          price={form.price}
-                          compareAtPrice={form.compareAtPrice}
-                          cost={form.cost}
-                          currencySymbol={currencySymbol}
-                          onPriceChange={v => setForm(prev => ({ ...prev, price: v }))}
-                          onCompareAtPriceChange={v => setForm(prev => ({ ...prev, compareAtPrice: v }))}
-                          onCostChange={v => setForm(prev => ({ ...prev, cost: v }))}
+                      {/* RIGHT — SEO */}
+                      <SEOCard
+                        title={seoTitle}
+                        description={seoDescription}
+                        storeDomain={activeStore?.domain || ''}
+                        productTitle={form.title}
+                        onTitleChange={setSeoTitle}
+                        onDescriptionChange={setSeoDescription}
+                      />
+                    </div>
+                  )}
+
+                  {/* ═══ STEP 3: VARIANTS & SHIPPING ═══ */}
+                  {wizardStep === 3 && (
+                    <div className="grid grid-cols-[340px_1fr] gap-3">
+                      {/* LEFT — Price + Sizes + Variants */}
+                      <div className="space-y-3">
+                        <div className="glass-card p-4 space-y-3">
+                          <h3 className="font-display font-semibold text-[13px] text-foreground">Preço</h3>
+                          <PriceSection
+                            price={form.price}
+                            compareAtPrice={form.compareAtPrice}
+                            cost={form.cost}
+                            currencySymbol={currencySymbol}
+                            onPriceChange={v => setForm(prev => ({ ...prev, price: v }))}
+                            onCompareAtPriceChange={v => setForm(prev => ({ ...prev, compareAtPrice: v }))}
+                            onCostChange={v => setForm(prev => ({ ...prev, cost: v }))}
+                          />
+                        </div>
+
+                        <div className="glass-card p-4 space-y-3">
+                          <h3 className="font-display font-semibold text-[13px] text-foreground">Tamanhos e variantes</h3>
+                          <div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {AVAILABLE_SIZES.map(size => (
+                                <button key={size} type="button" onClick={() => toggleSize(size)} className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${form.sizes.includes(size) ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>{size}</button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <VariantsTable
+                            variants={form.variants}
+                            onChange={v => setForm(prev => ({ ...prev, variants: v }))}
+                            inventoryPolicy={form.inventoryPolicy}
+                            onInventoryPolicyChange={p => setForm(prev => ({ ...prev, inventoryPolicy: p }))}
+                            productType={form.collection || form.title}
+                            currencySymbol={currencySymbol}
+                          />
+                        </div>
+                      </div>
+
+                      {/* RIGHT — Color + Shipping */}
+                      <div className="space-y-3">
+                        <ColorManager colors={colors} onColorsChange={setColors} />
+
+                        <ShippingCard
+                          requiresShipping={form.requiresShipping}
+                          onRequiresShippingChange={v => setForm(prev => ({ ...prev, requiresShipping: v }))}
+                          weight={form.weight}
+                          onWeightChange={v => setForm(prev => ({ ...prev, weight: v }))}
+                          weightUnit={form.weightUnit}
+                          onWeightUnitChange={v => setForm(prev => ({ ...prev, weightUnit: v }))}
+                          countryOfOrigin={form.countryOfOrigin}
+                          onCountryOfOriginChange={v => setForm(prev => ({ ...prev, countryOfOrigin: v }))}
                         />
-                      </div>
-
-                      {/* Sales Channels */}
-                      <div className="glass-card p-6">
-                        <SalesChannels selectedChannels={form.selectedChannels} onChannelsChange={c => setForm(prev => ({ ...prev, selectedChannels: c }))} />
-                      </div>
-
-                      <div className="flex justify-between">
-                        <Button variant="outline" onClick={() => setWizardStep(1)}><ArrowLeft className="w-4 h-4 mr-1" />Voltar</Button>
-                        <Button onClick={() => setWizardStep(3)}><ArrowRight className="w-4 h-4 mr-1" />Próximo</Button>
                       </div>
                     </div>
                   )}
 
-                  {/* STEP 3: Variants & Shipping */}
-                  {wizardStep === 3 && (
-                    <div className="space-y-6">
-                      <div className="glass-card p-6 space-y-5">
-                        <h3 className="font-display font-semibold text-sm uppercase tracking-wider text-muted-foreground">Tamanhos / Variantes</h3>
-                        <div>
-                          <Label className="text-sm font-medium text-muted-foreground">Tamanhos</Label>
-                          <div className="flex flex-wrap gap-2 mt-1.5">
-                            {AVAILABLE_SIZES.map(size => (
-                              <button key={size} type="button" onClick={() => toggleSize(size)} className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${form.sizes.includes(size) ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>{size}</button>
+                  {/* ═══ STEP 4: REVIEW ═══ */}
+                  {wizardStep === 4 && (
+                    <div className="grid grid-cols-[340px_1fr] gap-3">
+                      {/* LEFT — Checklist + Publish */}
+                      <div className="space-y-3">
+                        <div className="glass-card p-4">
+                          <ReviewChecklist form={form} hasImage={!!imageFile || generatedImages.some(i => i.url)} />
+                        </div>
+                        <div className="glass-card p-4 space-y-3">
+                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Publicação</h4>
+
+                          {/* Status pills */}
+                          <div className="flex gap-1.5">
+                            {(['draft', 'active', 'scheduled'] as const).map(status => (
+                              <button
+                                key={status}
+                                onClick={() => setPublishStatus(status)}
+                                className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${
+                                  publishStatus === status
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-secondary text-muted-foreground hover:text-foreground border border-border'
+                                }`}
+                              >
+                                {status === 'draft' ? 'Rascunho' : status === 'active' ? 'Ativo' : 'Agendar'}
+                              </button>
                             ))}
                           </div>
-                        </div>
 
-                        <VariantsTable
-                          variants={form.variants}
-                          onChange={v => setForm(prev => ({ ...prev, variants: v }))}
-                          inventoryPolicy={form.inventoryPolicy}
-                          onInventoryPolicyChange={p => setForm(prev => ({ ...prev, inventoryPolicy: p }))}
-                          productType={form.collection || form.title}
-                          currencySymbol={currencySymbol}
-                        />
+                          {/* Sales channels */}
+                          <SalesChannels selectedChannels={form.selectedChannels} onChannelsChange={c => setForm(prev => ({ ...prev, selectedChannels: c }))} />
+
+                          <Button onClick={handlePublish} disabled={!canPublish} size="lg" className="w-full font-display font-semibold text-sm">
+                            <Zap className="w-4 h-4 mr-2" />
+                            Publicar agora
+                          </Button>
+                        </div>
                       </div>
 
-                      <ShippingCard
-                        requiresShipping={form.requiresShipping}
-                        onRequiresShippingChange={v => setForm(prev => ({ ...prev, requiresShipping: v }))}
-                        weight={form.weight}
-                        onWeightChange={v => setForm(prev => ({ ...prev, weight: v }))}
-                        weightUnit={form.weightUnit}
-                        onWeightUnitChange={v => setForm(prev => ({ ...prev, weightUnit: v }))}
-                        countryOfOrigin={form.countryOfOrigin}
-                        onCountryOfOriginChange={v => setForm(prev => ({ ...prev, countryOfOrigin: v }))}
+                      {/* RIGHT — Shopify Preview */}
+                      <ShopifyProductPreview
+                        form={form}
+                        images={generatedImages}
+                        imagePreview={imagePreview}
+                        storeDomain={activeStore?.domain || ''}
+                        currencySymbol={currencySymbol}
                       />
-
-                      <div className="flex justify-between">
-                        <Button variant="outline" onClick={() => setWizardStep(2)}><ArrowLeft className="w-4 h-4 mr-1" />Voltar</Button>
-                        <Button onClick={() => setWizardStep(4)}><Eye className="w-4 h-4 mr-1" />Revisar</Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* STEP 4: Review */}
-                  {wizardStep === 4 && (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4">
-                        {/* LEFT — Checklist + Publish */}
-                        <div className="space-y-4">
-                          <div className="glass-card p-5">
-                            <ReviewChecklist form={form} hasImage={!!imageFile || generatedImages.some(i => i.url)} />
-                          </div>
-                          <div className="glass-card p-5 space-y-3">
-                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Publicação</h4>
-                            {form.selectedChannels.length > 0 && (
-                              <p className="text-xs text-muted-foreground">Canais: {form.selectedChannels.length} selecionado{form.selectedChannels.length !== 1 ? 's' : ''}</p>
-                            )}
-                            <Button onClick={handlePublish} disabled={!canPublish} size="lg" className="w-full font-display font-semibold">
-                              <Zap className="w-4 h-4 mr-2" />
-                              Publicar agora
-                            </Button>
-                          </div>
-                          <Button variant="outline" onClick={() => setWizardStep(3)} className="w-full"><ArrowLeft className="w-4 h-4 mr-1" />Voltar</Button>
-                        </div>
-
-                        {/* RIGHT — Shopify Preview */}
-                        <ShopifyProductPreview
-                          form={form}
-                          images={generatedImages}
-                          imagePreview={imagePreview}
-                          storeDomain={activeStore?.domain || ''}
-                          currencySymbol={currencySymbol}
-                        />
-                      </div>
                     </div>
                   )}
                 </div>
-              )}
 
-              {/* PUBLISHING PROGRESS */}
-              {currentView === 'publish' && isPublishing && (
-                <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
-                  <div className="glass-card p-10 text-center max-w-md w-full">
-                    <Loader2 className="w-12 h-12 mx-auto animate-spin text-primary mb-6" />
-                    <h2 className="font-display text-xl font-bold text-foreground mb-2">Publicando no Shopify</h2>
-                    <p className="text-sm text-muted-foreground mb-4">{PUBLISH_STEPS[publishStep]} ({publishStep + 1}/{PUBLISH_STEPS.length})</p>
-                    <Progress value={((publishStep + 1) / PUBLISH_STEPS.length) * 100} className="h-2" />
-                  </div>
-                </div>
-              )}
-
-              {/* PUBLISH SUCCESS */}
-              {currentView === 'publish' && publishResult && !isPublishing && (
-                <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
-                  <div className="glass-card p-10 text-center max-w-md w-full">
-                    <div className="w-20 h-20 mx-auto rounded-full bg-[hsl(var(--success))]/10 flex items-center justify-center mb-6 animate-bounce">
-                      <CheckCircle2 className="w-10 h-10 text-[hsl(var(--success))]" />
-                    </div>
-                    <h2 className="font-display text-2xl font-bold text-foreground mb-2">Produto Publicado!</h2>
-
-                    {publishResult.imageUrl && (
-                      <img src={publishResult.imageUrl} alt={publishResult.title} className="w-24 h-24 mx-auto rounded-lg border border-border object-cover my-4" />
+                {/* ═══ BOTTOM NAVIGATION BAR ═══ */}
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                  <div>
+                    {wizardStep === 1 ? (
+                      <button onClick={() => { markStepComplete(1); setWizardStep(2); }} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+                        Pular por agora
+                      </button>
+                    ) : (
+                      <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => setWizardStep(wizardStep - 1)}>
+                        <ArrowLeft className="w-3.5 h-3.5 mr-1" />Voltar
+                      </Button>
                     )}
+                  </div>
 
-                    <p className="text-foreground font-semibold text-lg">{publishResult.title}</p>
-                    <div className="flex items-center justify-center gap-2 mt-2">
-                      <span className="text-primary font-bold">{currencySymbol}{form.price.toFixed(2)}</span>
-                      {form.compareAtPrice && form.compareAtPrice > form.price && (
-                        <Badge className="bg-[hsl(var(--success))]/15 text-[hsl(var(--success))] border-[hsl(var(--success))]/30">
-                          {Math.round(((form.compareAtPrice - form.price) / form.compareAtPrice) * 100)}% off
-                        </Badge>
-                      )}
-                    </div>
+                  <span className="text-[11px] text-muted-foreground">
+                    Step {wizardStep} de 4
+                  </span>
 
-                    <div className="flex flex-col gap-2 mt-6">
-                      <Button asChild>
-                        <a href={publishResult.shopifyUrl} target="_blank" rel="noopener noreferrer">
-                          Ver produto no Shopify <ExternalLink className="w-4 h-4 ml-1" />
-                        </a>
+                  <div>
+                    {wizardStep < 4 ? (
+                      <Button size="sm" className="text-xs h-8" onClick={() => { markStepComplete(wizardStep); setWizardStep(wizardStep + 1); }}>
+                        Próximo <ArrowRight className="w-3.5 h-3.5 ml-1" />
                       </Button>
-                      <Button variant="secondary" onClick={handleNewProduct}>
-                        <Package className="w-4 h-4 mr-2" />Publicar outro produto
+                    ) : (
+                      <Button size="sm" className="text-xs h-8" onClick={handlePublish} disabled={!canPublish}>
+                        <Zap className="w-3.5 h-3.5 mr-1" />Publicar agora
                       </Button>
-                      <Button variant="ghost" onClick={() => { setPublishResult(null); setCurrentView('history'); }}>
-                        <ClipboardList className="w-4 h-4 mr-2" />Ver histórico
-                      </Button>
-                    </div>
+                    )}
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* HISTORY VIEW */}
-              {currentView === 'history' && <ProductHistory />}
+            {/* PUBLISHING PROGRESS */}
+            {currentView === 'publish' && isPublishing && (
+              <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
+                <div className="glass-card p-10 text-center max-w-md w-full">
+                  <Loader2 className="w-12 h-12 mx-auto animate-spin text-primary mb-6" />
+                  <h2 className="font-display text-xl font-bold text-foreground mb-2">Publicando no Shopify</h2>
+                  <p className="text-sm text-muted-foreground mb-4">{PUBLISH_STEPS[publishStep]} ({publishStep + 1}/{PUBLISH_STEPS.length})</p>
+                  <Progress value={((publishStep + 1) / PUBLISH_STEPS.length) * 100} className="h-2" />
+                </div>
+              </div>
+            )}
 
-              {/* STORES VIEW */}
-              {currentView === 'stores' && (
-                <div className="animate-fade-in">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h2 className="font-display text-2xl font-bold text-foreground">Lojas</h2>
-                      <p className="text-muted-foreground text-sm mt-1">Gerencie suas lojas conectadas.</p>
-                    </div>
-                    <Button onClick={handleAddStore} size="sm" variant="secondary" className="font-display font-medium">
-                      <Globe className="w-3.5 h-3.5 mr-1.5" />Adicionar loja
+            {/* PUBLISH SUCCESS */}
+            {currentView === 'publish' && publishResult && !isPublishing && (
+              <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
+                <div className="glass-card p-10 text-center max-w-md w-full">
+                  <div className="w-20 h-20 mx-auto rounded-full bg-[hsl(var(--success))]/10 flex items-center justify-center mb-6 animate-bounce">
+                    <CheckCircle2 className="w-10 h-10 text-[hsl(var(--success))]" />
+                  </div>
+                  <h2 className="font-display text-2xl font-bold text-foreground mb-2">Produto Publicado!</h2>
+
+                  {publishResult.imageUrl && (
+                    <img src={publishResult.imageUrl} alt={publishResult.title} className="w-24 h-24 mx-auto rounded-lg border border-border object-cover my-4" />
+                  )}
+
+                  <p className="text-foreground font-semibold text-lg">{publishResult.title}</p>
+                  <div className="flex items-center justify-center gap-2 mt-2">
+                    <span className="text-primary font-bold">{currencySymbol}{form.price.toFixed(2)}</span>
+                    {form.compareAtPrice && form.compareAtPrice > form.price && (
+                      <Badge className="bg-[hsl(var(--success))]/15 text-[hsl(var(--success))] border-[hsl(var(--success))]/30">
+                        {Math.round(((form.compareAtPrice - form.price) / form.compareAtPrice) * 100)}% off
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-2 mt-6">
+                    <Button asChild>
+                      <a href={publishResult.shopifyUrl} target="_blank" rel="noopener noreferrer">
+                        Ver produto no Shopify <ExternalLink className="w-4 h-4 ml-1" />
+                      </a>
+                    </Button>
+                    <Button variant="secondary" onClick={handleNewProduct}>
+                      <Package className="w-4 h-4 mr-2" />Publicar outro produto
+                    </Button>
+                    <Button variant="ghost" onClick={() => { setPublishResult(null); setCurrentView('history'); }}>
+                      <ClipboardList className="w-4 h-4 mr-2" />Ver histórico
                     </Button>
                   </div>
-                  {stores.length === 0 ? (
-                    <div className="glass-card p-10 text-center">
-                      <Store className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground text-sm">Nenhuma loja conectada.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {stores.map(store => {
-                        const lang = store.marketConfig?.language ? getAILanguageByCode(store.marketConfig.language) : null;
-                        return (
-                          <div key={store.id} className="glass-card p-4 flex items-center justify-between">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <span className="text-2xl flex-shrink-0">{store.marketConfig?.countryFlag || '🏪'}</span>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-foreground truncate">{store.marketConfig?.marketName || store.domain}</span>
-                                  {store.isDefault && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Padrão</Badge>}
-                                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${store.connected ? 'bg-[hsl(var(--success))]' : 'bg-muted-foreground'}`} />
-                                </div>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <span>{store.domain}</span>
-                                  {store.marketConfig?.currency && <><span>•</span><span>{store.marketConfig.currency}</span></>}
-                                  {lang && <><span>•</span><span>{lang.flag} {lang.label}</span></>}
-                                </div>
+                </div>
+              </div>
+            )}
+
+            {/* HISTORY VIEW */}
+            {currentView === 'history' && <ProductHistory />}
+
+            {/* STORES VIEW */}
+            {currentView === 'stores' && (
+              <div className="animate-fade-in">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="font-display text-2xl font-bold text-foreground">Lojas</h2>
+                    <p className="text-muted-foreground text-sm mt-1">Gerencie suas lojas conectadas.</p>
+                  </div>
+                  <Button onClick={handleAddStore} size="sm" variant="secondary" className="font-display font-medium">
+                    <Globe className="w-3.5 h-3.5 mr-1.5" />Adicionar loja
+                  </Button>
+                </div>
+                {stores.length === 0 ? (
+                  <div className="glass-card p-10 text-center">
+                    <Store className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground text-sm">Nenhuma loja conectada.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {stores.map(store => {
+                      const lang = store.marketConfig?.language ? getAILanguageByCode(store.marketConfig.language) : null;
+                      return (
+                        <div key={store.id} className="glass-card p-4 flex items-center justify-between">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="text-2xl flex-shrink-0">{store.marketConfig?.countryFlag || '🏪'}</span>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-foreground truncate">{store.marketConfig?.marketName || store.domain}</span>
+                                {store.isDefault && <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Padrão</Badge>}
+                                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${store.connected ? 'bg-[hsl(var(--success))]' : 'bg-muted-foreground'}`} />
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span>{store.domain}</span>
+                                {store.marketConfig?.currency && <><span>•</span><span>{store.marketConfig.currency}</span></>}
+                                {lang && <><span>•</span><span>{lang.flag} {lang.label}</span></>}
                               </div>
                             </div>
-                            <div className="flex gap-1">
-                              {!store.connected && <Button variant="ghost" size="sm" className="text-primary text-xs" onClick={() => handleReconnect(store)}>Reconectar</Button>}
-                              <Button variant="ghost" size="sm" className="text-destructive text-xs" onClick={() => { removeStore(store.id); toast.success('Loja removida.'); }}>Remover</Button>
-                            </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                  {groups.length > 0 && (
-                    <div className="mt-8">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2"><Layers className="w-4 h-4" />Grupos de Região</h3>
-                        <Button variant="ghost" size="sm" onClick={() => setShowRegions(true)}>Gerenciar</Button>
-                      </div>
-                      <div className="space-y-2">
-                        {groups.map(group => (
-                          <div key={group.id} className="glass-card p-3 flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium text-foreground">{group.name}</p>
-                              <p className="text-xs text-muted-foreground">{stores.filter(s => group.storeIds.includes(s.id)).map(s => s.marketConfig?.countryFlag || '🏪').join(' ')} • {group.storeIds.length} loja{group.storeIds.length !== 1 ? 's' : ''}</p>
-                            </div>
+                          <div className="flex gap-1">
+                            {!store.connected && <Button variant="ghost" size="sm" className="text-primary text-xs" onClick={() => handleReconnect(store)}>Reconectar</Button>}
+                            <Button variant="ghost" size="sm" className="text-destructive text-xs" onClick={() => { removeStore(store.id); toast.success('Loja removida.'); }}>Remover</Button>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {groups.length > 0 && (
+                  <div className="mt-8">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2"><Layers className="w-4 h-4" />Grupos de Região</h3>
+                      <Button variant="ghost" size="sm" onClick={() => setShowRegions(true)}>Gerenciar</Button>
                     </div>
-                  )}
-                </div>
-              )}
-
-              {/* SETTINGS VIEW */}
-              {currentView === 'settings' && (
-                <div className="animate-fade-in">
-                  <h2 className="font-display text-2xl font-bold text-foreground mb-2">Configurações</h2>
-                  <p className="text-muted-foreground text-sm mb-6">Preferências do aplicativo.</p>
-                  <div className="glass-card p-6 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div><p className="text-sm font-medium text-foreground">Versão</p><p className="text-xs text-muted-foreground">Publify Beta v0.3.0</p></div>
-                    </div>
-                    <div className="border-t border-border/50 pt-4 flex items-center justify-between">
-                      <div><p className="text-sm font-medium text-foreground">Lojas conectadas</p><p className="text-xs text-muted-foreground">{stores.filter(s => s.connected).length} ativa{stores.filter(s => s.connected).length !== 1 ? 's' : ''}</p></div>
-                      <Button variant="secondary" size="sm" onClick={() => setCurrentView('stores')} className="font-display text-xs">Gerenciar</Button>
-                    </div>
-                    <div className="border-t border-border/50 pt-4 flex items-center justify-between">
-                      <div><p className="text-sm font-medium text-foreground">Produtos publicados</p><p className="text-xs text-muted-foreground">{publishedCount} produto{publishedCount !== 1 ? 's' : ''}</p></div>
+                    <div className="space-y-2">
+                      {groups.map(group => (
+                        <div key={group.id} className="glass-card p-3 flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{group.name}</p>
+                            <p className="text-xs text-muted-foreground">{stores.filter(s => group.storeIds.includes(s.id)).map(s => s.marketConfig?.countryFlag || '🏪').join(' ')} • {group.storeIds.length} loja{group.storeIds.length !== 1 ? 's' : ''}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* SETTINGS VIEW */}
+            {currentView === 'settings' && (
+              <div className="animate-fade-in">
+                <h2 className="font-display text-2xl font-bold text-foreground mb-2">Configurações</h2>
+                <p className="text-muted-foreground text-sm mb-6">Preferências do aplicativo.</p>
+                <div className="glass-card p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div><p className="text-sm font-medium text-foreground">Versão</p><p className="text-xs text-muted-foreground">Publify Beta v0.3.0</p></div>
+                  </div>
+                  <div className="border-t border-border/50 pt-4 flex items-center justify-between">
+                    <div><p className="text-sm font-medium text-foreground">Lojas conectadas</p><p className="text-xs text-muted-foreground">{stores.filter(s => s.connected).length} ativa{stores.filter(s => s.connected).length !== 1 ? 's' : ''}</p></div>
+                    <Button variant="secondary" size="sm" onClick={() => setCurrentView('stores')} className="font-display text-xs">Gerenciar</Button>
+                  </div>
+                  <div className="border-t border-border/50 pt-4 flex items-center justify-between">
+                    <div><p className="text-sm font-medium text-foreground">Produtos publicados</p><p className="text-xs text-muted-foreground">{publishedCount} produto{publishedCount !== 1 ? 's' : ''}</p></div>
+                  </div>
                 </div>
-              )}
-            </div>
-          </main>
-        </div>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 };
