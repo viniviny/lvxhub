@@ -345,6 +345,17 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
             <option value={75}>75%</option>
             <option value={100}>100%</option>
           </select>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setIsFullscreen(true)}
+                className="w-[30px] h-[30px] rounded-full flex items-center justify-center bg-secondary/60 border border-[hsl(215,14%,19%)] text-[hsl(215,8%,55%)] hover:text-[hsl(220,14%,90%)] hover:border-[hsl(213,80%,56%)] transition-all duration-150"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">Tela cheia</TooltipContent>
+          </Tooltip>
         </div>
       </div>
 
