@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { ProductFormData, ProductSize, AVAILABLE_SIZES, COLLECTIONS } from '@/types/product';
+import { ProductHistory } from '@/components/ProductHistory';
 import { useStoreManager, type MarketConfig } from '@/hooks/useStoreManager';
 import { useRegionGroups } from '@/hooks/useRegionGroups';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
@@ -116,6 +117,7 @@ const Index = () => {
 
     try {
       const imageBase64 = await fileToBase64(imageFile);
+      const mc = activeStore?.marketConfig;
       const { data, error } = await supabase.functions.invoke('shopify-publish', {
         body: {
           title: form.title,
@@ -128,6 +130,16 @@ const Index = () => {
           storeDomain: activeStore.domain,
           accessToken: activeStore.accessToken,
           apiVersion: activeStore.apiVersion,
+          countryCode: mc?.countryCode || null,
+          countryFlag: mc?.countryFlag || null,
+          countryName: mc?.countryName || null,
+          currency: mc?.currency || null,
+          currencySymbol: mc?.currencySymbol || null,
+          localPrice: form.price,
+          baseCurrency: mc?.currency || 'BRL',
+          language: mc?.language || null,
+          languageLabel: activeStoreLang?.label || null,
+          marketName: mc?.marketName || null,
         },
       });
 
@@ -605,28 +617,7 @@ const Index = () => {
 
               {/* ---- HISTORY VIEW ---- */}
               {currentView === 'history' && (
-                <div className="animate-fade-in">
-                  <h2 className="font-display text-2xl font-bold text-foreground mb-2">Histórico</h2>
-                  <p className="text-muted-foreground text-sm mb-6">Histórico de produtos publicados.</p>
-                  <div className="glass-card p-10 text-center">
-                    <ClipboardList className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground text-sm">
-                      {publishedCount > 0
-                        ? `Você publicou ${publishedCount} produto${publishedCount !== 1 ? 's' : ''}.`
-                        : 'Nenhum produto publicado ainda.'}
-                    </p>
-                    {publishedCount > 0 && stores.filter(s => s.connected).length > 0 && (
-                      <div className="flex flex-wrap justify-center gap-2 mt-4">
-                        {stores.filter(s => s.connected).map(s => (
-                          <span key={s.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-secondary text-xs">
-                            <span>{s.marketConfig?.countryFlag || '🏪'}</span>
-                            <span>{s.marketConfig?.marketName || s.domain}</span>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <ProductHistory />
               )}
 
               {/* ---- STORES VIEW ---- */}
