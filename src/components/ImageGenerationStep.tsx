@@ -80,7 +80,18 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const fileInputRef = useRef<HTMLInputElement>(null);
   const refImageInputRef = useRef<HTMLInputElement>(null);
 
-  // Aspect ratio — persisted in localStorage
+  // Close prompt dropdown on outside click / Escape
+  useEffect(() => {
+    if (!promptDropdownOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (promptDropdownRef.current && !promptDropdownRef.current.contains(e.target as Node)) setPromptDropdownOpen(false);
+    };
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setPromptDropdownOpen(false); };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => { document.removeEventListener('mousedown', handleClick); document.removeEventListener('keydown', handleKey); };
+  }, [promptDropdownOpen]);
+
   const [ratio, setRatio] = useState<AspectRatio>(() => {
     return (localStorage.getItem('publify_aspect_ratio') as AspectRatio) || '4:5';
   });
