@@ -617,60 +617,7 @@ const Index = () => {
                   </div>
 
                   {wizardStep === 4 ? (
-                    <div className="flex items-center gap-3">
-                      {/* Status pills */}
-                      <div className="flex gap-0.5 bg-secondary/50 rounded-full p-0.5">
-                        {(['draft', 'active', 'scheduled'] as const).map(status => (
-                          <button
-                            key={status}
-                            onClick={() => setPublishStatus(status)}
-                            className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
-                              publishStatus === status
-                                ? 'bg-primary text-primary-foreground'
-                                : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                          >
-                            {status === 'draft' ? 'Rascunho' : status === 'active' ? 'Ativo' : 'Agendar'}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Sales channel pills */}
-                      <div className="flex gap-1">
-                        {[
-                          { id: 'online', icon: '🖥', label: 'Online Store' },
-                          { id: 'pos', icon: '📱', label: 'POS' },
-                          { id: 'google', icon: 'G', label: 'Google' },
-                        ].map(ch => {
-                          const isSelected = form.selectedChannels.includes(ch.id);
-                          return (
-                            <button
-                              key={ch.id}
-                              onClick={() => {
-                                const newChannels = isSelected
-                                  ? form.selectedChannels.filter(c => c !== ch.id)
-                                  : [...form.selectedChannels, ch.id];
-                                setForm(prev => ({ ...prev, selectedChannels: newChannels }));
-                              }}
-                              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-all border ${
-                                isSelected
-                                  ? 'border-primary/50 bg-primary/10 text-primary'
-                                  : 'border-border text-muted-foreground hover:text-foreground hover:border-primary/30'
-                              }`}
-                            >
-                              <span className="text-[10px]">{ch.icon}</span>
-                              {ch.label}
-                              {isSelected && <Check className="w-2.5 h-2.5" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Publish button */}
-                      <Button size="sm" className="text-xs h-9" onClick={handlePublish} disabled={!canPublish}>
-                        <Zap className="w-3.5 h-3.5 mr-1" />Publicar agora
-                      </Button>
-                    </div>
+                    <span className="text-[11px] text-muted-foreground">Step 4 de 4</span>
                   ) : (
                     <>
                       <span className="text-[11px] text-muted-foreground">
