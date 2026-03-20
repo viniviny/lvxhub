@@ -173,6 +173,14 @@ const Index = () => {
             <Button
               variant="ghost"
               size="icon"
+              onClick={() => setShowHelp(true)}
+              title="Tutorial"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setShowSettings(true)}
               title="Configurações"
             >
