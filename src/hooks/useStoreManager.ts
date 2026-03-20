@@ -1,5 +1,18 @@
 import { useState, useCallback } from 'react';
 
+export interface MarketConfig {
+  countryCode: string;
+  countryFlag: string;
+  countryName: string;
+  currency: string;
+  currencySymbol: string;
+  currencyPosition: 'before' | 'after';
+  language: string; // AI language code like 'en-US', 'pt-BR'
+  decimalSeparator: string;
+  thousandSeparator: string;
+  marketName: string; // custom label
+}
+
 export interface ShopifyStore {
   id: string;
   domain: string;
@@ -11,6 +24,7 @@ export interface ShopifyStore {
   connected: boolean;
   connectedAt: string | null;
   isDefault: boolean;
+  marketConfig?: MarketConfig;
 }
 
 const STORES_KEY = 'publify_stores';
