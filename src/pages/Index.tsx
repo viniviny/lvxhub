@@ -66,7 +66,7 @@ const Index = () => {
   const {
     stores, activeStore, activeStoreId, hasConnectedStore, publishedCount,
     setActiveStore, addStore, removeStore, setDefault, startOAuth, incrementPublished,
-    connectStoreWithMarket,
+    connectStoreWithMarket, updateStoreMarket,
   } = useStoreManager();
 
   const { groups, addGroup, updateGroup, removeGroup } = useRegionGroups();
