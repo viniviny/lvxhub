@@ -114,7 +114,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const promises = angles.map(async (angle) => {
       try {
         const { data, error } = await supabase.functions.invoke('generate-image', {
-          body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt, referenceImageUrl: referenceImage || undefined },
+          body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt, referenceImageUrl: referenceImage || undefined, aspectRatio: activeRatio },
         });
         if (error || data?.error) { toast.error(`Erro ao gerar imagem (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`); return null; }
         const imageUrl = data.imageUrl;
