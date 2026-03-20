@@ -74,6 +74,7 @@ const PUBLISH_STEPS = [
 const STEP_LABELS = ['Imagem', 'Detalhes', 'Variantes & Envio', 'Revisão'];
 
 const Index = () => {
+  const navigate = useNavigate();
   const {
     stores, activeStore, activeStoreId, hasConnectedStore, publishedCount,
     setActiveStore, addStore, removeStore, setDefault, startOAuth, incrementPublished,
