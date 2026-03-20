@@ -38,23 +38,30 @@ export function SettingsDialog({ open, onOpenChange, currentSettings, onSave, on
     }
   }, [open, currentSettings]);
 
-  const handleSave = () => {
+  const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/;
+
+  const validateForm = (): boolean => {
     if (!form.storeDomain.trim() || !form.clientId.trim() || !form.clientSecret.trim()) {
       toast.error('Preencha todos os campos obrigatórios.');
-      return;
+      return false;
     }
-    onSave(form);
+    if (!domainRegex.test(form.storeDomain.trim())) {
+      toast.error('Domínio inválido. Use o formato: minha-loja.myshopify.com');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSave = () => {
+    if (!validateForm()) return;
+    onSave({ ...form, storeDomain: form.storeDomain.trim() });
     toast.success('Configurações salvas com sucesso!');
   };
 
   const handleSaveAndConnect = () => {
-    if (!form.storeDomain.trim() || !form.clientId.trim() || !form.clientSecret.trim()) {
-      toast.error('Preencha todos os campos obrigatórios.');
-      return;
-    }
-    onSave(form);
+    if (!validateForm()) return;
+    onSave({ ...form, storeDomain: form.storeDomain.trim() });
     onOpenChange(false);
-    // Small delay to let state update before redirect
     setTimeout(() => onConnect(), 100);
   };
 
