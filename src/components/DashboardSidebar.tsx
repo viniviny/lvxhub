@@ -1,8 +1,8 @@
 import { ShopifyStore } from '@/hooks/useStoreManager';
 import { StoreSelector } from '@/components/StoreSelector';
-import { Package, ClipboardList, Store, Settings, Plus } from 'lucide-react';
+import { Package, ClipboardList, Store, Settings, Plus, Layers, Globe } from 'lucide-react';
 
-export type DashboardView = 'publish' | 'history' | 'stores' | 'settings';
+export type DashboardView = 'publish' | 'history' | 'stores' | 'regions' | 'settings';
 
 interface DashboardSidebarProps {
   stores: ShopifyStore[];
@@ -17,6 +17,7 @@ const navItems: { id: DashboardView; label: string; icon: React.ReactNode }[] = 
   { id: 'publish', label: 'Publicar Produto', icon: <Package className="w-[18px] h-[18px]" /> },
   { id: 'history', label: 'Histórico', icon: <ClipboardList className="w-[18px] h-[18px]" /> },
   { id: 'stores', label: 'Lojas', icon: <Store className="w-[18px] h-[18px]" /> },
+  { id: 'regions', label: 'Grupos de Região', icon: <Layers className="w-[18px] h-[18px]" /> },
   { id: 'settings', label: 'Configurações', icon: <Settings className="w-[18px] h-[18px]" /> },
 ];
 
