@@ -24,12 +24,17 @@ const ANGLE_OPTIONS = [
 type SortMode = 'recent' | 'most_used' | 'az';
 
 export default function PromptsPage() {
+  const navigate = useNavigate();
   const { prompts, isLoading, createPrompt, updatePrompt, deletePrompt } = useUserPrompts();
-  const { stores, activeStoreId, setActiveStore, addStore } = useStoreContext();
+  const { stores, activeStoreId, setActiveStore } = useStoreContext();
   const [editing, setEditing] = useState<UserPrompt | 'new' | null>(null);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortMode>('recent');
-  const [sidebarView, setSidebarView] = useState<DashboardView>('publish');
+
+  const handleSidebarNav = (view: DashboardView) => {
+    if (view === 'prompts') return;
+    navigate('/dashboard');
+  };
 
   // Form state
   const [name, setName] = useState('');
