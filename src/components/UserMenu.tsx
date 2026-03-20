@@ -59,6 +59,10 @@ export function UserMenu() {
         <DropdownMenuItem onClick={() => {}} className="gap-2">
           <Settings className="w-4 h-4" /> Configurações
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={toggleTheme} className="gap-2">
+          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          {theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="gap-2 text-destructive focus:text-destructive">
           <LogOut className="w-4 h-4" /> Sair
