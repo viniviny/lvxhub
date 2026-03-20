@@ -199,6 +199,8 @@ const Index = () => {
         isAuthenticated={isAuthenticated}
       />
 
+      <OnboardingGuide open={showHelp} onOpenChange={setShowHelp} />
+
       <main className="max-w-4xl mx-auto px-6 py-8">
         {/* Setup Screen */}
         {showSetup && (
