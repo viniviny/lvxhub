@@ -498,7 +498,7 @@ function DraggableGallery({ images, allSlots, generatingAngles, completedAngles,
                 onDrop={e => handleDrop(e, idx)}
                 onDragEnd={handleDragEnd}
               >
-                <ImageSlot label={label} angle={angle} image={image} isGenerating={generatingAngles.has(angle)} onRegenerate={() => onRegenerate(angle)} onRemove={() => onRemove(angle)} onSetCover={() => onSetCover(angle)} isCover={false} draggable={!!image} />
+                <ImageSlot label={label} angle={angle} image={image} isGenerating={generatingAngles.has(angle)} justCompleted={completedAngles.has(angle)} startTime={angleStartTimes[angle]} onRegenerate={() => onRegenerate(angle)} onRemove={() => onRemove(angle)} onSetCover={() => onSetCover(angle)} isCover={false} draggable={!!image} />
               </div>
             );
           })}
