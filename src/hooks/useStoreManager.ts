@@ -196,6 +196,7 @@ export function useStoreManager() {
     setActiveStore,
     addStore,
     connectStore,
+    connectStoreWithMarket,
     disconnectStore,
     removeStore,
     setDefault,
