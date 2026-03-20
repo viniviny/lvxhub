@@ -475,5 +475,6 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
         </div>
       )}
     </div>
+    </TooltipProvider>
   );
 }
