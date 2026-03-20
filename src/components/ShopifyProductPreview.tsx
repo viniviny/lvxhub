@@ -384,6 +384,95 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
           </DeviceFrame>
         </div>
       </div>
+
+      {/* Fullscreen overlay */}
+      {isFullscreen && (
+        <div
+          className="fixed inset-0 z-50 bg-[hsl(220,20%,7%)] flex flex-col"
+          style={{ animation: 'fade-in 0.25s ease-out' }}
+        >
+          {/* Fullscreen toolbar */}
+          <div className="flex items-center justify-between px-5 py-3 border-b border-[hsl(215,14%,19%)]">
+            <div className="inline-flex items-center bg-secondary/60 border border-[hsl(215,14%,19%)] rounded-full p-[3px] gap-0">
+              {devices.map(d => {
+                const Icon = d.icon;
+                const active = device === d.type;
+                return (
+                  <Tooltip key={d.type}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => handleDeviceChange(d.type)}
+                        className={`w-9 h-[30px] rounded-2xl flex items-center justify-center transition-all duration-150 ${
+                          active
+                            ? 'bg-[hsl(220,20%,14%)] text-[hsl(220,14%,90%)] border border-[hsl(213,80%,56%)] shadow-sm'
+                            : 'text-[hsl(215,8%,55%)] hover:text-[hsl(220,14%,80%)]'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="text-xs">{d.label}</TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+
+            <span className="text-xs text-muted-foreground">Pré-visualização em tela cheia</span>
+
+            <div className="flex items-center gap-2">
+              <select
+                value={zoom}
+                onChange={e => setZoom(Number(e.target.value))}
+                className="text-[11px] bg-secondary/60 border border-[hsl(215,14%,19%)] text-muted-foreground rounded-full px-2 py-1 cursor-pointer focus:outline-none"
+              >
+                <option value={50}>50%</option>
+                <option value={75}>75%</option>
+                <option value={100}>100%</option>
+              </select>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setIsFullscreen(false)}
+                    className="w-[30px] h-[30px] rounded-full flex items-center justify-center bg-secondary/60 border border-[hsl(215,14%,19%)] text-[hsl(215,8%,55%)] hover:text-red-400 hover:border-red-400/50 transition-all duration-150"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">Fechar (Esc)</TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
+
+          {/* Fullscreen content */}
+          <div className="flex-1 overflow-auto flex justify-center p-6">
+            <div
+              className="w-full max-w-5xl"
+              style={{
+                transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
+                transformOrigin: 'top center',
+                width: zoom !== 100 ? `${10000 / zoom}%` : undefined,
+                maxWidth: zoom !== 100 ? `${10000 / zoom}%` : undefined,
+                transition: 'transform 0.3s ease-out',
+              }}
+            >
+              <div
+                style={{
+                  opacity: isTransitioning ? 0 : 1,
+                  transform: isTransitioning ? 'scale(0.97)' : 'scale(1)',
+                  filter: isTransitioning ? 'blur(4px)' : 'blur(0px)',
+                  transition: 'opacity 0.2s ease-out, transform 0.25s cubic-bezier(0.16,1,0.3,1), filter 0.2s ease-out',
+                }}
+              >
+                <DeviceFrame device={displayDevice}>
+                  <div className={`${displayDevice === 'desktop' ? 'rounded-xl border border-[hsl(220,13%,87%)] overflow-hidden' : ''} bg-white`}>
+                    <PreviewContent {...props} device={displayDevice} />
+                  </div>
+                </DeviceFrame>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
