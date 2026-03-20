@@ -39,6 +39,7 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
 
       setShopName(data.shopName || domain);
       setIsConnected(true);
+      onConnected(data.shopName || domain, domain);
       toast.success('Loja Shopify conectada com sucesso!');
     } catch (err: any) {
       console.error('Erro ao conectar Shopify:', err);
