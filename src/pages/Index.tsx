@@ -320,27 +320,27 @@ const Index = () => {
 
               {currentView === 'publish' && !publishResult && !isPublishing && hasConnectedStore && (
                 <div className="animate-fade-in">
-                  <div className="mb-6">
-                    <h2 className="font-display text-2xl font-bold text-foreground">Publicar Produto</h2>
-                    <p className="text-muted-foreground text-sm mt-1 flex items-center gap-1.5">
+                  <div className="mb-3">
+                    <h2 className="font-display text-xl font-bold text-foreground">Publicar Produto</h2>
+                    <p className="text-muted-foreground text-xs mt-0.5 flex items-center gap-1.5">
                       Publicando em{' '}
-                      {activeStore?.marketConfig?.countryFlag && <span className="text-base">{activeStore.marketConfig.countryFlag}</span>}
+                      {activeStore?.marketConfig?.countryFlag && <span className="text-sm">{activeStore.marketConfig.countryFlag}</span>}
                       <span className="text-primary font-medium">{activeStore?.marketConfig?.marketName || activeStore?.domain}</span>
                       {activeStoreLang && <span className="text-muted-foreground">• {activeStoreLang.flag} {activeStoreLang.label}</span>}
                     </p>
                   </div>
 
                   {/* Wizard steps indicator */}
-                  <div className="flex items-center gap-2 mb-6">
+                  <div className="flex items-center gap-1.5 mb-3">
                     {[1, 2, 3, 4].map(step => (
                       <button
                         key={step}
                         onClick={() => setWizardStep(step)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                        className={`flex items-center gap-1 px-3 py-1 rounded-md text-[12px] font-medium transition-all ${
                           wizardStep === step ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
                         }`}
                       >
-                        <span className="w-4 h-4 rounded-full border flex items-center justify-center text-[10px]">{step}</span>
+                        <span className="w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[9px]">{step}</span>
                         {step === 1 && 'Imagem'}
                         {step === 2 && 'Detalhes'}
                         {step === 3 && 'Variantes & Envio'}
