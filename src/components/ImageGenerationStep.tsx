@@ -406,6 +406,9 @@ interface ImageGalleryProps {
 
 function ImageGallery({ images, allSlots, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover, aspectRatio, onAddUpload }: ImageGalleryProps) {
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [slideDir, setSlideDir] = useState<'left' | 'right' | null>(null);
+  const [isSliding, setIsSliding] = useState(false);
+  const prevIdxRef = useRef(0);
   const [hovered, setHovered] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
