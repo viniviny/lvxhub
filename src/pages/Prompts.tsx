@@ -24,7 +24,7 @@ type SortMode = 'recent' | 'most_used' | 'az';
 
 export default function PromptsPage() {
   const { prompts, isLoading, createPrompt, updatePrompt, deletePrompt } = useUserPrompts();
-  const { stores, activeStoreId, setActiveStoreId, addStore } = useStoreContext();
+  const { stores, activeStoreId, setActiveStore, addStore } = useStoreContext();
   const [editing, setEditing] = useState<UserPrompt | 'new' | null>(null);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortMode>('recent');
