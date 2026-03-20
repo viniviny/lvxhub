@@ -214,7 +214,7 @@ const Index = () => {
     }
   };
 
-  const handlePublishToStore = async (store: import('@/hooks/useStoreManager').ShopifyStore): Promise<boolean> => {
+  const handlePublishToStore = async (store: ShopifyStore): Promise<boolean> => {
     if (!imageFile || !store.accessToken) return false;
     try {
       const imageBase64 = await fileToBase64(imageFile);
