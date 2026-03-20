@@ -270,7 +270,15 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
   });
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [displayDevice, setDisplayDevice] = useState(device);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Close fullscreen on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsFullscreen(false); };
+    if (isFullscreen) { document.addEventListener('keydown', handler); document.body.style.overflow = 'hidden'; }
+    return () => { document.removeEventListener('keydown', handler); document.body.style.overflow = ''; };
+  }, [isFullscreen]);
 
   useEffect(() => { try { localStorage.setItem(DEVICE_KEY, device); } catch {} }, [device]);
   useEffect(() => { try { localStorage.setItem(ZOOM_KEY, String(zoom)); } catch {} }, [zoom]);
