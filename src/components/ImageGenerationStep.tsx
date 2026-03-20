@@ -312,9 +312,18 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           </div>
         )}
 
+        {/* Estimated time */}
+        {!isGenerating && selectedCount > 0 && (
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <Clock className="w-3 h-3" />
+            <span>~30s por imagem · {selectedCount} {selectedCount === 1 ? 'imagem' : 'imagens'} = ~{selectedCount > 1 ? '30' : '30'}s</span>
+          </div>
+        )}
+        {isGenerating && genStartTime && <GenerationCountdown startTime={genStartTime} totalImages={totalToGenerate} completedCount={generatedCount} />}
+
         {/* Generate button */}
         <Button onClick={isGenerating && images.length > 0 ? undefined : generateImages} disabled={isGenerating || !prompt.trim() || selectedAngles.size === 0} className="w-full font-display font-semibold h-9 text-xs">
-          {isGenerating ? (<><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Gerando... {generatedCount}/{totalToGenerate}</>) : images.length > 0 ? (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Regenerar tudo</>) : (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Gerar {selectedCount} {selectedCount === 1 ? 'imagem' : 'imagens'}</>)}
+          {isGenerating ? (<><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Gerando {generatedCount}/{totalToGenerate}...</>) : images.length > 0 ? (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Regenerar tudo</>) : (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Gerar {selectedCount} {selectedCount === 1 ? 'imagem' : 'imagens'}</>)}
         </Button>
 
         {/* Counter */}
