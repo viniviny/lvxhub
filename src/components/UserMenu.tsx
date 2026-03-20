@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +7,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, Shield } from 'lucide-react';
+import { User, Settings, LogOut, Shield, Sun, Moon } from 'lucide-react';
 
 export function UserMenu() {
   const { user, profile, isAdmin, signOut } = useAuth();
