@@ -71,24 +71,12 @@ const steps: Step[] = [
   },
 ];
 
-export function useOnboarding() {
-  const [showOnboarding, setShowOnboarding] = useState(
-    () => localStorage.getItem(ONBOARDING_KEY) !== 'true'
-  );
-
-  const completeOnboarding = useCallback(() => {
-    localStorage.setItem(ONBOARDING_KEY, 'true');
-    setShowOnboarding(false);
-  }, []);
-
-  return { showOnboarding, completeOnboarding };
-}
-
 interface OnboardingGuideProps {
-  onComplete: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function OnboardingGuide({ onComplete }: OnboardingGuideProps) {
+export function OnboardingGuide({ open, onOpenChange }: OnboardingGuideProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
 
