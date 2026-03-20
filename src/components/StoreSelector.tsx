@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Store } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 interface StoreSelectorProps {
   stores: ShopifyStore[];
@@ -17,15 +17,12 @@ interface StoreSelectorProps {
 }
 
 export function StoreSelector({ stores, activeStoreId, onSelectStore, onAddStore }: StoreSelectorProps) {
-  const connectedStores = stores.filter(s => s.connected);
-
-  if (connectedStores.length === 0) return null;
+  if (stores.length === 0) return null;
 
   return (
     <div className="flex items-center gap-2">
-      <Store className="w-4 h-4 text-muted-foreground" />
       <Select value={activeStoreId || ''} onValueChange={onSelectStore}>
-        <SelectTrigger className="w-[240px] bg-secondary border-border h-9 text-sm">
+        <SelectTrigger className="flex-1 bg-secondary border-border h-9 text-sm">
           <SelectValue placeholder="Selecione uma loja..." />
         </SelectTrigger>
         <SelectContent>
