@@ -244,7 +244,7 @@ export function OnboardingGuide({ open, onOpenChange, onConfigureCredentials }: 
           >
             {isLast ? (
               <>
-                Fechar
+                Já configurei, conectar agora
                 <ArrowRight className="w-4 h-4 ml-1.5" />
               </>
             ) : (
