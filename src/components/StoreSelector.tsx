@@ -20,19 +20,19 @@ export function StoreSelector({ stores, activeStoreId, onSelectStore, onAddStore
   if (stores.length === 0) return null;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5">
       <Select value={activeStoreId || ''} onValueChange={onSelectStore}>
-        <SelectTrigger className="flex-1 bg-secondary border-border h-9 text-sm">
+        <SelectTrigger className="flex-1 bg-card border-border h-8 text-[13px]">
           <SelectValue placeholder="Selecione uma loja..." />
         </SelectTrigger>
         <SelectContent>
           {stores.map(store => (
             <SelectItem key={store.id} value={store.id}>
               <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
                   store.connected ? 'bg-[hsl(var(--success))]' : 'bg-muted-foreground'
                 }`} />
-                <span className="truncate">{store.domain}</span>
+                <span className="truncate text-[13px]">{store.domain}</span>
               </div>
             </SelectItem>
           ))}
@@ -41,11 +41,11 @@ export function StoreSelector({ stores, activeStoreId, onSelectStore, onAddStore
       <Button
         variant="ghost"
         size="icon"
-        className="h-9 w-9 flex-shrink-0"
+        className="h-8 w-8 flex-shrink-0"
         onClick={onAddStore}
         title="Adicionar loja"
       >
-        <Plus className="w-4 h-4" />
+        <Plus className="w-3.5 h-3.5" />
       </Button>
     </div>
   );
