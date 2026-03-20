@@ -268,9 +268,27 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
   const [zoom, setZoom] = useState<number>(() => {
     try { return Number(localStorage.getItem(ZOOM_KEY)) || 100; } catch { return 100; }
   });
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [displayDevice, setDisplayDevice] = useState(device);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => { try { localStorage.setItem(DEVICE_KEY, device); } catch {} }, [device]);
   useEffect(() => { try { localStorage.setItem(ZOOM_KEY, String(zoom)); } catch {} }, [zoom]);
+
+  const handleDeviceChange = (newDevice: DeviceType) => {
+    if (newDevice === device) return;
+    setIsTransitioning(true);
+    clearTimeout(timeoutRef.current);
+    // Fade out, then swap device and fade in
+    timeoutRef.current = setTimeout(() => {
+      setDevice(newDevice);
+      setDisplayDevice(newDevice);
+      // Small delay to allow DOM to update before fading in
+      requestAnimationFrame(() => {
+        setIsTransitioning(false);
+      });
+    }, 200);
+  };
 
   const devices: { type: DeviceType; icon: typeof Monitor; label: string }[] = [
     { type: 'desktop', icon: Monitor, label: 'Desktop' },
@@ -291,7 +309,7 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
                 <Tooltip key={d.type}>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={() => setDevice(d.type)}
+                      onClick={() => handleDeviceChange(d.type)}
                       className={`w-9 h-[30px] rounded-2xl flex items-center justify-center transition-all duration-150 ${
                         active
                           ? 'bg-[hsl(220,20%,14%)] text-[hsl(220,14%,90%)] border border-[hsl(213,80%,56%)] shadow-sm'
@@ -324,18 +342,28 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
 
       {/* Preview area */}
       <div
-        className="transition-all duration-300 ease-out origin-top-left"
+        className="origin-top-left"
         style={{
           transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
           transformOrigin: 'top center',
           width: zoom !== 100 ? `${10000 / zoom}%` : undefined,
+          transition: 'transform 0.3s ease-out, width 0.3s ease-out',
         }}
       >
-        <DeviceFrame device={device}>
-          <div className={`${device === 'desktop' ? 'rounded-xl border border-[hsl(220,13%,87%)] overflow-hidden' : ''} bg-white`}>
-            <PreviewContent {...props} device={device} />
-          </div>
-        </DeviceFrame>
+        <div
+          style={{
+            opacity: isTransitioning ? 0 : 1,
+            transform: isTransitioning ? 'scale(0.97)' : 'scale(1)',
+            filter: isTransitioning ? 'blur(4px)' : 'blur(0px)',
+            transition: 'opacity 0.2s ease-out, transform 0.25s cubic-bezier(0.16,1,0.3,1), filter 0.2s ease-out',
+          }}
+        >
+          <DeviceFrame device={displayDevice}>
+            <div className={`${displayDevice === 'desktop' ? 'rounded-xl border border-[hsl(220,13%,87%)] overflow-hidden' : ''} bg-white`}>
+              <PreviewContent {...props} device={displayDevice} />
+            </div>
+          </DeviceFrame>
+        </div>
       </div>
     </div>
   );
