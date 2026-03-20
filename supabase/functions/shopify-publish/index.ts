@@ -165,12 +165,38 @@ serve(async (req) => {
 
     const productData = await createRes.json();
     const product = productData.product;
+    const shopifyProductUrl = `https://${conn.store_domain}/admin/products/${product.id}`;
+
+    // Persist to published_products
+    await adminClient.from('published_products').insert({
+      user_id: userId,
+      shopify_product_id: product.id.toString(),
+      title: product.title,
+      description: (description || '').replace(/<[^>]*>/g, ''),
+      collection: collection || null,
+      sizes: sizes || [],
+      image_url: bodyImageUrl || imageSrc || null,
+      store_domain: conn.store_domain,
+      country_code: countryCode || null,
+      country_flag: countryFlag || null,
+      country_name: countryName || null,
+      currency: bodyCurrency || null,
+      currency_symbol: currencySymbol || null,
+      local_price: localPrice || price || null,
+      base_price: price || null,
+      base_currency: baseCurrency || null,
+      language: bodyLanguage || null,
+      language_label: languageLabel || null,
+      market_name: marketName || null,
+      region_group: regionGroup || null,
+      shopify_url: shopifyProductUrl,
+    });
 
     return new Response(
       JSON.stringify({
         productId: product.id.toString(),
         title: product.title,
-        shopifyUrl: `https://${conn.store_domain}/admin/products/${product.id}`,
+        shopifyUrl: shopifyProductUrl,
         status: product.status,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
