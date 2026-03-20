@@ -1,8 +1,10 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import { ProductFormData, ProductSize, AVAILABLE_SIZES, COLLECTIONS } from '@/types/product';
-import { useShopifyAuth } from '@/hooks/useShopifyAuth';
+import { useStoreManager } from '@/hooks/useStoreManager';
 import { SettingsDialog } from '@/components/SettingsDialog';
 import { OnboardingGuide } from '@/components/OnboardingGuide';
+import { StoreSelector } from '@/components/StoreSelector';
+import { StoreManagementDialog } from '@/components/StoreManagementDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,19 +29,22 @@ const initialForm: ProductFormData = {
 
 const Index = () => {
   const {
-    settings, accessToken, isAuthenticated, hasSettings,
-    publishedCount, saveSettings, startOAuth, clearToken, incrementPublished,
-  } = useShopifyAuth();
+    stores, activeStore, activeStoreId, hasConnectedStore, publishedCount,
+    setActiveStore, addStore, connectStore, disconnectStore, removeStore,
+    setDefault, startOAuth, incrementPublished,
+  } = useStoreManager();
 
   const [showOnboarding, setShowOnboarding] = useState(false);
-
   const [showSettings, setShowSettings] = useState(false);
+  const [showManagement, setShowManagement] = useState(false);
   const [form, setForm] = useState<ProductFormData>(initialForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishResult, setPublishResult] = useState<{ title: string; shopifyUrl: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isAuthenticated = !!activeStore?.connected;
 
   const toggleSize = (size: ProductSize) => {
     setForm(prev => ({
@@ -75,7 +80,7 @@ const Index = () => {
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
-        resolve(result.split(',')[1]); // strip data:...;base64, prefix
+        resolve(result.split(',')[1]);
       };
       reader.onerror = reject;
       reader.readAsDataURL(file);
@@ -83,7 +88,7 @@ const Index = () => {
   };
 
   const handlePublish = async () => {
-    if (!imageFile || !accessToken || !settings) return;
+    if (!imageFile || !activeStore?.accessToken || !activeStore) return;
     if (!form.title.trim()) {
       toast.error('Informe o título do produto.');
       return;
@@ -104,9 +109,9 @@ const Index = () => {
           collection: form.collection,
           imageBase64,
           imageName: imageFile.name,
-          storeDomain: settings.storeDomain,
-          accessToken,
-          apiVersion: settings.apiVersion,
+          storeDomain: activeStore.domain,
+          accessToken: activeStore.accessToken,
+          apiVersion: activeStore.apiVersion,
         },
       });
 
@@ -116,7 +121,7 @@ const Index = () => {
 
       incrementPublished();
       setPublishResult({ title: data.title, shopifyUrl: data.shopifyUrl });
-      toast.success('Produto publicado como rascunho no Shopify!');
+      toast.success(`Produto publicado em ${activeStore.domain}!`);
     } catch (err: any) {
       console.error('Publish error:', err);
       toast.error(err.message || 'Erro ao publicar produto.');
@@ -133,6 +138,26 @@ const Index = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleAddStore = () => {
+    setShowOnboarding(true);
+  };
+
+  const handleCredentialsSubmit = (data: {
+    domain: string;
+    clientId: string;
+    clientSecret: string;
+    apiVersion: string;
+    redirectUri: string;
+  }) => {
+    const store = addStore(data);
+    setShowSettings(false);
+    startOAuth(store);
+  };
+
+  const handleReconnect = (store: import('@/hooks/useStoreManager').ShopifyStore) => {
+    setShowManagement(false);
+    startOAuth(store);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -152,29 +177,24 @@ const Index = () => {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {isAuthenticated && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[hsl(var(--success)/0.1)] border border-[hsl(var(--success)/0.3)] text-sm">
-                <CheckCircle2 className="w-4 h-4 text-[hsl(var(--success))]" />
-                <span className="text-[hsl(var(--success))] font-medium text-xs">Loja Conectada</span>
-                <span className="text-muted-foreground text-xs">·</span>
-                <span className="text-foreground font-medium text-xs">{settings?.storeDomain}</span>
-                <button
-                  onClick={clearToken}
-                  className="text-muted-foreground hover:text-destructive text-xs underline ml-1 transition-colors"
-                  title="Desconectar"
-                >
-                  Desconectar
-                </button>
-              </div>
+            {hasConnectedStore && (
+              <StoreSelector
+                stores={stores}
+                activeStoreId={activeStore?.id || null}
+                onSelectStore={setActiveStore}
+                onAddStore={handleAddStore}
+              />
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowSettings(true)}
-              title="Configurações"
-            >
-              <Settings className="w-5 h-5" />
-            </Button>
+            {stores.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowManagement(true)}
+                title="Gerenciar lojas"
+              >
+                <Settings className="w-5 h-5" />
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -182,10 +202,7 @@ const Index = () => {
       <SettingsDialog
         open={showSettings}
         onOpenChange={setShowSettings}
-        currentSettings={settings}
-        onSave={saveSettings}
-        onConnect={startOAuth}
-        isAuthenticated={isAuthenticated}
+        onSaveAndConnect={handleCredentialsSubmit}
       />
 
       <OnboardingGuide
@@ -197,9 +214,18 @@ const Index = () => {
         }}
       />
 
+      <StoreManagementDialog
+        open={showManagement}
+        onOpenChange={setShowManagement}
+        stores={stores}
+        onRemove={removeStore}
+        onReconnect={handleReconnect}
+        onSetDefault={setDefault}
+      />
+
       <main className="max-w-4xl mx-auto px-6 py-8">
-        {/* Not connected screen */}
-        {!isAuthenticated && (
+        {/* No store connected */}
+        {!hasConnectedStore && (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="glass-card p-10 text-center max-w-md w-full">
               <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-6">
@@ -209,7 +235,7 @@ const Index = () => {
               <p className="text-muted-foreground text-sm mb-6">
                 Conecte sua loja Shopify para começar a publicar produtos em segundos.
               </p>
-              <Button onClick={() => setShowOnboarding(true)} className="w-full font-display font-semibold">
+              <Button onClick={handleAddStore} className="w-full font-display font-semibold">
                 <ExternalLink className="w-4 h-4 mr-2" />
                 Conectar ao Shopify
               </Button>
@@ -334,6 +360,11 @@ const Index = () => {
                 )}
               </div>
 
+              {/* Publish target indicator */}
+              <div className="text-center text-xs text-muted-foreground">
+                Publicar em <span className="text-foreground font-medium">{activeStore?.domain}</span>
+              </div>
+
               <Button
                 onClick={handlePublish}
                 disabled={isPublishing || !imageFile || !form.title.trim()}
@@ -343,7 +374,7 @@ const Index = () => {
                 {isPublishing ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Publicando...
+                    Publicando em {activeStore?.domain}...
                   </>
                 ) : (
                   <>
@@ -363,7 +394,8 @@ const Index = () => {
               <CheckCircle2 className="w-16 h-16 mx-auto text-[hsl(var(--success))] mb-6" />
               <h2 className="font-display text-2xl font-bold text-foreground mb-2">Produto Publicado!</h2>
               <p className="text-muted-foreground text-sm mb-1">
-                <strong className="text-foreground">{publishResult.title}</strong> foi criado como rascunho.
+                <strong className="text-foreground">{publishResult.title}</strong> foi criado como rascunho em{' '}
+                <strong className="text-foreground">{activeStore?.domain}</strong>.
               </p>
               <a
                 href={publishResult.shopifyUrl}

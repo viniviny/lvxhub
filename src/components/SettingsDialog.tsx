@@ -3,22 +3,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { ShopifySettings } from '@/hooks/useShopifyAuth';
-import { Save, Store } from 'lucide-react';
+import { Store } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currentSettings: ShopifySettings | null;
-  onSave: (settings: ShopifySettings) => void;
-  onConnect: () => void;
-  isAuthenticated: boolean;
+  onSaveAndConnect: (data: {
+    domain: string;
+    clientId: string;
+    clientSecret: string;
+    apiVersion: string;
+    redirectUri: string;
+  }) => void;
 }
 
-export function SettingsDialog({ open, onOpenChange, currentSettings, onSave, onConnect, isAuthenticated }: SettingsDialogProps) {
-  const [form, setForm] = useState<ShopifySettings>({
-    storeDomain: '',
+export function SettingsDialog({ open, onOpenChange, onSaveAndConnect }: SettingsDialogProps) {
+  const [form, setForm] = useState({
+    domain: '',
     clientId: '',
     clientSecret: '',
     apiVersion: '2026-01',
@@ -27,51 +29,45 @@ export function SettingsDialog({ open, onOpenChange, currentSettings, onSave, on
 
   useEffect(() => {
     if (open) {
-      const defaultRedirect = `${window.location.origin}/callback`;
-      setForm(currentSettings ? { ...currentSettings, redirectUri: currentSettings.redirectUri || defaultRedirect } : {
-        storeDomain: '',
+      setForm({
+        domain: '',
         clientId: '',
         clientSecret: '',
         apiVersion: '2026-01',
-        redirectUri: defaultRedirect,
+        redirectUri: `${window.location.origin}/callback`,
       });
     }
-  }, [open, currentSettings]);
+  }, [open]);
 
   const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]*\.myshopify\.com$/;
 
   const validateForm = (): boolean => {
-    if (!form.storeDomain.trim() || !form.clientId.trim() || !form.clientSecret.trim()) {
+    if (!form.domain.trim() || !form.clientId.trim() || !form.clientSecret.trim()) {
       toast.error('Preencha todos os campos obrigatórios.');
       return false;
     }
-    if (!domainRegex.test(form.storeDomain.trim())) {
+    if (!domainRegex.test(form.domain.trim())) {
       toast.error('Domínio inválido. Use o formato: minha-loja.myshopify.com');
       return false;
     }
     return true;
   };
 
-  const handleSave = () => {
+  const handleConnect = () => {
     if (!validateForm()) return;
-    onSave({ ...form, storeDomain: form.storeDomain.trim() });
-    toast.success('Configurações salvas com sucesso!');
-  };
-
-  const handleSaveAndConnect = () => {
-    if (!validateForm()) return;
-    onSave({ ...form, storeDomain: form.storeDomain.trim() });
-    onOpenChange(false);
-    setTimeout(() => onConnect(), 100);
+    onSaveAndConnect({
+      ...form,
+      domain: form.domain.trim(),
+    });
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-display">Configurações Shopify</DialogTitle>
+          <DialogTitle className="font-display">Credenciais Shopify</DialogTitle>
           <DialogDescription>
-            Configure as credenciais do seu app Shopify para conectar sua loja.
+            Cole as credenciais do app criado na sua loja Shopify.
           </DialogDescription>
         </DialogHeader>
 
@@ -79,8 +75,8 @@ export function SettingsDialog({ open, onOpenChange, currentSettings, onSave, on
           <div>
             <Label className="text-sm font-medium text-muted-foreground">Domínio da Loja *</Label>
             <Input
-              value={form.storeDomain}
-              onChange={e => setForm(prev => ({ ...prev, storeDomain: e.target.value }))}
+              value={form.domain}
+              onChange={e => setForm(prev => ({ ...prev, domain: e.target.value }))}
               placeholder="minha-loja.myshopify.com"
               className="mt-1.5 bg-secondary border-border"
             />
@@ -126,18 +122,10 @@ export function SettingsDialog({ open, onOpenChange, currentSettings, onSave, on
             </div>
           </div>
 
-          <div className="flex gap-3">
-            <Button onClick={handleSave} variant="secondary" className="flex-1 font-display font-semibold">
-              <Save className="w-4 h-4 mr-2" />
-              Salvar
-            </Button>
-            {!isAuthenticated && (
-              <Button onClick={handleSaveAndConnect} className="flex-1 font-display font-semibold">
-                <Store className="w-4 h-4 mr-2" />
-                Conectar Loja
-              </Button>
-            )}
-          </div>
+          <Button onClick={handleConnect} className="w-full font-display font-semibold">
+            <Store className="w-4 h-4 mr-2" />
+            Conectar Loja
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
