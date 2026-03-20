@@ -395,6 +395,8 @@ interface DraggableGalleryProps {
   images: GeneratedImage[];
   allSlots: ImageAngle[];
   generatingAngles: Set<ImageAngle>;
+  completedAngles: Set<ImageAngle>;
+  angleStartTimes: Record<string, number>;
   onImagesChange: (images: GeneratedImage[]) => void;
   onRegenerate: (angle: ImageAngle) => void;
   onRemove: (angle: ImageAngle) => void;
