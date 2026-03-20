@@ -117,6 +117,7 @@ const Index = () => {
 
     try {
       const imageBase64 = await fileToBase64(imageFile);
+      const mc = activeStore?.marketConfig;
       const { data, error } = await supabase.functions.invoke('shopify-publish', {
         body: {
           title: form.title,
@@ -129,6 +130,16 @@ const Index = () => {
           storeDomain: activeStore.domain,
           accessToken: activeStore.accessToken,
           apiVersion: activeStore.apiVersion,
+          countryCode: mc?.countryCode || null,
+          countryFlag: mc?.countryFlag || null,
+          countryName: mc?.countryName || null,
+          currency: mc?.currency || null,
+          currencySymbol: mc?.currencySymbol || null,
+          localPrice: form.price,
+          baseCurrency: mc?.currency || 'BRL',
+          language: mc?.language || null,
+          languageLabel: mc?.languageLabel || null,
+          marketName: mc?.marketName || null,
         },
       });
 
