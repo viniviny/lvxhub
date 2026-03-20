@@ -119,10 +119,18 @@ export function SettingsDialog({ open, onOpenChange, currentSettings, onSave, on
             </div>
           </div>
 
-          <Button onClick={handleSave} className="w-full font-display font-semibold">
-            <Save className="w-4 h-4 mr-2" />
-            Salvar Configurações
-          </Button>
+          <div className="flex gap-3">
+            <Button onClick={handleSave} variant="secondary" className="flex-1 font-display font-semibold">
+              <Save className="w-4 h-4 mr-2" />
+              Salvar
+            </Button>
+            {!isAuthenticated && (
+              <Button onClick={handleSaveAndConnect} className="flex-1 font-display font-semibold">
+                <Store className="w-4 h-4 mr-2" />
+                Conectar Loja
+              </Button>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
