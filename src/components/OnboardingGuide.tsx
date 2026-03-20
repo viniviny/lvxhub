@@ -74,9 +74,10 @@ const steps: Step[] = [
 interface OnboardingGuideProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onConfigureCredentials: () => void;
 }
 
-export function OnboardingGuide({ open, onOpenChange }: OnboardingGuideProps) {
+export function OnboardingGuide({ open, onOpenChange, onConfigureCredentials }: OnboardingGuideProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
 
