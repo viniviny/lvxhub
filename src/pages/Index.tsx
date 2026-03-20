@@ -163,9 +163,6 @@ const Index = () => {
                 </button>
               </div>
             )}
-                </Button>
-              </div>
-            )}
             <Button
               variant="ghost"
               size="icon"
