@@ -38,12 +38,31 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
   const handleOptimize = useCallback(async () => {
     if (!productTitle) return;
     setIsOptimizing(true);
-    await new Promise(r => setTimeout(r, 800));
-    const generated = productTitle.slice(0, 60);
-    const generatedDesc = `Compre ${productTitle} com o melhor preço. Envio rápido e seguro. Confira!`.slice(0, 155);
-    onTitleChange(generated);
-    onDescriptionChange(generatedDesc);
-    setIsOptimizing(false);
+    try {
+      const [titleRes, descRes] = await Promise.all([
+        supabase.functions.invoke('generate-text', {
+          body: {
+            type: 'title',
+            customPrompt: `Write an SEO-optimized product title for: "${productTitle}". Max 60 characters. Only return the title, nothing else.`,
+            language: 'Portuguese',
+          },
+        }),
+        supabase.functions.invoke('generate-text', {
+          body: {
+            type: 'description',
+            customPrompt: `Write an SEO meta description for the product "${productTitle}". Max 155 characters. Compelling, with keywords. Only return the description, nothing else.`,
+            language: 'Portuguese',
+          },
+        }),
+      ]);
+      if (titleRes.data?.content) onTitleChange(titleRes.data.content.replace(/^["']|["']$/g, '').slice(0, 70));
+      if (descRes.data?.content) onDescriptionChange(descRes.data.content.replace(/^["']|["']$/g, '').slice(0, 160));
+      toast.success('SEO otimizado com IA!');
+    } catch (e: any) {
+      toast.error(e.message || 'Erro ao otimizar SEO');
+    } finally {
+      setIsOptimizing(false);
+    }
   }, [productTitle, onTitleChange, onDescriptionChange]);
 
   if (compact) {
