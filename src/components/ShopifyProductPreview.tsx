@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ProductFormData, calculateDiscount } from '@/types/product';
 import { GeneratedImage } from '@/components/ImageGenerationStep';
 import { ChevronDown, ChevronRight, ShoppingCart, Search, User, Star, Monitor, Tablet, Smartphone } from 'lucide-react';
