@@ -53,7 +53,7 @@ const initialForm: ProductFormData = {
   weight: 0,
   weightUnit: 'kg',
   countryOfOrigin: '',
-  selectedChannels: [],
+  selectedChannels: ['online'],
   tags: '',
 };
 
@@ -513,34 +513,6 @@ const Index = () => {
                         <div className="glass-card p-4">
                           <ReviewChecklist form={form} hasImage={!!imageFile || generatedImages.some(i => i.url)} />
                         </div>
-                        <div className="glass-card p-4 space-y-3">
-                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Publicação</h4>
-
-                          {/* Status pills */}
-                          <div className="flex gap-1.5">
-                            {(['draft', 'active', 'scheduled'] as const).map(status => (
-                              <button
-                                key={status}
-                                onClick={() => setPublishStatus(status)}
-                                className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${
-                                  publishStatus === status
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'bg-secondary text-muted-foreground hover:text-foreground border border-border'
-                                }`}
-                              >
-                                {status === 'draft' ? 'Rascunho' : status === 'active' ? 'Ativo' : 'Agendar'}
-                              </button>
-                            ))}
-                          </div>
-
-                          {/* Sales channels */}
-                          <SalesChannels selectedChannels={form.selectedChannels} onChannelsChange={c => setForm(prev => ({ ...prev, selectedChannels: c }))} />
-
-                          <Button onClick={handlePublish} disabled={!canPublish} size="lg" className="w-full font-display font-semibold text-sm">
-                            <Zap className="w-4 h-4 mr-2" />
-                            Publicar agora
-                          </Button>
-                        </div>
                       </div>
 
                       {/* RIGHT — Shopify Preview */}
@@ -556,7 +528,7 @@ const Index = () => {
                 </div>
 
                 {/* ═══ BOTTOM NAVIGATION BAR ═══ */}
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-border h-[52px]">
                   <div>
                     {wizardStep === 1 ? (
                       <button onClick={() => { markStepComplete(1); setWizardStep(2); }} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
@@ -569,21 +541,71 @@ const Index = () => {
                     )}
                   </div>
 
-                  <span className="text-[11px] text-muted-foreground">
-                    Step {wizardStep} de 4
-                  </span>
+                  {wizardStep === 4 ? (
+                    <div className="flex items-center gap-3">
+                      {/* Status pills */}
+                      <div className="flex gap-0.5 bg-secondary/50 rounded-full p-0.5">
+                        {(['draft', 'active', 'scheduled'] as const).map(status => (
+                          <button
+                            key={status}
+                            onClick={() => setPublishStatus(status)}
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
+                              publishStatus === status
+                                ? 'bg-primary text-primary-foreground'
+                                : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                          >
+                            {status === 'draft' ? 'Rascunho' : status === 'active' ? 'Ativo' : 'Agendar'}
+                          </button>
+                        ))}
+                      </div>
 
-                  <div>
-                    {wizardStep < 4 ? (
+                      {/* Sales channel pills */}
+                      <div className="flex gap-1">
+                        {[
+                          { id: 'online', icon: '🖥', label: 'Online Store' },
+                          { id: 'pos', icon: '📱', label: 'POS' },
+                          { id: 'google', icon: 'G', label: 'Google' },
+                        ].map(ch => {
+                          const isSelected = form.selectedChannels.includes(ch.id);
+                          return (
+                            <button
+                              key={ch.id}
+                              onClick={() => {
+                                const newChannels = isSelected
+                                  ? form.selectedChannels.filter(c => c !== ch.id)
+                                  : [...form.selectedChannels, ch.id];
+                                setForm(prev => ({ ...prev, selectedChannels: newChannels }));
+                              }}
+                              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-all border ${
+                                isSelected
+                                  ? 'border-primary/50 bg-primary/10 text-primary'
+                                  : 'border-border text-muted-foreground hover:text-foreground hover:border-primary/30'
+                              }`}
+                            >
+                              <span className="text-[10px]">{ch.icon}</span>
+                              {ch.label}
+                              {isSelected && <Check className="w-2.5 h-2.5" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Publish button */}
+                      <Button size="sm" className="text-xs h-9" onClick={handlePublish} disabled={!canPublish}>
+                        <Zap className="w-3.5 h-3.5 mr-1" />Publicar agora
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-[11px] text-muted-foreground">
+                        Step {wizardStep} de 4
+                      </span>
                       <Button size="sm" className="text-xs h-8" onClick={() => { markStepComplete(wizardStep); setWizardStep(wizardStep + 1); }}>
                         Próximo <ArrowRight className="w-3.5 h-3.5 ml-1" />
                       </Button>
-                    ) : (
-                      <Button size="sm" className="text-xs h-8" onClick={handlePublish} disabled={!canPublish}>
-                        <Zap className="w-3.5 h-3.5 mr-1" />Publicar agora
-                      </Button>
-                    )}
-                  </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
