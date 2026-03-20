@@ -4,13 +4,14 @@ import { useProducts } from '@/hooks/useProducts';
 import { ImagePreview } from '@/components/ImagePreview';
 import { ProductTable } from '@/components/ProductTable';
 import { PublishConfirmation } from '@/components/PublishConfirmation';
+import { ShopifyConnectDialog } from '@/components/ShopifyConnectDialog';
 import { Product } from '@/types/product';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, Loader2, Send, LayoutDashboard, PlusCircle } from 'lucide-react';
+import { Sparkles, Loader2, Send, LayoutDashboard, PlusCircle, Store } from 'lucide-react';
 
 type View = 'dashboard' | 'create';
 
