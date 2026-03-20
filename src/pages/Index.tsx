@@ -513,34 +513,6 @@ const Index = () => {
                         <div className="glass-card p-4">
                           <ReviewChecklist form={form} hasImage={!!imageFile || generatedImages.some(i => i.url)} />
                         </div>
-                        <div className="glass-card p-4 space-y-3">
-                          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Publicação</h4>
-
-                          {/* Status pills */}
-                          <div className="flex gap-1.5">
-                            {(['draft', 'active', 'scheduled'] as const).map(status => (
-                              <button
-                                key={status}
-                                onClick={() => setPublishStatus(status)}
-                                className={`px-3 py-1 rounded-full text-[11px] font-medium transition-all ${
-                                  publishStatus === status
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'bg-secondary text-muted-foreground hover:text-foreground border border-border'
-                                }`}
-                              >
-                                {status === 'draft' ? 'Rascunho' : status === 'active' ? 'Ativo' : 'Agendar'}
-                              </button>
-                            ))}
-                          </div>
-
-                          {/* Sales channels */}
-                          <SalesChannels selectedChannels={form.selectedChannels} onChannelsChange={c => setForm(prev => ({ ...prev, selectedChannels: c }))} />
-
-                          <Button onClick={handlePublish} disabled={!canPublish} size="lg" className="w-full font-display font-semibold text-sm">
-                            <Zap className="w-4 h-4 mr-2" />
-                            Publicar agora
-                          </Button>
-                        </div>
                       </div>
 
                       {/* RIGHT — Shopify Preview */}
