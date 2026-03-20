@@ -19,6 +19,7 @@ import { VariantsTable } from '@/components/VariantsTable';
 import { ShippingCard } from '@/components/ShippingCard';
 import { SalesChannels } from '@/components/SalesChannels';
 import { ReviewChecklist, getCanPublish } from '@/components/ReviewChecklist';
+import { ShopifyProductPreview } from '@/components/ShopifyProductPreview';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
