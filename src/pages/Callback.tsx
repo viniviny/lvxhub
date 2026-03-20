@@ -44,9 +44,10 @@ const Callback = () => {
         }
 
         localStorage.setItem('shopify_access_token', data.accessToken);
+        localStorage.setItem('shopify_connected', 'true');
         setStatus('success');
 
-        setTimeout(() => navigate('/'), 1500);
+        setTimeout(() => navigate('/', { replace: true }), 1200);
       } catch (err: any) {
         console.error('Token exchange error:', err);
         setStatus('error');
