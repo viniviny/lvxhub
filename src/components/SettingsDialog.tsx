@@ -16,7 +16,7 @@ interface SettingsDialogProps {
   isAuthenticated: boolean;
 }
 
-export function SettingsDialog({ open, onOpenChange, currentSettings, onSave }: SettingsDialogProps) {
+export function SettingsDialog({ open, onOpenChange, currentSettings, onSave, onConnect, isAuthenticated }: SettingsDialogProps) {
   const [form, setForm] = useState<ShopifySettings>({
     storeDomain: '',
     clientId: '',
