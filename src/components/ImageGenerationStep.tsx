@@ -515,7 +515,7 @@ function DraggableGallery({ images, allSlots, generatingAngles, completedAngles,
             const label = ANGLE_OPTIONS.find(a => a.id === angle)?.label || angle;
             return (
               <div key={`extra-${angle}`}>
-                <ImageSlot label={label} angle={angle} image={image} isGenerating={generatingAngles.has(angle)} onRegenerate={() => onRegenerate(angle)} onRemove={() => onRemove(angle)} onSetCover={() => onSetCover(angle)} isCover={false} draggable={!!image} />
+                <ImageSlot label={label} angle={angle} image={image} isGenerating={generatingAngles.has(angle)} justCompleted={completedAngles.has(angle)} startTime={angleStartTimes[angle]} onRegenerate={() => onRegenerate(angle)} onRemove={() => onRemove(angle)} onSetCover={() => onSetCover(angle)} isCover={false} draggable={!!image} />
               </div>
             );
           })}
