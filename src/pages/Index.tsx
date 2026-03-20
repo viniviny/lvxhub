@@ -136,16 +136,6 @@ const Index = () => {
   // Show setup screen if not configured
   const showSetup = !hasSettings;
 
-  if (showOnboarding) {
-    return (
-      <OnboardingGuide
-        onComplete={() => {
-          completeOnboarding();
-          setShowSettings(true);
-        }}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
