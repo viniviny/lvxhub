@@ -20,19 +20,19 @@ interface Step {
 const steps: Step[] = [
   {
     icon: <Sparkles className="w-10 h-10" />,
-    title: 'Bem-vindo ao Fashion Publisher',
-    text: 'Publique produtos na sua loja Shopify em segundos. Vamos configurar tudo em 4 passos simples.',
+    title: 'Bem-vindo ao Publify',
+    text: 'Publique produtos na Shopify em segundos. Vamos configurar tudo em 4 passos simples.',
   },
   {
     icon: <AppWindow className="w-10 h-10" />,
     title: 'Passo 1 — Crie um app na Shopify',
-    text: 'Acesse o painel admin da sua loja e crie um app de desenvolvimento para conectar ao Fashion Publisher.',
+    text: 'Acesse o painel admin da sua loja e crie um app de desenvolvimento para conectar ao Publify.',
     instructions: [
       'Acesse sua loja em myshopify.com/admin',
       'Vá em Configurações → Apps e canais de vendas',
       'Clique em "Desenvolver apps"',
       'Clique em "Criar um app"',
-      'Dê o nome "Fashion Publisher" e salve',
+      'Dê o nome "Publify" e salve',
     ],
   },
   {
@@ -49,7 +49,7 @@ const steps: Step[] = [
   {
     icon: <KeyRound className="w-10 h-10" />,
     title: 'Passo 3 — Copie as credenciais',
-    text: 'Você vai precisar do Client ID e Client Secret do app para conectar ao Fashion Publisher.',
+    text: 'Você vai precisar do Client ID e Client Secret do app para conectar ao Publify.',
     instructions: [
       'No menu lateral clique em "Configurações"',
       'Copie o "ID do cliente"',

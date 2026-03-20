@@ -46,7 +46,7 @@ serve(async (req) => {
       product: {
         title,
         body_html: `<p>${description}</p>`,
-        vendor: 'Fashion Publisher',
+        vendor: 'Publify',
         product_type: collection,
         status: 'draft',
         options: [{ name: 'Tamanho', values: sizes }],
