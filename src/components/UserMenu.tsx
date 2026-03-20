@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/useAuth';
+import { useTheme } from '@/hooks/useTheme';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -6,10 +7,11 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut, Shield } from 'lucide-react';
+import { User, Settings, LogOut, Shield, Sun, Moon } from 'lucide-react';
 
 export function UserMenu() {
   const { user, profile, isAdmin, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   if (!user) return null;
@@ -56,6 +58,10 @@ export function UserMenu() {
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => {}} className="gap-2">
           <Settings className="w-4 h-4" /> Configurações
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={toggleTheme} className="gap-2">
+          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          {theme === 'dark' ? 'Modo claro' : 'Modo escuro'}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="gap-2 text-destructive focus:text-destructive">
