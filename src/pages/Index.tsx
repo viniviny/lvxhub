@@ -227,7 +227,7 @@ const Index = () => {
   };
 
   const handleNewProduct = () => {
-    setForm(initialForm); setImageFile(null); setImagePreview(null); setPublishResult(null); setWizardStep(1);
+    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setWizardStep(1);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
