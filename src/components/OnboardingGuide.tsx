@@ -20,8 +20,8 @@ interface Step {
 const steps: Step[] = [
   {
     icon: <Sparkles className="w-10 h-10" />,
-    title: 'Bem-vindo ao Fashion Publisher',
-    text: 'Publique produtos na sua loja Shopify em segundos. Vamos configurar tudo em 4 passos simples.',
+    title: 'Bem-vindo ao Publify',
+    text: 'Publique produtos na Shopify em segundos. Vamos configurar tudo em 4 passos simples.',
   },
   {
     icon: <AppWindow className="w-10 h-10" />,
