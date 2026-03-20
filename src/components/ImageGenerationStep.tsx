@@ -543,13 +543,19 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
           </div>
         )}
 
-        {/* Current image */}
         {currentImage && (
           <img
             src={currentImage.url}
             alt={currentLabel}
-            className="w-full h-full object-cover transition-opacity duration-200"
-            style={completedAngles.has(currentImage.angle) ? { animation: 'fade-in 0.3s ease-out' } : undefined}
+            className="w-full h-full object-cover"
+            style={{
+              transition: 'transform 0.15s ease-out, opacity 0.15s ease-out',
+              transform: isSliding
+                ? `translateX(${slideDir === 'right' ? '-30px' : '30px'})`
+                : 'translateX(0)',
+              opacity: isSliding ? 0 : 1,
+              ...(completedAngles.has(currentImage.angle) && !isSliding ? { animation: 'fade-in 0.3s ease-out' } : {}),
+            }}
           />
         )}
 
