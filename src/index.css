@@ -230,6 +230,11 @@
   background: hsl(var(--sidebar-primary));
 }
 
+@keyframes pulse-border {
+  0%, 100% { border-color: hsl(var(--primary)); opacity: 1; }
+  50% { border-color: hsl(var(--accent)); opacity: 0.5; }
+}
+
 /* ===== Reduced Motion ===== */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

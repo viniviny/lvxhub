@@ -525,12 +525,53 @@ function DraggableGallery({ images, allSlots, generatingAngles, completedAngles,
   );
 }
 
+/* ─── Generation Countdown ─── */
+function GenerationCountdown({ startTime, totalImages, completedCount }: { startTime: number; totalImages: number; completedCount: number }) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - startTime) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [startTime]);
+  const remaining = Math.max(0, 30 - elapsed);
+  return (
+    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+      <Clock className="w-3 h-3 animate-pulse" />
+      <span>
+        {remaining > 0 ? `Tempo estimado: ${remaining}s` : 'Finalizando...'} · {completedCount}/{totalImages} prontas
+      </span>
+    </div>
+  );
+}
+
+/* ─── Slot Elapsed Timer ─── */
+function SlotTimer({ startTime }: { startTime: number }) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - startTime) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [startTime]);
+  const statusText = elapsed < 10 ? 'Gerando...' : elapsed < 20 ? 'Processando...' : 'Finalizando...';
+  const progress = Math.min(90, (elapsed / 30) * 90);
+  return (
+    <>
+      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+      <span className="text-[10px] text-muted-foreground">{statusText}</span>
+      <span className="text-[9px] text-muted-foreground/60">{elapsed}s</span>
+      <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-border/30 overflow-hidden rounded-b-lg">
+        <div className="h-full bg-primary transition-all duration-1000 ease-linear" style={{ width: `${progress}%` }} />
+      </div>
+    </>
+  );
+}
+
 /* ─── Image Slot ─── */
 interface ImageSlotProps {
   label?: string;
   angle?: ImageAngle;
   image: GeneratedImage | null;
   isGenerating: boolean;
+  justCompleted?: boolean;
+  startTime?: number;
   onRegenerate: () => void;
   onRemove: () => void;
   onSetCover: () => void;
@@ -539,15 +580,23 @@ interface ImageSlotProps {
   draggable?: boolean;
 }
 
-function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCover, isCover, tall, draggable: isDraggable }: ImageSlotProps) {
+function ImageSlot({ label, image, isGenerating, justCompleted, startTime, onRegenerate, onRemove, onSetCover, isCover, tall, draggable: isDraggable }: ImageSlotProps) {
   const [hovered, setHovered] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
   if (isGenerating) {
     return (
-      <div className={`rounded-lg border border-primary/60 bg-card flex flex-col items-center justify-center gap-1.5 animate-pulse ${tall ? 'h-full' : 'aspect-square'}`}>
-        <Loader2 className="w-4 h-4 animate-spin text-primary" />
-        <span className="text-[10px] text-muted-foreground">Gerando...</span>
+      <div
+        className={`relative rounded-lg border border-primary/60 bg-card flex flex-col items-center justify-center gap-1.5 ${tall ? 'h-full' : 'aspect-square'}`}
+        style={{ animation: 'pulse-border 1.5s infinite' }}
+      >
+        {startTime ? <SlotTimer startTime={startTime} /> : (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            <span className="text-[10px] text-muted-foreground">Gerando...</span>
+          </>
+        )}
+        {label && <span className="absolute top-1 left-1 text-[9px] font-medium px-1.5 py-px rounded bg-black/40 text-white/70">{label}</span>}
       </div>
     );
   }
@@ -556,16 +605,27 @@ function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCo
     return (
       <>
         <div
-          className={`relative rounded-lg overflow-hidden bg-secondary group ${tall ? 'h-full' : 'aspect-square'}`}
+          className={`relative rounded-lg overflow-hidden bg-secondary group ${tall ? 'h-full' : 'aspect-square'} ${justCompleted ? 'ring-2 ring-[hsl(var(--success))]' : ''}`}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
+          style={justCompleted ? { animation: 'fade-in 0.3s ease-out' } : undefined}
         >
-          <img src={image.url} alt={label} className="w-full h-full object-cover" />
+          <img src={image.url} alt={label} className="w-full h-full object-cover" style={justCompleted ? { animation: 'fade-in 0.3s ease-out' } : undefined} />
           <span className="absolute top-1 left-1 text-[9px] font-medium px-1.5 py-px rounded bg-black/60 text-white">{label}</span>
-          {isDraggable && (
+          {justCompleted && (
+            <span className="absolute top-1 right-1 flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-px rounded bg-[hsl(var(--success))]/80 text-white" style={{ animation: 'scale-in 0.2s ease-out' }}>
+              <Check className="w-2.5 h-2.5" /> Pronta
+            </span>
+          )}
+          {isDraggable && !justCompleted && (
             <span className="absolute top-1 right-1 text-white/60 hover:text-white cursor-grab active:cursor-grabbing transition-colors">
               <GripVertical className="w-3 h-3" />
             </span>
+          )}
+          {justCompleted && (
+            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-border/30 overflow-hidden rounded-b-lg">
+              <div className="h-full bg-[hsl(var(--success))] w-full transition-all duration-300" />
+            </div>
           )}
           {hovered && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-1.5 animate-fade-in">
@@ -578,7 +638,7 @@ function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCo
         </div>
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
           <DialogContent className="max-w-3xl p-2 bg-background border-border">
-            <img src={image.url} alt={label} className="w-full h-auto rounded-lg object-contain max-h-[80vh]" />
+            <img src={image.url} alt={label} className="w-full h-full rounded-lg object-contain max-h-[80vh]" />
           </DialogContent>
         </Dialog>
       </>
