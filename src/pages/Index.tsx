@@ -38,6 +38,7 @@ import {
   ArrowLeft, ArrowRight, Eye, ClipboardList, Check, ChevronDown
 } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const initialForm: ProductFormData = {
   title: '',
