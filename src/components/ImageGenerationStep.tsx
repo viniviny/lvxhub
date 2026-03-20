@@ -358,6 +358,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
             images={images}
             allSlots={allSlots}
             generatingAngles={generatingAngles}
+            completedAngles={completedAngles}
+            angleStartTimes={angleStartTimes}
             onImagesChange={onImagesChange}
             onRegenerate={regenerateAngle}
             onRemove={removeImage}
