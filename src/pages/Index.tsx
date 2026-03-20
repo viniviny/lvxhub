@@ -31,6 +31,8 @@ const Index = () => {
     publishedCount, saveSettings, startOAuth, clearToken, incrementPublished,
   } = useShopifyAuth();
 
+  const { showOnboarding, completeOnboarding } = useOnboarding();
+
   const [showSettings, setShowSettings] = useState(false);
   const [form, setForm] = useState<ProductFormData>(initialForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
