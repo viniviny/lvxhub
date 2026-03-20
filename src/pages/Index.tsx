@@ -29,6 +29,7 @@ const Index = () => {
   const [form, setForm] = useState<ProductFormData>(initialForm);
   const [imageApproved, setImageApproved] = useState(false);
   const [publishedProduct, setPublishedProduct] = useState<Product | null>(null);
+  const [showShopifyDialog, setShowShopifyDialog] = useState(false);
 
   const {
     products,
