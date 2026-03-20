@@ -101,19 +101,42 @@ const Index = () => {
               <PlusCircle className="w-4 h-4 mr-2" />
               Novo Produto
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowShopifyDialog(true)}
-            >
-              <Store className="w-4 h-4 mr-2" />
-              Conectar Shopify
-            </Button>
+            {shopifyConnected ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-secondary border border-border text-sm">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[hsl(var(--success))] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[hsl(var(--success))]"></span>
+                </span>
+                <span className="text-foreground font-medium">{connection?.shopName}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                  onClick={disconnect}
+                  title="Desconectar loja"
+                >
+                  <Unplug className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowShopifyDialog(true)}
+              >
+                <Store className="w-4 h-4 mr-2" />
+                Conectar Shopify
+              </Button>
+            )}
           </nav>
         </div>
       </header>
 
-      <ShopifyConnectDialog open={showShopifyDialog} onOpenChange={setShowShopifyDialog} />
+      <ShopifyConnectDialog
+        open={showShopifyDialog}
+        onOpenChange={setShowShopifyDialog}
+        onConnected={connect}
+      />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {view === 'dashboard' && (
