@@ -133,7 +133,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     setGeneratingAngles(new Set());
     const successCount = results.length - images.length;
     if (successCount > 0) toast.success(`${successCount} imagens geradas com sucesso ✓`);
-  }, [prompt, promptMode, selectedAngles, customAngleText, referenceImage, images, onImagesChange]);
+  }, [prompt, promptMode, selectedAngles, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
 
   const regenerateAngle = useCallback(async (angle: ImageAngle) => {
     if (!prompt.trim()) return;
