@@ -44,21 +44,23 @@ serve(async (req) => {
       );
     }
 
-    const { prompt, angle, customAngleText } = await req.json();
+    const { prompt, angle, customAngleText, isCustomPrompt, referenceImageUrl } = await req.json();
 
-    if (!prompt || typeof prompt !== 'string' || prompt.length > 1000) {
+    if (!prompt || typeof prompt !== 'string' || prompt.length > 2000) {
       return new Response(
-        JSON.stringify({ error: 'Prompt inválido (máx. 1000 caracteres).' }),
+        JSON.stringify({ error: 'Prompt inválido (máx. 2000 caracteres).' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Build the full prompt with angle suffix
+    // Build the full prompt with angle suffix (skip suffixes in custom prompt mode)
     let fullPrompt = prompt;
-    if (angle && angle === 'personalizado' && customAngleText) {
-      fullPrompt = `${prompt}, ${customAngleText}`;
-    } else if (angle && ANGLE_SUFFIXES[angle]) {
-      fullPrompt = `${prompt}, ${ANGLE_SUFFIXES[angle]}`;
+    if (!isCustomPrompt) {
+      if (angle && angle === 'personalizado' && customAngleText) {
+        fullPrompt = `${prompt}, ${customAngleText}`;
+      } else if (angle && ANGLE_SUFFIXES[angle]) {
+        fullPrompt = `${prompt}, ${ANGLE_SUFFIXES[angle]}`;
+      }
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -69,6 +71,12 @@ serve(async (req) => {
       );
     }
 
+    // Build message content - text only or text + reference image
+    const messageContent: any[] = [{ type: 'text', text: `Generate a high-quality product photo: ${fullPrompt}` }];
+    if (referenceImageUrl) {
+      messageContent.push({ type: 'image_url', image_url: { url: referenceImageUrl } });
+    }
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -77,7 +85,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash-image',
-        messages: [{ role: 'user', content: `Generate a high-quality product photo: ${fullPrompt}` }],
+        messages: [{ role: 'user', content: messageContent }],
         modalities: ['image', 'text'],
       }),
     });
