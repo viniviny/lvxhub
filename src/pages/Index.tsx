@@ -449,6 +449,9 @@ const Index = () => {
                               brief={form.title || ''}
                               title={form.title}
                               language={activeStoreLang?.label || 'English'}
+                              languageCode={activeStore?.marketConfig?.language || 'en-US'}
+                              countryName={activeStore?.marketConfig?.marketName || ''}
+                              countryFlag={activeStore?.marketConfig?.countryFlag || ''}
                               currentValue={form.description}
                               onGenerated={html => setForm(prev => ({ ...prev, description: html }))}
                             />
