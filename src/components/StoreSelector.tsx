@@ -50,14 +50,12 @@ export function StoreSelector({ stores, activeStoreId, onSelectStore, onAddStore
 
         {/* Store info */}
         <div className="flex-1 min-w-0 text-left">
-          <div className="text-xs font-medium text-[hsl(210,29%,90%)] truncate">
-            {truncateDomain(mc?.marketName || active?.domain || '')}
+          <div className="text-[13px] font-medium text-[hsl(210,29%,90%)] truncate">
+            {mc?.countryName || mc?.marketName || 'Sem mercado'}
           </div>
-          {mc && (
-            <span className="inline-flex items-center mt-0.5 text-[10px] font-medium px-1.5 py-px rounded bg-[hsl(var(--sidebar-primary)/0.1)] text-[hsl(var(--info))]">
-              {mc.currency} · {mc.language}
-            </span>
-          )}
+          <div className="text-[11px] text-[hsl(var(--sidebar-foreground))] truncate">
+            {truncateDomain(active?.domain || '')}
+          </div>
         </div>
 
         {/* Right side: connected dot + chevron */}
