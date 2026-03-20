@@ -283,32 +283,9 @@ const Index = () => {
       <RegionGroupManager open={showRegions} onOpenChange={setShowRegions} groups={groups} stores={stores} onAddGroup={addGroup} onUpdateGroup={updateGroup} onRemoveGroup={removeGroup} />
       <GlobalPublishFlow open={showGlobalPublish} onOpenChange={setShowGlobalPublish} stores={stores} groups={groups} activeStore={activeStore} basePrice={form.price} productTitle={form.title} convert={convert} onPublish={handlePublishToStore} />
 
-      {/* NOT CONNECTED */}
-      {!hasConnectedStore && (
-        <main className="flex-1 flex items-center justify-center px-6">
-          <div className="glass-card p-12 text-center max-w-lg w-full animate-fade-in">
-            <div className="w-20 h-20 mx-auto rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-8">
-              <Zap className="w-10 h-10 text-primary" />
-            </div>
-            <h2 className="font-display text-3xl font-bold text-foreground mb-2">Conectar ao Shopify</h2>
-            <p className="text-muted-foreground text-sm mb-8 max-w-sm mx-auto leading-relaxed">Gerencie múltiplas lojas em qualquer país e publique produtos com um clique</p>
-            <Button onClick={handleAddStore} size="lg" className="w-full font-display font-semibold text-base mb-6">
-              <Globe className="w-4 h-4 mr-2" />Conectar ao Shopify
-            </Button>
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary/40"><span className="text-lg">🌍</span><span className="text-xs text-muted-foreground font-medium">195 países</span></div>
-              <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary/40"><span className="text-lg">🏪</span><span className="text-xs text-muted-foreground font-medium">Múltiplas lojas</span></div>
-              <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary/40"><span className="text-lg">💱</span><span className="text-xs text-muted-foreground font-medium">Câmbio automático</span></div>
-            </div>
-            <button onClick={() => setShowOnboarding(true)} className="text-sm text-muted-foreground hover:text-primary transition-colors underline underline-offset-4">Como funciona?</button>
-          </div>
-        </main>
-      )}
-
-      {/* CONNECTED DASHBOARD */}
-      {hasConnectedStore && (
-        <div className="flex-1 flex">
-          <DashboardSidebar stores={stores} activeStoreId={activeStore?.id || null} onSelectStore={setActiveStore} onAddStore={handleAddStore} currentView={currentView} onViewChange={handleViewChange} />
+      {/* DASHBOARD — always show after login */}
+      <div className="flex-1 flex">
+        <DashboardSidebar stores={stores} activeStoreId={activeStore?.id || null} onSelectStore={setActiveStore} onAddStore={handleAddStore} currentView={currentView} onViewChange={handleViewChange} />
 
           <main className="flex-1 overflow-y-auto">
             <div className="max-w-4xl mx-auto px-6 py-8">
