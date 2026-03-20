@@ -246,7 +246,7 @@ const Index = () => {
     setShowConnect(false);
   };
 
-  const handleReconnect = (store: import('@/hooks/useStoreManager').ShopifyStore) => { setShowManagement(false); startOAuth(store); };
+  const handleReconnect = (store: ShopifyStore) => { setShowManagement(false); startOAuth(store); };
 
   const handleViewChange = (view: DashboardView) => {
     if (view === 'regions') { setShowRegions(true); return; }
