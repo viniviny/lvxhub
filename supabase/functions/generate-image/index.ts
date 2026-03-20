@@ -12,36 +12,33 @@ serve(async (req) => {
 
   try {
     const { prompt } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
-    if (!LOVABLE_API_KEY) {
+    if (!OPENAI_API_KEY) {
       return new Response(
-        JSON.stringify({ error: 'LOVABLE_API_KEY não configurada' }),
+        JSON.stringify({ error: 'OPENAI_API_KEY não configurada' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-3-pro-image-preview',
-        messages: [
-          {
-            role: 'user',
-            content: `Generate a high-quality product photo for fashion e-commerce: ${prompt}. The image should be professional, studio-quality with clean background.`,
-          },
-        ],
-        modalities: ['image', 'text'],
+        model: 'dall-e-3',
+        prompt,
+        n: 1,
+        size: '1024x1024',
+        quality: 'hd',
       }),
     });
 
     if (!response.ok) {
       const err = await response.text();
-      console.error('AI gateway error:', response.status, err);
+      console.error('OpenAI error:', response.status, err);
 
       if (response.status === 429) {
         return new Response(
@@ -51,7 +48,7 @@ serve(async (req) => {
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: 'Créditos insuficientes. Adicione fundos na sua conta.', status: 402 }),
+          JSON.stringify({ error: 'Créditos insuficientes. Adicione fundos na sua conta OpenAI.', status: 402 }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -63,15 +60,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
-    if (!imageUrl) {
-      console.error('No image in response:', JSON.stringify(data));
-      return new Response(
-        JSON.stringify({ error: 'Nenhuma imagem foi gerada. Tente outro prompt.' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const imageUrl = data.data?.[0]?.url;
 
     return new Response(
       JSON.stringify({ imageUrl }),
