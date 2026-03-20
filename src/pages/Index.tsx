@@ -4,13 +4,14 @@ import { useProducts } from '@/hooks/useProducts';
 import { ImagePreview } from '@/components/ImagePreview';
 import { ProductTable } from '@/components/ProductTable';
 import { PublishConfirmation } from '@/components/PublishConfirmation';
+import { ShopifyConnectDialog } from '@/components/ShopifyConnectDialog';
 import { Product } from '@/types/product';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, Loader2, Send, LayoutDashboard, PlusCircle } from 'lucide-react';
+import { Sparkles, Loader2, Send, LayoutDashboard, PlusCircle, Store } from 'lucide-react';
 
 type View = 'dashboard' | 'create';
 
@@ -28,6 +29,7 @@ const Index = () => {
   const [form, setForm] = useState<ProductFormData>(initialForm);
   const [imageApproved, setImageApproved] = useState(false);
   const [publishedProduct, setPublishedProduct] = useState<Product | null>(null);
+  const [showShopifyDialog, setShowShopifyDialog] = useState(false);
 
   const {
     products,
@@ -97,9 +99,19 @@ const Index = () => {
               <PlusCircle className="w-4 h-4 mr-2" />
               Novo Produto
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowShopifyDialog(true)}
+            >
+              <Store className="w-4 h-4 mr-2" />
+              Conectar Shopify
+            </Button>
           </nav>
         </div>
       </header>
+
+      <ShopifyConnectDialog open={showShopifyDialog} onOpenChange={setShowShopifyDialog} />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {view === 'dashboard' && (
