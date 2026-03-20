@@ -35,8 +35,9 @@ import { getAILanguageByCode } from '@/data/languages';
 import {
   Send, Loader2, Upload, CheckCircle2, ExternalLink,
   Package, XCircle, Zap, HelpCircle, Store, Settings, Globe, Layers,
-  ArrowLeft, ArrowRight, Eye, ClipboardList, Check
+  ArrowLeft, ArrowRight, Eye, ClipboardList, Check, ChevronDown
 } from 'lucide-react';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 
 const initialForm: ProductFormData = {
   title: '',
@@ -100,6 +101,7 @@ const Index = () => {
   const [wizardStep, setWizardStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [publishStatus, setPublishStatus] = useState<'draft' | 'active' | 'scheduled'>('active');
+  const [pubOpen, setPubOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currencySymbol = activeStore?.marketConfig?.currencySymbol || 'R$';
@@ -513,6 +515,79 @@ const Index = () => {
                         <div className="glass-card p-4">
                           <ReviewChecklist form={form} hasImage={!!imageFile || generatedImages.some(i => i.url)} />
                         </div>
+
+                        {/* Publicação accordion */}
+                        <Collapsible open={pubOpen} onOpenChange={setPubOpen}>
+                          <div className="glass-card">
+                            <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/30 transition-colors rounded-lg">
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Publicação</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[11px] text-muted-foreground">
+                                  {publishStatus === 'draft' ? 'Rascunho' : publishStatus === 'active' ? 'Ativo' : 'Agendar'}
+                                  {' · '}
+                                  {form.selectedChannels.includes('online') ? 'Online Store' : form.selectedChannels[0] || 'Nenhum'}
+                                </span>
+                                <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${pubOpen ? 'rotate-180' : ''}`} />
+                              </div>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="px-3 pb-3 space-y-3">
+                              <div>
+                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Status</span>
+                                <div className="flex gap-1 mt-1.5">
+                                  {(['draft', 'active', 'scheduled'] as const).map(status => (
+                                    <button
+                                      key={status}
+                                      onClick={() => setPublishStatus(status)}
+                                      className={`px-3 h-7 rounded-full text-[11px] font-medium transition-all border ${
+                                        publishStatus === status
+                                          ? 'bg-primary text-primary-foreground border-primary'
+                                          : 'border-border text-muted-foreground hover:text-foreground'
+                                      }`}
+                                    >
+                                      {status === 'draft' ? 'Rascunho' : status === 'active' ? 'Ativo' : 'Agendar'}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Canais de venda</span>
+                                <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                                  {[
+                                    { id: 'online', icon: '🖥', label: 'Online Store' },
+                                    { id: 'pos', icon: '📦', label: 'POS' },
+                                    { id: 'google', icon: 'G', label: 'Google' },
+                                  ].map(ch => {
+                                    const isOn = form.selectedChannels.includes(ch.id);
+                                    return (
+                                      <button
+                                        key={ch.id}
+                                        onClick={() => {
+                                          const next = isOn
+                                            ? form.selectedChannels.filter(c => c !== ch.id)
+                                            : [...form.selectedChannels, ch.id];
+                                          setForm(prev => ({ ...prev, selectedChannels: next }));
+                                        }}
+                                        className={`flex items-center gap-1 px-2.5 h-[26px] rounded-full text-[10px] font-medium transition-all border ${
+                                          isOn
+                                            ? 'border-primary bg-primary/10 text-[hsl(213,97%,67%)]'
+                                            : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30'
+                                        }`}
+                                      >
+                                        <span>{ch.icon}</span>
+                                        {ch.label}
+                                        {isOn && <Check className="w-2.5 h-2.5" />}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </CollapsibleContent>
+                          </div>
+                        </Collapsible>
+
+                        <Button className="w-full" onClick={handlePublish} disabled={!canPublish}>
+                          <Zap className="w-4 h-4 mr-1.5" />Publicar agora
+                        </Button>
                       </div>
 
                       {/* RIGHT — Shopify Preview */}
@@ -542,60 +617,7 @@ const Index = () => {
                   </div>
 
                   {wizardStep === 4 ? (
-                    <div className="flex items-center gap-3">
-                      {/* Status pills */}
-                      <div className="flex gap-0.5 bg-secondary/50 rounded-full p-0.5">
-                        {(['draft', 'active', 'scheduled'] as const).map(status => (
-                          <button
-                            key={status}
-                            onClick={() => setPublishStatus(status)}
-                            className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
-                              publishStatus === status
-                                ? 'bg-primary text-primary-foreground'
-                                : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                          >
-                            {status === 'draft' ? 'Rascunho' : status === 'active' ? 'Ativo' : 'Agendar'}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Sales channel pills */}
-                      <div className="flex gap-1">
-                        {[
-                          { id: 'online', icon: '🖥', label: 'Online Store' },
-                          { id: 'pos', icon: '📱', label: 'POS' },
-                          { id: 'google', icon: 'G', label: 'Google' },
-                        ].map(ch => {
-                          const isSelected = form.selectedChannels.includes(ch.id);
-                          return (
-                            <button
-                              key={ch.id}
-                              onClick={() => {
-                                const newChannels = isSelected
-                                  ? form.selectedChannels.filter(c => c !== ch.id)
-                                  : [...form.selectedChannels, ch.id];
-                                setForm(prev => ({ ...prev, selectedChannels: newChannels }));
-                              }}
-                              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-all border ${
-                                isSelected
-                                  ? 'border-primary/50 bg-primary/10 text-primary'
-                                  : 'border-border text-muted-foreground hover:text-foreground hover:border-primary/30'
-                              }`}
-                            >
-                              <span className="text-[10px]">{ch.icon}</span>
-                              {ch.label}
-                              {isSelected && <Check className="w-2.5 h-2.5" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Publish button */}
-                      <Button size="sm" className="text-xs h-9" onClick={handlePublish} disabled={!canPublish}>
-                        <Zap className="w-3.5 h-3.5 mr-1" />Publicar agora
-                      </Button>
-                    </div>
+                    <span className="text-[11px] text-muted-foreground">Step 4 de 4</span>
                   ) : (
                     <>
                       <span className="text-[11px] text-muted-foreground">
