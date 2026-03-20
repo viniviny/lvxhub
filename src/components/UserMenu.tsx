@@ -11,6 +11,7 @@ import { User, Settings, LogOut, Shield, Sun, Moon } from 'lucide-react';
 
 export function UserMenu() {
   const { user, profile, isAdmin, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   if (!user) return null;
