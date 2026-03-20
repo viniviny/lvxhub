@@ -1,15 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useStoreContext } from '@/hooks/useStoreContext';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 
 const STORES_KEY = 'publify_stores';
 
+interface ConnectedStoreInfo {
+  shopName: string;
+  domain: string;
+  flag?: string;
+  countryName?: string;
+  currency?: string;
+}
+
 const Callback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { refreshStores } = useStoreContext();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [errorMsg, setErrorMsg] = useState('');
+  const [storeInfo, setStoreInfo] = useState<ConnectedStoreInfo | null>(null);
 
   useEffect(() => {
     const exchangeToken = async () => {
@@ -31,11 +42,13 @@ const Callback = () => {
         }
 
         const settings = JSON.parse(settingsRaw);
+        const domain = shop || settings.storeDomain;
 
+        // Step 1: Exchange code for token via edge function (token saved server-side)
         const { data, error } = await supabase.functions.invoke('shopify-exchange-token', {
           body: {
             code,
-            shop: shop || settings.storeDomain,
+            shop: domain,
             clientId: settings.clientId,
             clientSecret: settings.clientSecret,
           },
@@ -45,36 +58,70 @@ const Callback = () => {
           throw new Error(data?.error || error?.message || 'Erro ao trocar token');
         }
 
-        // Update the store in multi-store storage
+        // Step 2: Build the store object for localStorage
+        const marketConfig = settings.marketConfig || undefined;
         const pendingStoreId = localStorage.getItem('publify_pending_store');
         const storesRaw = localStorage.getItem(STORES_KEY);
-        const stores = storesRaw ? JSON.parse(storesRaw) : [];
+        let stores = storesRaw ? JSON.parse(storesRaw) : [];
 
-        // Recover market config saved before OAuth redirect
-        const marketConfig = settings.marketConfig || undefined;
+        const shopName = data.shopName || domain.replace('.myshopify.com', '');
 
-        const updatedStores = stores.map((s: any) =>
-          s.id === pendingStoreId
-            ? {
-                ...s,
-                accessToken: data.accessToken,
-                connected: true,
-                connectedAt: new Date().toISOString().split('T')[0],
-                ...(marketConfig ? { marketConfig } : {}),
-              }
-            : s
+        // Check if this store already exists (by pending ID or by domain)
+        const existingIndex = stores.findIndex((s: any) =>
+          s.id === pendingStoreId || s.domain === domain
         );
 
-        localStorage.setItem(STORES_KEY, JSON.stringify(updatedStores));
-        localStorage.setItem('publify_active_store', pendingStoreId || '');
+        if (existingIndex >= 0) {
+          // Update existing store
+          stores[existingIndex] = {
+            ...stores[existingIndex],
+            connected: true,
+            connectedAt: new Date().toISOString().split('T')[0],
+            accessToken: null, // Token is server-side only
+            ...(marketConfig ? { marketConfig } : {}),
+          };
+        } else {
+          // Create new store entry
+          const newStore = {
+            id: pendingStoreId || `store_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            domain,
+            clientId: settings.clientId || '',
+            clientSecret: '',
+            apiVersion: settings.apiVersion || '2026-01',
+            redirectUri: settings.redirectUri || `${window.location.origin}/callback`,
+            accessToken: null,
+            connected: true,
+            connectedAt: new Date().toISOString().split('T')[0],
+            isDefault: stores.length === 0,
+            ...(marketConfig ? { marketConfig } : {}),
+          };
+          stores.push(newStore);
+        }
+
+        // Step 3: Save to localStorage
+        localStorage.setItem(STORES_KEY, JSON.stringify(stores));
+
+        // Set active store
+        const connectedStore = stores.find((s: any) => s.domain === domain) || stores[stores.length - 1];
+        localStorage.setItem('publify_active_store', connectedStore.id);
         localStorage.removeItem('publify_pending_store');
 
-        // Keep legacy keys for backward compat
-        localStorage.setItem('shopify_access_token', data.accessToken);
-        localStorage.setItem('shopify_connected', 'true');
+        // Step 4: Refresh global context so sidebar/dashboard re-render
+        refreshStores();
+
+        // Step 5: Show success with store info
+        setStoreInfo({
+          shopName,
+          domain,
+          flag: marketConfig?.countryFlag,
+          countryName: marketConfig?.countryName,
+          currency: marketConfig?.currency,
+        });
 
         setStatus('success');
-        setTimeout(() => navigate('/', { replace: true }), 1200);
+
+        // Step 6: Redirect after 2 seconds
+        setTimeout(() => navigate('/dashboard', { replace: true }), 2000);
       } catch (err: any) {
         console.error('Token exchange error:', err);
         setStatus('error');
@@ -83,7 +130,7 @@ const Callback = () => {
     };
 
     exchangeToken();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, refreshStores]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
@@ -96,11 +143,23 @@ const Callback = () => {
           </>
         )}
         {status === 'success' && (
-          <>
-            <CheckCircle2 className="w-12 h-12 mx-auto text-[hsl(var(--success))] mb-4" />
-            <h2 className="font-display text-xl font-bold text-foreground">Conectado com sucesso!</h2>
-            <p className="text-muted-foreground mt-2 text-sm">Redirecionando para o app...</p>
-          </>
+          <div className="animate-scale-in">
+            <div className="w-16 h-16 mx-auto rounded-full bg-[hsl(var(--success))]/10 flex items-center justify-center mb-4">
+              <CheckCircle2 className="w-10 h-10 text-[hsl(var(--success))]" />
+            </div>
+            <h2 className="font-display text-xl font-bold text-foreground">Loja conectada com sucesso!</h2>
+            <p className="text-muted-foreground mt-2 text-[13px]">{storeInfo?.domain}</p>
+            {storeInfo?.flag && (
+              <p className="text-muted-foreground mt-1 text-sm flex items-center justify-center gap-1.5">
+                <span className="text-lg">{storeInfo.flag}</span>
+                <span>{storeInfo.countryName}</span>
+                {storeInfo.currency && <span>· {storeInfo.currency}</span>}
+              </p>
+            )}
+            <p className="text-muted-foreground mt-3 text-xs flex items-center justify-center gap-1.5">
+              <Loader2 className="w-3 h-3 animate-spin" /> Redirecionando...
+            </p>
+          </div>
         )}
         {status === 'error' && (
           <>
@@ -108,10 +167,10 @@ const Callback = () => {
             <h2 className="font-display text-xl font-bold text-foreground">Erro na conexão</h2>
             <p className="text-muted-foreground mt-2 text-sm">{errorMsg}</p>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/dashboard')}
               className="mt-4 text-primary underline text-sm"
             >
-              Voltar ao app
+              Tentar novamente
             </button>
           </>
         )}
