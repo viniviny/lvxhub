@@ -162,6 +162,16 @@ export function useStoreManager() {
     });
   }, []);
 
+  const updateStoreMarket = useCallback((storeId: string, marketConfig: MarketConfig) => {
+    setStores(prev => {
+      const updated = prev.map(s =>
+        s.id === storeId ? { ...s, marketConfig } : s
+      );
+      persistStores(updated);
+      return updated;
+    });
+  }, []);
+
   const startOAuth = useCallback((store: ShopifyStore) => {
     // Save pending store id so callback knows which store to connect
     localStorage.setItem('publify_pending_store', store.id);
@@ -200,6 +210,7 @@ export function useStoreManager() {
     disconnectStore,
     removeStore,
     setDefault,
+    updateStoreMarket,
     startOAuth,
     incrementPublished,
   };
