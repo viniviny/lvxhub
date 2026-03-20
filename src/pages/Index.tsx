@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
   Settings, Send, Loader2, Upload, CheckCircle2, ExternalLink,
-  Package, XCircle, Zap, HelpCircle
+  Package, XCircle, Zap
 } from 'lucide-react';
 
 const initialForm: ProductFormData = {
