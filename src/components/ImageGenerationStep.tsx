@@ -237,6 +237,39 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           )}
         </div>
 
+        {/* Aspect ratio selector */}
+        <div>
+          <Label className="text-xs font-medium text-muted-foreground">Proporção das imagens</Label>
+          <div className="grid grid-cols-2 gap-1.5 mt-1.5">
+            <button
+              onClick={() => handleRatioChange('1:1')}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all border ${
+                activeRatio === '1:1'
+                  ? 'bg-primary/15 border-primary text-[#58A6FF]'
+                  : 'bg-[hsl(var(--card))] border-border text-muted-foreground hover:border-primary/40'
+              }`}
+            >
+              <Square className="w-3 h-3" />
+              <span>1:1 Quadrado</span>
+            </button>
+            <button
+              onClick={() => handleRatioChange('4:5')}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all border ${
+                activeRatio === '4:5'
+                  ? 'bg-primary/15 border-primary text-[#58A6FF]'
+                  : 'bg-[hsl(var(--card))] border-border text-muted-foreground hover:border-primary/40'
+              }`}
+            >
+              <RectangleVertical className="w-3 h-3" />
+              <span>4:5 Retrato</span>
+            </button>
+          </div>
+          <p className="text-[9px] text-muted-foreground mt-1">
+            {activeRatio === '1:1' ? '1024×1024px · WebP · Padrão Shopify' : '1024×1280px · WebP · Ideal para moda'}
+            {activeRatio === '4:5' && <span className="ml-1 text-[#58A6FF]">Instagram ready</span>}
+          </p>
+        </div>
+
         {/* Angle checkboxes — 3 columns */}
         <div>
           <Label className="text-xs font-medium text-muted-foreground">Selecione os ângulos</Label>
