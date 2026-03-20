@@ -17,6 +17,7 @@ export interface ShopifyAuthState {
 
 const SETTINGS_KEY = 'shopify_settings';
 const TOKEN_KEY = 'shopify_access_token';
+const CONNECTED_KEY = 'shopify_connected';
 const COUNT_KEY = 'shopify_published_count';
 
 function loadSettings(): ShopifySettings | null {
@@ -35,7 +36,11 @@ export function useShopifyAuth() {
     () => parseInt(localStorage.getItem(COUNT_KEY) || '0', 10)
   );
 
-  const isAuthenticated = !!accessToken;
+  const [isConnected, setIsConnected] = useState<boolean>(
+    () => localStorage.getItem(CONNECTED_KEY) === 'true'
+  );
+
+  const isAuthenticated = !!accessToken && isConnected;
   const hasSettings = !!settings?.storeDomain && !!settings?.clientId && !!settings?.clientSecret;
 
   const saveSettings = useCallback((s: ShopifySettings) => {
@@ -45,12 +50,16 @@ export function useShopifyAuth() {
 
   const saveToken = useCallback((token: string) => {
     localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(CONNECTED_KEY, 'true');
     setAccessToken(token);
+    setIsConnected(true);
   }, []);
 
   const clearToken = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(CONNECTED_KEY);
     setAccessToken(null);
+    setIsConnected(false);
   }, []);
 
   const incrementPublished = useCallback(() => {
