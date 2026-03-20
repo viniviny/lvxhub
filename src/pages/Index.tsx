@@ -190,6 +190,7 @@ const Index = () => {
                 <Settings className="w-4.5 h-4.5" />
               </Button>
             )}
+            <UserMenu />
           </div>
         </div>
       </header>
