@@ -277,102 +277,42 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected, onOpenOn
                 </button>
               </div>
 
-              {/* Market config */}
-              <div className="border-t border-border pt-4 space-y-4">
-                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  🌍 Configuração de Mercado
+              {/* Market config — compact card */}
+              <div className="border-t border-border pt-4 space-y-3">
+                <h4 className="text-xs font-medium text-foreground flex items-center gap-2">
+                  🌍 Mercado alvo
                 </h4>
 
-                <div>
-                  <Label className="text-sm text-muted-foreground">País</Label>
-                  <div className="mt-1.5">
-                    <CountrySelector value={selectedCountryCode} onChange={handleCountrySelect} />
+                <button
+                  type="button"
+                  onClick={() => setMarketPickerOpen(true)}
+                  className="w-full flex items-center gap-3 rounded-lg bg-[hsl(var(--sidebar-card))] border border-[hsl(var(--sidebar-border))] px-3 py-2.5 hover:border-primary/60 transition-colors cursor-pointer group"
+                >
+                  <span className="text-[22px] leading-none">{selectedCountry?.flag || '🇺🇸'}</span>
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-[13px] font-medium text-foreground truncate">
+                      {selectedCountry?.name || 'Estados Unidos'}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {customCurrency || 'USD'} · {selectedLanguage}
+                    </p>
                   </div>
-                </div>
-
-                {selectedCountry && (
-                  <>
-                    <div>
-                      <Label className="text-sm text-muted-foreground">Idioma do conteúdo</Label>
-                      <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                        <SelectTrigger className="mt-1.5 bg-secondary border-border">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[200px]">
-                          {AI_LANGUAGES.map(l => (
-                            <SelectItem key={l.code} value={l.code}>
-                              {l.flag} {l.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-sm text-muted-foreground">Moeda</Label>
-                        <Input
-                          value={customCurrency}
-                          onChange={e => setCustomCurrency(e.target.value.toUpperCase())}
-                          placeholder="USD"
-                          className="mt-1.5 bg-secondary border-border"
-                          maxLength={4}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm text-muted-foreground">Posição do símbolo</Label>
-                        <Select value={currencyPosition} onValueChange={v => setCurrencyPosition(v as 'before' | 'after')}>
-                          <SelectTrigger className="mt-1.5 bg-secondary border-border">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="before">Antes ($ 10,00)</SelectItem>
-                            <SelectItem value="after">Depois (10,00 €)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-sm text-muted-foreground">Separador decimal</Label>
-                        <Select value={decimalSep} onValueChange={setDecimalSep}>
-                          <SelectTrigger className="mt-1.5 bg-secondary border-border">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value=".">Ponto (.)</SelectItem>
-                            <SelectItem value=",">Vírgula (,)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-sm text-muted-foreground">Separador de milhar</Label>
-                        <Select value={thousandSep} onValueChange={setThousandSep}>
-                          <SelectTrigger className="mt-1.5 bg-secondary border-border">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value=".">Ponto (.)</SelectItem>
-                            <SelectItem value=",">Vírgula (,)</SelectItem>
-                            <SelectItem value=" ">Espaço ( )</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-sm text-muted-foreground">Nome do mercado (opcional)</Label>
-                      <Input
-                        value={marketName}
-                        onChange={e => setMarketName(e.target.value)}
-                        placeholder="Ex: Europa Central, LATAM..."
-                        className="mt-1.5 bg-secondary border-border"
-                      />
-                    </div>
-                  </>
-                )}
+                  <span className="text-[11px] text-muted-foreground group-hover:text-primary transition-colors flex items-center gap-0.5 shrink-0">
+                    alterar <ChevronDown className="w-3 h-3" />
+                  </span>
+                </button>
               </div>
+
+              {/* Market picker modal */}
+              <MarketPickerModal
+                open={marketPickerOpen}
+                onOpenChange={setMarketPickerOpen}
+                selectedCode={selectedCountryCode}
+                onSelect={(country) => {
+                  handleCountrySelect(country);
+                  setMarketPickerOpen(false);
+                }}
+              />
             </div>
 
             <DialogFooter>
