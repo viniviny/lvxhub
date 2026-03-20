@@ -50,12 +50,16 @@ export function useShopifyAuth() {
 
   const saveToken = useCallback((token: string) => {
     localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(CONNECTED_KEY, 'true');
     setAccessToken(token);
+    setIsConnected(true);
   }, []);
 
   const clearToken = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(CONNECTED_KEY);
     setAccessToken(null);
+    setIsConnected(false);
   }, []);
 
   const incrementPublished = useCallback(() => {
