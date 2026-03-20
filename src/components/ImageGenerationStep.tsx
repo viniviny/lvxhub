@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, DragEvent } from 'react';
+import { useState, useRef, useCallback, DragEvent, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,8 +9,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
   Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
-  ArrowRight, ImageIcon, X, Info, Eye, GripVertical
+  ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical
 } from 'lucide-react';
+
+export type AspectRatio = '1:1' | '4:5';
 
 export type ImageAngle =
   | 'frente' | 'costas' | 'detalhe' | 'lateral'
@@ -44,11 +46,13 @@ interface ImageGenerationStepProps {
   onImagesChange: (images: GeneratedImage[]) => void;
   onNext: () => void;
   onSkip: () => void;
+  aspectRatio?: AspectRatio;
+  onAspectRatioChange?: (ratio: AspectRatio) => void;
 }
 
 type PromptMode = 'simple' | 'custom';
 
-export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: ImageGenerationStepProps) {
+export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange }: ImageGenerationStepProps) {
   const [prompt, setPrompt] = useState('');
   const [promptMode, setPromptMode] = useState<PromptMode>('simple');
   const [customAngleText, setCustomAngleText] = useState('');
@@ -62,6 +66,17 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const refImageInputRef = useRef<HTMLInputElement>(null);
+
+  // Aspect ratio — persisted in localStorage
+  const [ratio, setRatio] = useState<AspectRatio>(() => {
+    return (localStorage.getItem('publify_aspect_ratio') as AspectRatio) || '4:5';
+  });
+  const activeRatio = externalRatio ?? ratio;
+  const handleRatioChange = (r: AspectRatio) => {
+    setRatio(r);
+    localStorage.setItem('publify_aspect_ratio', r);
+    onAspectRatioChange?.(r);
+  };
 
   const selectedCount = selectedAngles.size;
   const hasAtLeastOneImage = images.length > 0;
@@ -99,7 +114,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
     const promises = angles.map(async (angle) => {
       try {
         const { data, error } = await supabase.functions.invoke('generate-image', {
-          body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt, referenceImageUrl: referenceImage || undefined },
+          body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt, referenceImageUrl: referenceImage || undefined, aspectRatio: activeRatio },
         });
         if (error || data?.error) { toast.error(`Erro ao gerar imagem (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`); return null; }
         const imageUrl = data.imageUrl;
@@ -118,21 +133,21 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
     setGeneratingAngles(new Set());
     const successCount = results.length - images.length;
     if (successCount > 0) toast.success(`${successCount} imagens geradas com sucesso ✓`);
-  }, [prompt, promptMode, selectedAngles, customAngleText, referenceImage, images, onImagesChange]);
+  }, [prompt, promptMode, selectedAngles, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
 
   const regenerateAngle = useCallback(async (angle: ImageAngle) => {
     if (!prompt.trim()) return;
     setGeneratingAngles(new Set([angle]));
     try {
       const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImageUrl: referenceImage || undefined },
+        body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImageUrl: referenceImage || undefined, aspectRatio: activeRatio },
       });
       if (error || data?.error) { toast.error('Erro ao regenerar imagem'); return; }
       const updated = images.map(img => img.angle === angle ? { ...img, url: data.imageUrl } : img);
       onImagesChange(updated);
       toast.success('Imagem regenerada!');
     } catch { toast.error('Erro ao regenerar imagem'); } finally { setGeneratingAngles(new Set()); }
-  }, [prompt, promptMode, customAngleText, referenceImage, images, onImagesChange]);
+  }, [prompt, promptMode, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
 
   const removeImage = (angle: ImageAngle) => {
     const updated = images.filter(img => img.angle !== angle);
@@ -220,6 +235,39 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
               <span className="text-[9px] text-muted-foreground">Prompt enviado diretamente sem modificações</span>
             </div>
           )}
+        </div>
+
+        {/* Aspect ratio selector */}
+        <div>
+          <Label className="text-xs font-medium text-muted-foreground">Proporção das imagens</Label>
+          <div className="grid grid-cols-2 gap-1.5 mt-1.5">
+            <button
+              onClick={() => handleRatioChange('1:1')}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all border ${
+                activeRatio === '1:1'
+                  ? 'bg-primary/15 border-primary text-[#58A6FF]'
+                  : 'bg-[hsl(var(--card))] border-border text-muted-foreground hover:border-primary/40'
+              }`}
+            >
+              <Square className="w-3 h-3" />
+              <span>1:1 Quadrado</span>
+            </button>
+            <button
+              onClick={() => handleRatioChange('4:5')}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all border ${
+                activeRatio === '4:5'
+                  ? 'bg-primary/15 border-primary text-[#58A6FF]'
+                  : 'bg-[hsl(var(--card))] border-border text-muted-foreground hover:border-primary/40'
+              }`}
+            >
+              <RectangleVertical className="w-3 h-3" />
+              <span>4:5 Retrato</span>
+            </button>
+          </div>
+          <p className="text-[9px] text-muted-foreground mt-1">
+            {activeRatio === '1:1' ? '1024×1024px · WebP · Padrão Shopify' : '1024×1280px · WebP · Ideal para moda'}
+            {activeRatio === '4:5' && <span className="ml-1 text-[#58A6FF]">Instagram ready</span>}
+          </p>
         </div>
 
         {/* Angle checkboxes — 3 columns */}

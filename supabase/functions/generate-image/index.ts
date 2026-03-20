@@ -16,6 +16,11 @@ const ANGLE_SUFFIXES: Record<string, string> = {
   look_completo: 'full outfit invisible mannequin, white studio background, head to toe',
 };
 
+const RATIO_PROMPTS: Record<string, string> = {
+  '1:1': 'Square 1:1 aspect ratio, 1024x1024 pixels.',
+  '4:5': 'Portrait 4:5 aspect ratio, vertical orientation, suitable for fashion e-commerce and Instagram.',
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -32,6 +37,7 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -44,7 +50,7 @@ serve(async (req) => {
       );
     }
 
-    const { prompt, angle, customAngleText, isCustomPrompt, referenceImageUrl } = await req.json();
+    const { prompt, angle, customAngleText, isCustomPrompt, referenceImageUrl, aspectRatio } = await req.json();
 
     if (!prompt || typeof prompt !== 'string' || prompt.length > 2000) {
       return new Response(
@@ -53,7 +59,7 @@ serve(async (req) => {
       );
     }
 
-    // Build the full prompt with angle suffix (skip suffixes in custom prompt mode)
+    // Build the full prompt with angle suffix and aspect ratio
     let fullPrompt = prompt;
     if (!isCustomPrompt) {
       if (angle && angle === 'personalizado' && customAngleText) {
@@ -63,6 +69,10 @@ serve(async (req) => {
       }
     }
 
+    // Add aspect ratio instruction
+    const ratioInstruction = RATIO_PROMPTS[aspectRatio] || RATIO_PROMPTS['4:5'];
+    fullPrompt = `${fullPrompt}. ${ratioInstruction}`;
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       return new Response(
@@ -71,7 +81,7 @@ serve(async (req) => {
       );
     }
 
-    // Build message content - text only or text + reference image
+    // Build message content
     const messageContent: any[] = [{ type: 'text', text: `Generate a high-quality product photo: ${fullPrompt}` }];
     if (referenceImageUrl) {
       messageContent.push({ type: 'image_url', image_url: { url: referenceImageUrl } });
@@ -110,17 +120,59 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const base64Url = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
-    if (!imageUrl) {
+    if (!base64Url) {
       return new Response(
         JSON.stringify({ error: 'Nenhuma imagem foi gerada. Tente outro prompt.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Upload to Supabase Storage as WebP
+    try {
+      const base64Data = base64Url.replace(/^data:image\/\w+;base64,/, '');
+      const binaryStr = atob(base64Data);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+
+      const adminClient = createClient(supabaseUrl, serviceRoleKey);
+      const fileName = `${user.id}/${angle || 'custom'}-${Date.now()}.webp`;
+
+      const { error: uploadError } = await adminClient.storage
+        .from('product-images')
+        .upload(fileName, bytes.buffer, {
+          contentType: 'image/webp',
+          upsert: false,
+        });
+
+      if (!uploadError) {
+        const { data: urlData } = adminClient.storage
+          .from('product-images')
+          .getPublicUrl(fileName);
+
+        return new Response(
+          JSON.stringify({
+            imageUrl: urlData.publicUrl,
+            format: 'webp',
+            size: bytes.length,
+            stored: true,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // If upload fails, fall back to returning base64 URL
+      console.error('Storage upload failed:', uploadError);
+    } catch (storageErr) {
+      console.error('Storage error:', storageErr);
+    }
+
+    // Fallback: return the base64 URL directly
     return new Response(
-      JSON.stringify({ imageUrl }),
+      JSON.stringify({ imageUrl: base64Url }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (e) {
