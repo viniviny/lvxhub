@@ -584,6 +584,7 @@ interface ImageSlotProps {
   onSetCover: () => void;
   isCover: boolean;
   tall?: boolean;
+  draggable?: boolean;
 }
 
 function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCover, isCover, tall }: ImageSlotProps) {
