@@ -442,7 +442,18 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
   const goTo = (idx: number) => {
     if (idx < 0) idx = displayList.length - 1;
     if (idx >= displayList.length) idx = 0;
-    setSelectedIdx(idx);
+    if (idx === selectedIdx) return;
+    const dir = idx > prevIdxRef.current ? 'right' : 'left';
+    // Handle wrap-around: going from last to first = right, first to last = left
+    if (prevIdxRef.current === displayList.length - 1 && idx === 0) setSlideDir('right');
+    else if (prevIdxRef.current === 0 && idx === displayList.length - 1) setSlideDir('left');
+    else setSlideDir(dir);
+    setIsSliding(true);
+    setTimeout(() => {
+      prevIdxRef.current = idx;
+      setSelectedIdx(idx);
+      setIsSliding(false);
+    }, 150);
   };
 
   // Keyboard navigation
