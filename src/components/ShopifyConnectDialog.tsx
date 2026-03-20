@@ -10,9 +10,10 @@ import { toast } from 'sonner';
 interface ShopifyConnectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onConnected: (shopName: string, storeDomain: string) => void;
 }
 
-export function ShopifyConnectDialog({ open, onOpenChange }: ShopifyConnectDialogProps) {
+export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: ShopifyConnectDialogProps) {
   const [storeDomain, setStoreDomain] = useState('');
   const [accessToken, setAccessToken] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
@@ -38,6 +39,7 @@ export function ShopifyConnectDialog({ open, onOpenChange }: ShopifyConnectDialo
 
       setShopName(data.shopName || domain);
       setIsConnected(true);
+      onConnected(data.shopName || domain, domain);
       toast.success('Loja Shopify conectada com sucesso!');
     } catch (err: any) {
       console.error('Erro ao conectar Shopify:', err);
