@@ -1,14 +1,15 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { User, Settings, LogOut } from 'lucide-react';
+import { User, Settings, LogOut, Shield } from 'lucide-react';
 
 export function UserMenu() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
   if (!user) return null;
@@ -34,9 +35,22 @@ export function UserMenu() {
           <span className="text-sm font-medium text-foreground hidden md:block max-w-[120px] truncate">
             {displayName}
           </span>
+          {isAdmin && (
+            <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] px-1.5 py-0 font-display">
+              Admin
+            </Badge>
+          )}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
+        {isAdmin && (
+          <>
+            <DropdownMenuItem onClick={() => navigate('/admin')} className="gap-2 text-primary">
+              <Shield className="w-4 h-4" /> Painel Admin
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem onClick={() => {}} className="gap-2">
           <User className="w-4 h-4" /> Minha conta
         </DropdownMenuItem>
