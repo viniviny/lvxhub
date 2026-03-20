@@ -41,18 +41,33 @@ export function DashboardSidebar({
         />
         {(() => {
           const active = stores.find(s => s.id === activeStoreId) || stores.find(s => s.connected);
-          if (!active?.marketConfig) return null;
+          if (!active) return null;
           const mc = active.marketConfig;
+          const isConnected = active.connected;
           return (
             <div className="mt-2.5 flex items-center gap-2 px-1">
-              <span className="text-lg leading-none">{mc.countryFlag}</span>
-              <div className="flex flex-col min-w-0">
-                <span className="text-[12px] font-medium text-foreground truncate">{mc.marketName || mc.countryName}</span>
-                <span className="text-[11px] text-muted-foreground">{mc.currency} · {mc.language}</span>
+              <div className="relative">
+                <span className="text-lg leading-none">{mc?.countryFlag || '🏪'}</span>
+                <span
+                  className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-sidebar ${
+                    isConnected ? 'bg-[hsl(var(--success,142_71%_45%))]' : 'bg-muted-foreground'
+                  }`}
+                  title={isConnected ? 'Conectada' : 'Desconectada'}
+                />
               </div>
-              <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0 border-primary/30 text-primary">
-                {mc.currencySymbol}
-              </Badge>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[12px] font-medium text-foreground truncate">
+                  {mc?.marketName || mc?.countryName || active.domain}
+                </span>
+                <span className="text-[11px] text-muted-foreground">
+                  {isConnected ? (mc ? `${mc.currency} · ${mc.language}` : 'Conectada') : 'Desconectada'}
+                </span>
+              </div>
+              {mc && (
+                <Badge variant="outline" className="ml-auto text-[10px] px-1.5 py-0 border-primary/30 text-primary">
+                  {mc.currencySymbol}
+                </Badge>
+              )}
             </div>
           );
         })()}
