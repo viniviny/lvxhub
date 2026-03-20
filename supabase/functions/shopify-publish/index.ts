@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 serve(async (req) => {
@@ -11,24 +12,68 @@ serve(async (req) => {
   }
 
   try {
-    const { title, description, price, sizes, collection, imageBase64, imageName, storeDomain, accessToken, apiVersion } = await req.json();
-
-    if (!storeDomain || !accessToken) {
+    // Authenticate user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
-        JSON.stringify({ error: 'Credenciais Shopify não fornecidas.' }),
+        JSON.stringify({ error: 'Não autorizado.' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(
+      authHeader.replace('Bearer ', '')
+    );
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: 'Sessão inválida. Faça login novamente.' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+    const { title, description, price, sizes, collection, imageBase64, imageName } = await req.json();
+
+    // Input validation
+    if (!title || typeof title !== 'string' || title.length > 255) {
+      return new Response(
+        JSON.stringify({ error: 'Título inválido (máx. 255 caracteres).' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const version = apiVersion || '2026-01';
-    const baseUrl = `https://${storeDomain}/admin/api/${version}`;
+    // Fetch user's active connection using service role (token never sent to frontend)
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const adminClient = createClient(supabaseUrl, serviceKey);
 
-    // Step 1: Upload image if provided
-    let imageId: string | null = null;
+    const { data: conn, error: connError } = await adminClient
+      .from('shopify_connections')
+      .select('store_domain, access_token')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (connError || !conn) {
+      return new Response(
+        JSON.stringify({ error: 'Nenhuma loja conectada. Conecte sua loja primeiro.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const apiVersion = '2024-01';
+    const baseUrl = `https://${conn.store_domain}/admin/api/${apiVersion}`;
+    const accessToken = conn.access_token;
+
+    // Upload image if provided
     let imageSrc: string | null = null;
 
     if (imageBase64 && imageName) {
-      // Use staged uploads for the image
       const stageRes = await fetch(`${baseUrl}/graphql.json`, {
         method: 'POST',
         headers: {
@@ -38,11 +83,7 @@ serve(async (req) => {
         body: JSON.stringify({
           query: `mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
             stagedUploadsCreate(input: $input) {
-              stagedTargets {
-                url
-                resourceUrl
-                parameters { name value }
-              }
+              stagedTargets { url resourceUrl parameters { name value } }
               userErrors { field message }
             }
           }`,
@@ -62,56 +103,45 @@ serve(async (req) => {
         const target = stageData?.data?.stagedUploadsCreate?.stagedTargets?.[0];
 
         if (target?.url) {
-          // Decode base64 and upload
           const binaryStr = atob(imageBase64);
           const bytes = new Uint8Array(binaryStr.length);
           for (let i = 0; i < binaryStr.length; i++) {
             bytes[i] = binaryStr.charCodeAt(i);
           }
-
           const mimeType = imageName.endsWith('.png') ? 'image/png' : imageName.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
-
           await fetch(target.url, {
             method: 'PUT',
             headers: { 'Content-Type': mimeType },
             body: bytes,
           });
-
           imageSrc = target.resourceUrl;
         }
       }
     }
 
-    // Step 2: Create product with REST API
+    // Strip HTML from description
+    const cleanDescription = (description || '').replace(/<[^>]*>/g, '');
+
     const variants = (sizes && sizes.length > 0 ? sizes : ['Único']).map((size: string) => ({
       option1: size,
-      price: price?.toString() || '0.00',
+      price: (price || 0).toString(),
       inventory_management: 'shopify',
     }));
 
-    const productPayload: any = {
+    const productPayload: Record<string, unknown> = {
       product: {
         title: title || 'Produto sem título',
-        body_html: description ? `<p>${description}</p>` : '',
+        body_html: cleanDescription ? `<p>${cleanDescription}</p>` : '',
         vendor: 'Publify',
         product_type: collection || '',
         status: 'draft',
         options: [{ name: 'Tamanho', values: sizes && sizes.length > 0 ? sizes : ['Único'] }],
         variants,
+        ...(imageSrc ? { images: [{ src: imageSrc }] } : imageBase64 ? {
+          images: [{ attachment: imageBase64, filename: imageName || 'product-image.jpg' }]
+        } : {}),
       },
     };
-
-    // Attach image
-    if (imageSrc) {
-      productPayload.product.images = [{ src: imageSrc }];
-    } else if (imageBase64) {
-      // Fallback: attach base64 directly
-      const mimeType = imageName?.endsWith('.png') ? 'image/png' : imageName?.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
-      productPayload.product.images = [{
-        attachment: imageBase64,
-        filename: imageName || 'product-image.jpg',
-      }];
-    }
 
     const createRes = await fetch(`${baseUrl}/products.json`, {
       method: 'POST',
@@ -123,10 +153,8 @@ serve(async (req) => {
     });
 
     if (!createRes.ok) {
-      const errText = await createRes.text();
-      console.error('Shopify create product error:', createRes.status, errText);
       return new Response(
-        JSON.stringify({ error: 'Erro ao criar produto no Shopify.', details: errText }),
+        JSON.stringify({ error: 'Erro ao criar produto no Shopify. Tente novamente.' }),
         { status: createRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -138,15 +166,14 @@ serve(async (req) => {
       JSON.stringify({
         productId: product.id.toString(),
         title: product.title,
-        shopifyUrl: `https://${storeDomain}/admin/products/${product.id}`,
+        shopifyUrl: `https://${conn.store_domain}/admin/products/${product.id}`,
         status: product.status,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (e) {
-    console.error('shopify-publish error:', e);
     return new Response(
-      JSON.stringify({ error: e.message }),
+      JSON.stringify({ error: 'Erro interno. Tente novamente.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

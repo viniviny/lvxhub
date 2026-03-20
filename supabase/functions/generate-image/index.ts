@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,12 +12,44 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    // Authenticate user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Não autorizado.' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(
+      authHeader.replace('Bearer ', '')
+    );
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: 'Sessão inválida. Faça login novamente.' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { prompt } = await req.json();
+
+    if (!prompt || typeof prompt !== 'string' || prompt.length > 1000) {
+      return new Response(
+        JSON.stringify({ error: 'Prompt inválido (máx. 1000 caracteres).' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       return new Response(
-        JSON.stringify({ error: 'LOVABLE_API_KEY não configurada' }),
+        JSON.stringify({ error: 'Serviço de geração de imagem indisponível.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -29,35 +62,26 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash-image',
-        messages: [
-          {
-            role: 'user',
-            content: `Generate a high-quality product photo: ${prompt}`,
-          },
-        ],
+        messages: [{ role: 'user', content: `Generate a high-quality product photo: ${prompt}` }],
         modalities: ['image', 'text'],
       }),
     });
 
     if (!response.ok) {
-      const err = await response.text();
-      console.error('AI Gateway error:', response.status, err);
-
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: 'Limite de requisições atingido. Tente novamente em instantes.', status: 429 }),
+          JSON.stringify({ error: 'Limite de requisições atingido. Tente novamente em instantes.' }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: 'Créditos insuficientes. Adicione fundos no workspace.', status: 402 }),
+          JSON.stringify({ error: 'Créditos insuficientes.' }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-
       return new Response(
-        JSON.stringify({ error: 'Erro ao gerar imagem', status: response.status }),
+        JSON.stringify({ error: 'Erro ao gerar imagem. Tente novamente.' }),
         { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -66,7 +90,6 @@ serve(async (req) => {
     const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
     if (!imageUrl) {
-      console.error('No image in response:', JSON.stringify(data).slice(0, 500));
       return new Response(
         JSON.stringify({ error: 'Nenhuma imagem foi gerada. Tente outro prompt.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -78,9 +101,8 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (e) {
-    console.error('generate-image error:', e);
     return new Response(
-      JSON.stringify({ error: e.message }),
+      JSON.stringify({ error: 'Erro interno. Tente novamente.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
