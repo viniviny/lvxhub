@@ -612,6 +612,11 @@ function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCo
           <span className="absolute top-1.5 left-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-black/60 text-white">
             {label}
           </span>
+          {isDraggable && (
+            <span className="absolute top-1.5 right-1.5 text-white/60 hover:text-white cursor-grab active:cursor-grabbing transition-colors">
+              <GripVertical className="w-3.5 h-3.5" />
+            </span>
+          )}
           {hovered && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-2 animate-fade-in">
               <button onClick={() => setPreviewOpen(true)} className="p-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors" title="Ver imagem">
