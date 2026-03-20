@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,15 +13,27 @@ serve(async (req) => {
 
   try {
     const { title, description, price, sizes, collection, imageUrl } = await req.json();
-    const SHOPIFY_STORE = Deno.env.get('SHOPIFY_STORE');
-    const SHOPIFY_TOKEN = Deno.env.get('SHOPIFY_TOKEN');
 
-    if (!SHOPIFY_STORE || !SHOPIFY_TOKEN) {
+    // Read Shopify credentials from database
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data: conn, error: connError } = await supabase
+      .from('shopify_connections')
+      .select('store_domain, access_token')
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (connError || !conn) {
       return new Response(
-        JSON.stringify({ error: 'Credenciais Shopify não configuradas' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Nenhuma loja Shopify conectada. Conecte sua loja primeiro.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const SHOPIFY_STORE = conn.store_domain;
+    const SHOPIFY_TOKEN = conn.access_token;
 
     // Build variants from sizes
     const variants = sizes.map((size: string) => ({
