@@ -408,9 +408,20 @@ const Index = () => {
 
                   {/* ═══ STEP 2: DETAILS ═══ */}
                   {wizardStep === 2 && (
-                    <div className="grid grid-cols-[340px_1fr] gap-3">
-                      {/* LEFT — Product Details */}
-                      <div className="glass-card p-4 space-y-3">
+                    <div className="grid grid-cols-[260px_1fr] gap-3">
+                      {/* LEFT — SEO (secondary) */}
+                      <SEOCard
+                        title={seoTitle}
+                        description={seoDescription}
+                        storeDomain={activeStore?.domain || ''}
+                        productTitle={form.title}
+                        onTitleChange={setSeoTitle}
+                        onDescriptionChange={setSeoDescription}
+                        compact
+                      />
+
+                      {/* RIGHT — Product Details (main) */}
+                      <div className="glass-card p-5 space-y-4">
                         <h3 className="font-display font-semibold text-[13px] text-foreground">Detalhes do produto</h3>
 
                         <div>
@@ -424,7 +435,7 @@ const Index = () => {
                               onGenerated={content => setForm(prev => ({ ...prev, title: content.slice(0, 255) }))}
                             />
                           </div>
-                          <Input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value.slice(0, 255) }))} placeholder="Ex: Camiseta Urban Flow" className="bg-secondary border-border text-xs h-8" maxLength={255} />
+                          <Input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value.slice(0, 255) }))} placeholder="Ex: Camiseta Urban Flow" className="bg-secondary border-border text-[13px] h-10" maxLength={255} />
                         </div>
 
                         <div>
@@ -439,12 +450,12 @@ const Index = () => {
                               onGenerated={html => setForm(prev => ({ ...prev, description: html }))}
                             />
                           </div>
-                          <div>
+                          <div className="[&_.ProseMirror]:min-h-[160px]">
                             <RichTextEditor content={form.description} onChange={html => setForm(prev => ({ ...prev, description: html }))} placeholder="Descreva o produto..." />
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-2">
                           <div>
                             <Label className="text-xs font-medium text-muted-foreground">Coleção</Label>
                             <Select value={form.collection} onValueChange={v => setForm(prev => ({ ...prev, collection: v }))}>
@@ -453,21 +464,15 @@ const Index = () => {
                             </Select>
                           </div>
                           <div>
+                            <Label className="text-xs font-medium text-muted-foreground">Tipo de produto</Label>
+                            <Input value={form.tags?.split(',')[0] || ''} onChange={e => setForm(prev => ({ ...prev, tags: e.target.value }))} placeholder="Ex: Jaqueta" className="mt-1 bg-secondary border-border text-xs h-8" />
+                          </div>
+                          <div>
                             <Label className="text-xs font-medium text-muted-foreground">Tags</Label>
                             <Input value={form.tags} onChange={e => setForm(prev => ({ ...prev, tags: e.target.value }))} placeholder="streetwear, summer" className="mt-1 bg-secondary border-border text-xs h-8" />
                           </div>
                         </div>
                       </div>
-
-                      {/* RIGHT — SEO */}
-                      <SEOCard
-                        title={seoTitle}
-                        description={seoDescription}
-                        storeDomain={activeStore?.domain || ''}
-                        productTitle={form.title}
-                        onTitleChange={setSeoTitle}
-                        onDescriptionChange={setSeoDescription}
-                      />
                     </div>
                   )}
 

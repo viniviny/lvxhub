@@ -3,7 +3,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 
 interface SEOCardProps {
   title: string;
@@ -12,10 +13,12 @@ interface SEOCardProps {
   productTitle: string;
   onTitleChange: (v: string) => void;
   onDescriptionChange: (v: string) => void;
+  compact?: boolean;
 }
 
-export function SEOCard({ title, description, storeDomain, productTitle, onTitleChange, onDescriptionChange }: SEOCardProps) {
+export function SEOCard({ title, description, storeDomain, productTitle, onTitleChange, onDescriptionChange, compact }: SEOCardProps) {
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
 
   const seoTitle = title || productTitle || '';
   const seoDesc = description || '';
@@ -33,7 +36,6 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
   const handleOptimize = useCallback(async () => {
     if (!productTitle) return;
     setIsOptimizing(true);
-    // Auto-generate SEO from product title
     await new Promise(r => setTimeout(r, 800));
     const generated = productTitle.slice(0, 60);
     const generatedDesc = `Compre ${productTitle} com o melhor preço. Envio rápido e seguro. Confira!`.slice(0, 155);
@@ -41,6 +43,81 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
     onDescriptionChange(generatedDesc);
     setIsOptimizing(false);
   }, [productTitle, onTitleChange, onDescriptionChange]);
+
+  if (compact) {
+    return (
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <div className="rounded-lg border border-[hsl(215,20%,16%)] bg-[hsl(215,25%,10%)] h-full flex flex-col">
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/20 transition-colors rounded-t-lg">
+            <span className="text-[11px] font-semibold text-[hsl(215,10%,45%)] uppercase tracking-wider">SEO</span>
+            <div className="flex items-center gap-1.5">
+              {!isOpen && (
+                <span className="text-[10px] text-muted-foreground">
+                  {titleLen}/70 · {descLen}/160
+                </span>
+              )}
+              <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+            </div>
+          </CollapsibleTrigger>
+
+          <CollapsibleContent className="px-3 pb-3 space-y-2.5 flex-1">
+            <div>
+              <div className="flex items-center justify-between mb-0.5">
+                <Label className="text-[10px] font-medium text-[hsl(215,10%,45%)]">Título SEO</Label>
+                <span className={`text-[9px] font-medium ${titleColor}`}>{titleLen}/70 {titleStatus}</span>
+              </div>
+              <Input
+                value={seoTitle}
+                onChange={e => onTitleChange(e.target.value.slice(0, 100))}
+                placeholder="Título para buscadores"
+                className="bg-[hsl(215,25%,8%)] border-[hsl(215,20%,16%)] text-[11px] h-[34px]"
+                maxLength={100}
+              />
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-0.5">
+                <Label className="text-[10px] font-medium text-[hsl(215,10%,45%)]">Meta descrição</Label>
+                <span className={`text-[9px] font-medium ${descColor}`}>{descLen}/160 {descStatus}</span>
+              </div>
+              <Textarea
+                value={seoDesc}
+                onChange={e => onDescriptionChange(e.target.value.slice(0, 200))}
+                placeholder="Descrição para resultados de busca"
+                className="bg-[hsl(215,25%,8%)] border-[hsl(215,20%,16%)] resize-none text-[11px] min-h-0"
+                style={{ height: '48px' }}
+                maxLength={200}
+              />
+            </div>
+
+            <div>
+              <Label className="text-[9px] font-medium text-[hsl(215,10%,40%)] mb-0.5 block">Preview Google</Label>
+              <div className="bg-[hsl(215,30%,6%)] rounded-md p-2.5 border border-[hsl(215,20%,16%)] space-y-0.5">
+                <p className="text-[9px] text-muted-foreground truncate">
+                  {storeDomain || 'your-store.myshopify.com'} › products › {handle}
+                </p>
+                <p className="text-[12px] text-primary font-medium truncate leading-tight">
+                  {seoTitle || 'Título do produto'}
+                </p>
+                <p className="text-[10px] text-muted-foreground line-clamp-2 leading-snug">
+                  {seoDesc || 'Adicione uma meta descrição...'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={handleOptimize}
+              disabled={isOptimizing || !productTitle}
+              className="flex items-center justify-center gap-1.5 w-full h-[30px] rounded-md text-[10px] font-medium border border-border text-muted-foreground hover:border-primary/50 hover:text-[hsl(213,97%,67%)] disabled:opacity-40 transition-all"
+            >
+              {isOptimizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+              Otimizar SEO com IA
+            </button>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+    );
+  }
 
   return (
     <div className="glass-card p-4 space-y-3 h-full flex flex-col">
@@ -75,7 +152,6 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
         />
       </div>
 
-      {/* Google Preview */}
       <div className="flex-1">
         <Label className="text-[10px] font-medium text-muted-foreground mb-1 block">Prévia do Google</Label>
         <div className="bg-secondary rounded-md p-3 border border-border space-y-1">
