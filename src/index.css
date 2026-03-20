@@ -6,7 +6,6 @@
 
 @layer base {
   :root {
-    /* Oceano Profundo — Light mode fallback (same as dark for this palette) */
     --background: 216 28% 7%;
     --foreground: 210 29% 90%;
 
@@ -119,6 +118,13 @@
   }
 }
 
+/* ===== Skeleton Shimmer ===== */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ===== Button Glow Effects ===== */
 @layer utilities {
   .glass-card {
     @apply bg-card border border-border rounded-lg;
@@ -134,5 +140,66 @@
 
   .status-published {
     @apply bg-success/15 text-[hsl(var(--success))];
+  }
+
+  /* Card hover micro-interaction */
+  .card-hover {
+    @apply transition-all duration-200 ease-out;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    border-color: hsl(var(--border) / 0.8);
+  }
+
+  /* Input focus micro-interaction */
+  .input-focus {
+    @apply transition-all duration-150 ease-out;
+  }
+  .input-focus:focus {
+    border-color: hsl(var(--primary));
+    transform: scale(1.005);
+  }
+
+  /* Skeleton with shimmer */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--card)) 0%,
+      hsl(213 97% 61% / 0.06) 50%,
+      hsl(var(--card)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  /* Glassmorphism modal */
+  .glass-modal {
+    background: hsl(215 17% 11% / 0.75);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(213 97% 61% / 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border-radius: 16px;
+  }
+
+  .glass-overlay {
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  /* Stagger animation helpers */
+  .stagger-1 { animation-delay: 0ms; }
+  .stagger-2 { animation-delay: 50ms; }
+  .stagger-3 { animation-delay: 100ms; }
+  .stagger-4 { animation-delay: 150ms; }
+  .stagger-5 { animation-delay: 200ms; }
+}
+
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
