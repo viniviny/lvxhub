@@ -9,7 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
   Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
-  ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical
+  ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical,
+  Clock, Check
 } from 'lucide-react';
 
 export type AspectRatio = '1:1' | '4:5';
@@ -39,6 +40,7 @@ export interface GeneratedImage {
   angle: ImageAngle;
   url: string;
   isCover: boolean;
+  justCompleted?: boolean;
 }
 
 interface ImageGenerationStepProps {
@@ -64,6 +66,9 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const [generatedCount, setGeneratedCount] = useState(0);
   const [totalToGenerate, setTotalToGenerate] = useState(0);
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
+  const [genStartTime, setGenStartTime] = useState<number | null>(null);
+  const [angleStartTimes, setAngleStartTimes] = useState<Record<string, number>>({});
+  const [completedAngles, setCompletedAngles] = useState<Set<ImageAngle>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const refImageInputRef = useRef<HTMLInputElement>(null);
 
@@ -105,10 +110,14 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const generateImages = useCallback(async () => {
     if (!prompt.trim() || selectedAngles.size === 0) return;
     const angles = Array.from(selectedAngles);
+    const now = Date.now();
     setIsGenerating(true);
     setGeneratingAngles(new Set(angles));
     setGeneratedCount(0);
     setTotalToGenerate(angles.length);
+    setGenStartTime(now);
+    setCompletedAngles(new Set());
+    setAngleStartTimes(Object.fromEntries(angles.map(a => [a, now])));
     const results: GeneratedImage[] = [...images];
     const isCustomPrompt = promptMode === 'custom';
     const promises = angles.map(async (angle) => {
@@ -119,20 +128,32 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         if (error || data?.error) { toast.error(`Erro ao gerar imagem (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`); return null; }
         const imageUrl = data.imageUrl;
         const idx = results.findIndex(img => img.angle === angle);
-        const newImage: GeneratedImage = { angle, url: imageUrl, isCover: results.length === 0 && angle === angles[0] };
+        const newImage: GeneratedImage = { angle, url: imageUrl, isCover: results.length === 0 && angle === angles[0], justCompleted: true };
         if (idx >= 0) results[idx] = newImage; else results.push(newImage);
         setGeneratedCount(prev => prev + 1);
+        setCompletedAngles(prev => new Set(prev).add(angle));
         setGeneratingAngles(prev => { const next = new Set(prev); next.delete(angle); return next; });
+        // Update parent with partial results so slots show images as they arrive
+        const snapshot = [...results];
+        if (snapshot.length > 0 && !snapshot.some(r => r.isCover)) snapshot[0].isCover = true;
+        onImagesChange(snapshot);
         return newImage;
       } catch { toast.error(`Erro ao gerar imagem (${angle})`); return null; }
     });
     await Promise.all(promises);
     if (results.length > 0 && !results.some(r => r.isCover)) results[0].isCover = true;
-    onImagesChange(results);
+    onImagesChange(results.map(r => ({ ...r, justCompleted: false })));
     setIsGenerating(false);
     setGeneratingAngles(new Set());
-    const successCount = results.length - images.length;
-    if (successCount > 0) toast.success(`${successCount} imagens geradas com sucesso ✓`);
+    setGenStartTime(null);
+    setAngleStartTimes({});
+    const elapsed = ((Date.now() - now) / 1000).toFixed(0);
+    const successCount = results.filter(r => r.url).length;
+    if (successCount > 0) toast.success(`${successCount} imagens geradas em ${elapsed}s ✓`);
+    // Clear justCompleted flags after animation
+    setTimeout(() => {
+      setCompletedAngles(new Set());
+    }, 2500);
   }, [prompt, promptMode, selectedAngles, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
 
   const regenerateAngle = useCallback(async (angle: ImageAngle) => {
@@ -291,9 +312,18 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           </div>
         )}
 
+        {/* Estimated time */}
+        {!isGenerating && selectedCount > 0 && (
+          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <Clock className="w-3 h-3" />
+            <span>~30s por imagem · {selectedCount} {selectedCount === 1 ? 'imagem' : 'imagens'} = ~{selectedCount > 1 ? '30' : '30'}s</span>
+          </div>
+        )}
+        {isGenerating && genStartTime && <GenerationCountdown startTime={genStartTime} totalImages={totalToGenerate} completedCount={generatedCount} />}
+
         {/* Generate button */}
         <Button onClick={isGenerating && images.length > 0 ? undefined : generateImages} disabled={isGenerating || !prompt.trim() || selectedAngles.size === 0} className="w-full font-display font-semibold h-9 text-xs">
-          {isGenerating ? (<><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Gerando... {generatedCount}/{totalToGenerate}</>) : images.length > 0 ? (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Regenerar tudo</>) : (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Gerar {selectedCount} {selectedCount === 1 ? 'imagem' : 'imagens'}</>)}
+          {isGenerating ? (<><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Gerando {generatedCount}/{totalToGenerate}...</>) : images.length > 0 ? (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Regenerar tudo</>) : (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Gerar {selectedCount} {selectedCount === 1 ? 'imagem' : 'imagens'}</>)}
         </Button>
 
         {/* Counter */}
@@ -328,6 +358,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
             images={images}
             allSlots={allSlots}
             generatingAngles={generatingAngles}
+            completedAngles={completedAngles}
+            angleStartTimes={angleStartTimes}
             onImagesChange={onImagesChange}
             onRegenerate={regenerateAngle}
             onRemove={removeImage}
@@ -363,13 +395,15 @@ interface DraggableGalleryProps {
   images: GeneratedImage[];
   allSlots: ImageAngle[];
   generatingAngles: Set<ImageAngle>;
+  completedAngles: Set<ImageAngle>;
+  angleStartTimes: Record<string, number>;
   onImagesChange: (images: GeneratedImage[]) => void;
   onRegenerate: (angle: ImageAngle) => void;
   onRemove: (angle: ImageAngle) => void;
   onSetCover: (angle: ImageAngle) => void;
 }
 
-function DraggableGallery({ images, allSlots, generatingAngles, onImagesChange, onRegenerate, onRemove, onSetCover }: DraggableGalleryProps) {
+function DraggableGallery({ images, allSlots, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover }: DraggableGalleryProps) {
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
@@ -435,6 +469,8 @@ function DraggableGallery({ images, allSlots, generatingAngles, onImagesChange, 
               angle={mainSlots[0].angle}
               image={'empty' in mainSlots[0] ? null : (mainSlots[0] as GeneratedImage)}
               isGenerating={generatingAngles.has(mainSlots[0].angle)}
+              justCompleted={completedAngles.has(mainSlots[0].angle)}
+              startTime={angleStartTimes[mainSlots[0].angle]}
               onRegenerate={() => onRegenerate(mainSlots[0].angle)}
               onRemove={() => onRemove(mainSlots[0].angle)}
               onSetCover={() => onSetCover(mainSlots[0].angle)}
@@ -462,7 +498,7 @@ function DraggableGallery({ images, allSlots, generatingAngles, onImagesChange, 
                 onDrop={e => handleDrop(e, idx)}
                 onDragEnd={handleDragEnd}
               >
-                <ImageSlot label={label} angle={angle} image={image} isGenerating={generatingAngles.has(angle)} onRegenerate={() => onRegenerate(angle)} onRemove={() => onRemove(angle)} onSetCover={() => onSetCover(angle)} isCover={false} draggable={!!image} />
+                <ImageSlot label={label} angle={angle} image={image} isGenerating={generatingAngles.has(angle)} justCompleted={completedAngles.has(angle)} startTime={angleStartTimes[angle]} onRegenerate={() => onRegenerate(angle)} onRemove={() => onRemove(angle)} onSetCover={() => onSetCover(angle)} isCover={false} draggable={!!image} />
               </div>
             );
           })}
@@ -479,7 +515,7 @@ function DraggableGallery({ images, allSlots, generatingAngles, onImagesChange, 
             const label = ANGLE_OPTIONS.find(a => a.id === angle)?.label || angle;
             return (
               <div key={`extra-${angle}`}>
-                <ImageSlot label={label} angle={angle} image={image} isGenerating={generatingAngles.has(angle)} onRegenerate={() => onRegenerate(angle)} onRemove={() => onRemove(angle)} onSetCover={() => onSetCover(angle)} isCover={false} draggable={!!image} />
+                <ImageSlot label={label} angle={angle} image={image} isGenerating={generatingAngles.has(angle)} justCompleted={completedAngles.has(angle)} startTime={angleStartTimes[angle]} onRegenerate={() => onRegenerate(angle)} onRemove={() => onRemove(angle)} onSetCover={() => onSetCover(angle)} isCover={false} draggable={!!image} />
               </div>
             );
           })}
@@ -489,12 +525,53 @@ function DraggableGallery({ images, allSlots, generatingAngles, onImagesChange, 
   );
 }
 
+/* ─── Generation Countdown ─── */
+function GenerationCountdown({ startTime, totalImages, completedCount }: { startTime: number; totalImages: number; completedCount: number }) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - startTime) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [startTime]);
+  const remaining = Math.max(0, 30 - elapsed);
+  return (
+    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+      <Clock className="w-3 h-3 animate-pulse" />
+      <span>
+        {remaining > 0 ? `Tempo estimado: ${remaining}s` : 'Finalizando...'} · {completedCount}/{totalImages} prontas
+      </span>
+    </div>
+  );
+}
+
+/* ─── Slot Elapsed Timer ─── */
+function SlotTimer({ startTime }: { startTime: number }) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - startTime) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [startTime]);
+  const statusText = elapsed < 10 ? 'Gerando...' : elapsed < 20 ? 'Processando...' : 'Finalizando...';
+  const progress = Math.min(90, (elapsed / 30) * 90);
+  return (
+    <>
+      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+      <span className="text-[10px] text-muted-foreground">{statusText}</span>
+      <span className="text-[9px] text-muted-foreground/60">{elapsed}s</span>
+      <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-border/30 overflow-hidden rounded-b-lg">
+        <div className="h-full bg-primary transition-all duration-1000 ease-linear" style={{ width: `${progress}%` }} />
+      </div>
+    </>
+  );
+}
+
 /* ─── Image Slot ─── */
 interface ImageSlotProps {
   label?: string;
   angle?: ImageAngle;
   image: GeneratedImage | null;
   isGenerating: boolean;
+  justCompleted?: boolean;
+  startTime?: number;
   onRegenerate: () => void;
   onRemove: () => void;
   onSetCover: () => void;
@@ -503,15 +580,23 @@ interface ImageSlotProps {
   draggable?: boolean;
 }
 
-function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCover, isCover, tall, draggable: isDraggable }: ImageSlotProps) {
+function ImageSlot({ label, image, isGenerating, justCompleted, startTime, onRegenerate, onRemove, onSetCover, isCover, tall, draggable: isDraggable }: ImageSlotProps) {
   const [hovered, setHovered] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
   if (isGenerating) {
     return (
-      <div className={`rounded-lg border border-primary/60 bg-card flex flex-col items-center justify-center gap-1.5 animate-pulse ${tall ? 'h-full' : 'aspect-square'}`}>
-        <Loader2 className="w-4 h-4 animate-spin text-primary" />
-        <span className="text-[10px] text-muted-foreground">Gerando...</span>
+      <div
+        className={`relative rounded-lg border border-primary/60 bg-card flex flex-col items-center justify-center gap-1.5 ${tall ? 'h-full' : 'aspect-square'}`}
+        style={{ animation: 'pulse-border 1.5s infinite' }}
+      >
+        {startTime ? <SlotTimer startTime={startTime} /> : (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            <span className="text-[10px] text-muted-foreground">Gerando...</span>
+          </>
+        )}
+        {label && <span className="absolute top-1 left-1 text-[9px] font-medium px-1.5 py-px rounded bg-black/40 text-white/70">{label}</span>}
       </div>
     );
   }
@@ -520,16 +605,27 @@ function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCo
     return (
       <>
         <div
-          className={`relative rounded-lg overflow-hidden bg-secondary group ${tall ? 'h-full' : 'aspect-square'}`}
+          className={`relative rounded-lg overflow-hidden bg-secondary group ${tall ? 'h-full' : 'aspect-square'} ${justCompleted ? 'ring-2 ring-[hsl(var(--success))]' : ''}`}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
+          style={justCompleted ? { animation: 'fade-in 0.3s ease-out' } : undefined}
         >
-          <img src={image.url} alt={label} className="w-full h-full object-cover" />
+          <img src={image.url} alt={label} className="w-full h-full object-cover" style={justCompleted ? { animation: 'fade-in 0.3s ease-out' } : undefined} />
           <span className="absolute top-1 left-1 text-[9px] font-medium px-1.5 py-px rounded bg-black/60 text-white">{label}</span>
-          {isDraggable && (
+          {justCompleted && (
+            <span className="absolute top-1 right-1 flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-px rounded bg-[hsl(var(--success))]/80 text-white" style={{ animation: 'scale-in 0.2s ease-out' }}>
+              <Check className="w-2.5 h-2.5" /> Pronta
+            </span>
+          )}
+          {isDraggable && !justCompleted && (
             <span className="absolute top-1 right-1 text-white/60 hover:text-white cursor-grab active:cursor-grabbing transition-colors">
               <GripVertical className="w-3 h-3" />
             </span>
+          )}
+          {justCompleted && (
+            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-border/30 overflow-hidden rounded-b-lg">
+              <div className="h-full bg-[hsl(var(--success))] w-full transition-all duration-300" />
+            </div>
           )}
           {hovered && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-1.5 animate-fade-in">
@@ -542,7 +638,7 @@ function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCo
         </div>
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
           <DialogContent className="max-w-3xl p-2 bg-background border-border">
-            <img src={image.url} alt={label} className="w-full h-auto rounded-lg object-contain max-h-[80vh]" />
+            <img src={image.url} alt={label} className="w-full h-full rounded-lg object-contain max-h-[80vh]" />
           </DialogContent>
         </Dialog>
       </>
