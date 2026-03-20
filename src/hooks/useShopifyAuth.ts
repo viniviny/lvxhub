@@ -17,6 +17,7 @@ export interface ShopifyAuthState {
 
 const SETTINGS_KEY = 'shopify_settings';
 const TOKEN_KEY = 'shopify_access_token';
+const CONNECTED_KEY = 'shopify_connected';
 const COUNT_KEY = 'shopify_published_count';
 
 function loadSettings(): ShopifySettings | null {
