@@ -210,6 +210,7 @@ export function useStoreManager() {
     disconnectStore,
     removeStore,
     setDefault,
+    updateStoreMarket,
     startOAuth,
     incrementPublished,
   };
