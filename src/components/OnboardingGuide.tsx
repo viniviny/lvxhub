@@ -109,18 +109,10 @@ export function OnboardingGuide({ open, onOpenChange }: OnboardingGuideProps) {
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else onOpenChange(v); }}>
       <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0 overflow-hidden bg-background border-border">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-2">
-          <span className="font-display text-sm font-semibold text-muted-foreground">
-            {currentStep + 1} de {steps.length}
-          </span>
-        </div>
-        <button
-          onClick={handleSkip}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
-        >
-          Pular tutorial
-        </button>
+      <div className="flex items-center justify-between px-6 pt-5 pb-2">
+        <span className="font-display text-sm font-semibold text-muted-foreground">
+          {currentStep + 1} de {steps.length}
+        </span>
       </div>
 
       {/* Progress */}
