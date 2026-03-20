@@ -5,6 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Loader2, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface SEOCardProps {
   title: string;
