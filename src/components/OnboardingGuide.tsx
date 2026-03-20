@@ -1,12 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   ArrowRight, ArrowLeft, Sparkles, AppWindow, Shield, KeyRound, PlugZap,
-  Image, FileText, ShoppingBag, CheckCircle2
+  Image, FileText, ShoppingBag, CheckCircle2, X
 } from 'lucide-react';
-
-const ONBOARDING_KEY = 'onboarding_done';
 
 interface Step {
   icon: React.ReactNode;
@@ -72,24 +71,12 @@ const steps: Step[] = [
   },
 ];
 
-export function useOnboarding() {
-  const [showOnboarding, setShowOnboarding] = useState(
-    () => localStorage.getItem(ONBOARDING_KEY) !== 'true'
-  );
-
-  const completeOnboarding = useCallback(() => {
-    localStorage.setItem(ONBOARDING_KEY, 'true');
-    setShowOnboarding(false);
-  }, []);
-
-  return { showOnboarding, completeOnboarding };
-}
-
 interface OnboardingGuideProps {
-  onComplete: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function OnboardingGuide({ onComplete }: OnboardingGuideProps) {
+export function OnboardingGuide({ open, onOpenChange }: OnboardingGuideProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
 
@@ -98,9 +85,14 @@ export function OnboardingGuide({ onComplete }: OnboardingGuideProps) {
   const isLast = currentStep === steps.length - 1;
   const progress = ((currentStep + 1) / steps.length) * 100;
 
+  const handleClose = () => {
+    setCurrentStep(0);
+    onOpenChange(false);
+  };
+
   const goNext = () => {
     if (isLast) {
-      onComplete();
+      handleClose();
       return;
     }
     setDirection('next');
@@ -113,25 +105,14 @@ export function OnboardingGuide({ onComplete }: OnboardingGuideProps) {
     setCurrentStep(prev => prev - 1);
   };
 
-  const handleSkip = () => {
-    onComplete();
-  };
-
   return (
-    <div className="fixed inset-0 z-50 bg-background flex flex-col">
+    <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); else onOpenChange(v); }}>
+      <DialogContent className="max-w-2xl max-h-[90vh] p-0 gap-0 overflow-hidden bg-background border-border">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-2">
-          <span className="font-display text-sm font-semibold text-muted-foreground">
-            {currentStep + 1} de {steps.length}
-          </span>
-        </div>
-        <button
-          onClick={handleSkip}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
-        >
-          Pular tutorial
-        </button>
+      <div className="flex items-center justify-between px-6 pt-5 pb-2">
+        <span className="font-display text-sm font-semibold text-muted-foreground">
+          {currentStep + 1} de {steps.length}
+        </span>
       </div>
 
       {/* Progress */}
@@ -261,7 +242,7 @@ export function OnboardingGuide({ onComplete }: OnboardingGuideProps) {
           >
             {isLast ? (
               <>
-                Começar configuração
+                Fechar
                 <ArrowRight className="w-4 h-4 ml-1.5" />
               </>
             ) : (
@@ -273,6 +254,7 @@ export function OnboardingGuide({ onComplete }: OnboardingGuideProps) {
           </Button>
         </div>
       </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

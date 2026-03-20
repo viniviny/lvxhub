@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { ProductFormData, ProductSize, AVAILABLE_SIZES, COLLECTIONS } from '@/types/product';
 import { useShopifyAuth } from '@/hooks/useShopifyAuth';
 import { SettingsDialog } from '@/components/SettingsDialog';
-import { OnboardingGuide, useOnboarding } from '@/components/OnboardingGuide';
+import { OnboardingGuide } from '@/components/OnboardingGuide';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
   Settings, Send, Loader2, Upload, CheckCircle2, ExternalLink,
-  Package, XCircle, Zap
+  Package, XCircle, Zap, HelpCircle
 } from 'lucide-react';
 
 const initialForm: ProductFormData = {
@@ -31,7 +31,7 @@ const Index = () => {
     publishedCount, saveSettings, startOAuth, clearToken, incrementPublished,
   } = useShopifyAuth();
 
-  const { showOnboarding, completeOnboarding } = useOnboarding();
+  const [showHelp, setShowHelp] = useState(false);
 
   const [showSettings, setShowSettings] = useState(false);
   const [form, setForm] = useState<ProductFormData>(initialForm);
@@ -136,16 +136,6 @@ const Index = () => {
   // Show setup screen if not configured
   const showSetup = !hasSettings;
 
-  if (showOnboarding) {
-    return (
-      <OnboardingGuide
-        onComplete={() => {
-          completeOnboarding();
-          setShowSettings(true);
-        }}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -183,6 +173,14 @@ const Index = () => {
             <Button
               variant="ghost"
               size="icon"
+              onClick={() => setShowHelp(true)}
+              title="Tutorial"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setShowSettings(true)}
               title="Configurações"
             >
@@ -200,6 +198,8 @@ const Index = () => {
         onConnect={startOAuth}
         isAuthenticated={isAuthenticated}
       />
+
+      <OnboardingGuide open={showHelp} onOpenChange={setShowHelp} />
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         {/* Setup Screen */}
