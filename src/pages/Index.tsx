@@ -3,7 +3,7 @@ import { ImageGenerationStep, GeneratedImage } from '@/components/ImageGeneratio
 import { ProductFormData, ProductSize, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
 import { ProductHistory } from '@/components/ProductHistory';
 import { useStoreContext } from '@/hooks/useStoreContext';
-import { type MarketConfig } from '@/hooks/useStoreManager';
+import type { MarketConfig, ShopifyStore } from '@/hooks/useStoreManager';
 import { useRegionGroups } from '@/hooks/useRegionGroups';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { SettingsDialog } from '@/components/SettingsDialog';
