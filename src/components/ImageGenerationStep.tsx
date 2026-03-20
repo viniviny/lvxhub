@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, DragEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
   Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
-  ArrowRight, ImageIcon, X, Info, Eye
+  ArrowRight, ImageIcon, X, Info, Eye, GripVertical
 } from 'lucide-react';
 
 export type ImageAngle =
@@ -412,45 +412,22 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
           <h3 className="font-display font-semibold text-foreground text-base">
             Imagens do produto
           </h3>
-          <span className="text-xs text-muted-foreground">{images.length} imagens</span>
+          <span className="text-xs text-muted-foreground">
+            {images.length} imagens
+            {images.length > 1 && ' · arraste para reorganizar'}
+          </span>
         </div>
 
-        {/* Gallery grid */}
-        <div className="grid grid-cols-3 gap-2 auto-rows-[140px]">
-          {/* Cover slot */}
-          <div className="row-span-2 col-span-1">
-            <ImageSlot
-              label="Capa"
-              angle={coverImage?.angle || 'frente'}
-              image={coverImage || null}
-              isGenerating={generatingAngles.has(coverImage?.angle || 'frente')}
-              onRegenerate={() => coverImage && regenerateAngle(coverImage.angle)}
-              onRemove={() => coverImage && removeImage(coverImage.angle)}
-              onSetCover={() => { }}
-              isCover
-              tall
-            />
-          </div>
-          {/* Other slots */}
-          {[0, 1, 2, 3].map(i => {
-            const angle = otherSlots[i];
-            const img = angle ? images.find(im => im.angle === angle) : null;
-            const label = angle ? ANGLE_OPTIONS.find(a => a.id === angle)?.label || angle : undefined;
-            return (
-              <ImageSlot
-                key={i}
-                label={label}
-                angle={angle}
-                image={img || null}
-                isGenerating={!!angle && generatingAngles.has(angle)}
-                onRegenerate={() => angle && regenerateAngle(angle)}
-                onRemove={() => angle && removeImage(angle)}
-                onSetCover={() => angle && setCover(angle)}
-                isCover={false}
-              />
-            );
-          })}
-        </div>
+        {/* Gallery grid with drag-and-drop */}
+        <DraggableGallery
+          images={images}
+          allSlots={allSlots}
+          generatingAngles={generatingAngles}
+          onImagesChange={onImagesChange}
+          onRegenerate={regenerateAngle}
+          onRemove={removeImage}
+          onSetCover={setCover}
+        />
 
         {/* Bottom navigation */}
         <div className="flex items-center justify-between mt-6 pt-4 border-t border-[hsl(var(--sidebar-border))]">
@@ -481,6 +458,121 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
   );
 }
 
+/* ─── Draggable Gallery ─── */
+interface DraggableGalleryProps {
+  images: GeneratedImage[];
+  allSlots: ImageAngle[];
+  generatingAngles: Set<ImageAngle>;
+  onImagesChange: (images: GeneratedImage[]) => void;
+  onRegenerate: (angle: ImageAngle) => void;
+  onRemove: (angle: ImageAngle) => void;
+  onSetCover: (angle: ImageAngle) => void;
+}
+
+function DraggableGallery({
+  images, allSlots, generatingAngles, onImagesChange, onRegenerate, onRemove, onSetCover,
+}: DraggableGalleryProps) {
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  // Build display list: images first (in order), then empty slots
+  const imageAngles = images.map(i => i.angle);
+  const emptySlots = allSlots.filter(a => !imageAngles.includes(a));
+  const displayList: (GeneratedImage | { angle: ImageAngle; empty: true })[] = [
+    ...images,
+    ...emptySlots.map(a => ({ angle: a, empty: true as const })),
+  ];
+  // Cap at 5 slots
+  const slots = displayList.slice(0, 5);
+
+  const handleDragStart = (e: DragEvent<HTMLDivElement>, idx: number) => {
+    const item = slots[idx];
+    if ('empty' in item) { e.preventDefault(); return; }
+    setDragIdx(idx);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>, idx: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIdx !== idx) setDragOverIdx(idx);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>, dropIdx: number) => {
+    e.preventDefault();
+    if (dragIdx === null || dragIdx === dropIdx) { setDragIdx(null); setDragOverIdx(null); return; }
+
+    // Only reorder actual images
+    const reordered = [...images];
+    // Map display indices to image indices
+    const fromImg = slots[dragIdx];
+    const toImg = slots[dropIdx];
+    if (!fromImg || 'empty' in fromImg) { setDragIdx(null); setDragOverIdx(null); return; }
+
+    const fromImageIdx = reordered.findIndex(i => i.angle === fromImg.angle);
+    if (fromImageIdx < 0) { setDragIdx(null); setDragOverIdx(null); return; }
+
+    // If dropping onto an empty slot, move to end
+    let toImageIdx: number;
+    if ('empty' in toImg) {
+      toImageIdx = reordered.length - 1;
+    } else {
+      toImageIdx = reordered.findIndex(i => i.angle === toImg.angle);
+    }
+
+    const [moved] = reordered.splice(fromImageIdx, 1);
+    reordered.splice(toImageIdx, 0, moved);
+
+    // First image is always cover
+    const updated = reordered.map((img, i) => ({ ...img, isCover: i === 0 }));
+    onImagesChange(updated);
+
+    setDragIdx(null);
+    setDragOverIdx(null);
+  };
+
+  const handleDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
+
+  return (
+    <div className="grid grid-cols-3 gap-2 auto-rows-[140px]">
+      {slots.map((slot, idx) => {
+        const isFirst = idx === 0;
+        const angle = slot.angle;
+        const isImage = !('empty' in slot);
+        const image = isImage ? (slot as GeneratedImage) : null;
+        const label = isFirst ? 'Capa' : (ANGLE_OPTIONS.find(a => a.id === angle)?.label || angle);
+        const isDragging = dragIdx === idx;
+        const isDragOver = dragOverIdx === idx && dragIdx !== idx;
+
+        return (
+          <div
+            key={`${angle}-${idx}`}
+            className={`${isFirst ? 'row-span-2 col-span-1' : ''} ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'ring-2 ring-primary rounded-lg' : ''} transition-all duration-150`}
+            draggable={!!image}
+            onDragStart={e => handleDragStart(e, idx)}
+            onDragOver={e => handleDragOver(e, idx)}
+            onDrop={e => handleDrop(e, idx)}
+            onDragEnd={handleDragEnd}
+          >
+            <ImageSlot
+              label={label}
+              angle={angle}
+              image={image}
+              isGenerating={generatingAngles.has(angle)}
+              onRegenerate={() => onRegenerate(angle)}
+              onRemove={() => onRemove(angle)}
+              onSetCover={() => onSetCover(angle)}
+              isCover={isFirst}
+              tall={isFirst}
+              draggable={!!image}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ─── Image Slot sub-component ─── */
 interface ImageSlotProps {
   label?: string;
@@ -492,9 +584,10 @@ interface ImageSlotProps {
   onSetCover: () => void;
   isCover: boolean;
   tall?: boolean;
+  draggable?: boolean;
 }
 
-function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCover, isCover, tall }: ImageSlotProps) {
+function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCover, isCover, tall, draggable: isDraggable }: ImageSlotProps) {
   const [hovered, setHovered] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
@@ -519,6 +612,11 @@ function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCo
           <span className="absolute top-1.5 left-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-black/60 text-white">
             {label}
           </span>
+          {isDraggable && (
+            <span className="absolute top-1.5 right-1.5 text-white/60 hover:text-white cursor-grab active:cursor-grabbing transition-colors">
+              <GripVertical className="w-3.5 h-3.5" />
+            </span>
+          )}
           {hovered && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-2 animate-fade-in">
               <button onClick={() => setPreviewOpen(true)} className="p-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors" title="Ver imagem">
