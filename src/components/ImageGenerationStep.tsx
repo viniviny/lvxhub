@@ -469,6 +469,8 @@ function DraggableGallery({ images, allSlots, generatingAngles, completedAngles,
               angle={mainSlots[0].angle}
               image={'empty' in mainSlots[0] ? null : (mainSlots[0] as GeneratedImage)}
               isGenerating={generatingAngles.has(mainSlots[0].angle)}
+              justCompleted={completedAngles.has(mainSlots[0].angle)}
+              startTime={angleStartTimes[mainSlots[0].angle]}
               onRegenerate={() => onRegenerate(mainSlots[0].angle)}
               onRemove={() => onRemove(mainSlots[0].angle)}
               onSetCover={() => onSetCover(mainSlots[0].angle)}
