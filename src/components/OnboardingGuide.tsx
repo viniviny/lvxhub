@@ -254,6 +254,8 @@ export function OnboardingGuide({ open, onOpenChange }: OnboardingGuideProps) {
           </Button>
         </div>
       </div>
-    </div>
+      </div>
+      </DialogContent>
+    </Dialog>
   );
 }
