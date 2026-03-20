@@ -651,7 +651,6 @@ const Index = () => {
             </div>
           </main>
         </div>
-      </div>
     </div>
   );
 };
