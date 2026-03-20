@@ -473,39 +473,34 @@ const Index = () => {
 
                   {/* STEP 4: Review */}
                   {wizardStep === 4 && (
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Preview */}
-                        <div className="glass-card p-6">
-                          <h3 className="font-display font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Pré-visualização</h3>
-                          {imagePreview && <img src={imagePreview} alt="Preview" className="w-full rounded-lg border border-border object-contain max-h-48 mb-4" />}
-                          <h4 className="text-lg font-bold text-foreground">{form.title || 'Sem título'}</h4>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="text-xl font-bold text-primary">{currencySymbol}{form.price.toFixed(2)}</span>
-                            {form.compareAtPrice && form.compareAtPrice > form.price && (
-                              <span className="text-sm line-through text-muted-foreground">{currencySymbol}{form.compareAtPrice.toFixed(2)}</span>
-                            )}
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-4">
+                        {/* LEFT — Checklist + Publish */}
+                        <div className="space-y-4">
+                          <div className="glass-card p-5">
+                            <ReviewChecklist form={form} hasImage={!!imageFile || generatedImages.some(i => i.url)} />
                           </div>
-                          {form.sizes.length > 0 && (
-                            <div className="flex gap-1.5 mt-3">
-                              {form.sizes.map(s => <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>)}
-                            </div>
-                          )}
-                          {form.collection && <Badge variant="outline" className="mt-3">{form.collection}</Badge>}
+                          <div className="glass-card p-5 space-y-3">
+                            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Publicação</h4>
+                            {form.selectedChannels.length > 0 && (
+                              <p className="text-xs text-muted-foreground">Canais: {form.selectedChannels.length} selecionado{form.selectedChannels.length !== 1 ? 's' : ''}</p>
+                            )}
+                            <Button onClick={handlePublish} disabled={!canPublish} size="lg" className="w-full font-display font-semibold">
+                              <Zap className="w-4 h-4 mr-2" />
+                              Publicar agora
+                            </Button>
+                          </div>
+                          <Button variant="outline" onClick={() => setWizardStep(3)} className="w-full"><ArrowLeft className="w-4 h-4 mr-1" />Voltar</Button>
                         </div>
 
-                        {/* Checklist */}
-                        <div className="glass-card p-6">
-                          <ReviewChecklist form={form} hasImage={!!imageFile} />
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between">
-                        <Button variant="outline" onClick={() => setWizardStep(3)}><ArrowLeft className="w-4 h-4 mr-1" />Voltar</Button>
-                        <Button onClick={handlePublish} disabled={!canPublish} size="lg" className="font-display font-semibold">
-                          <Send className="w-4 h-4 mr-2" />
-                          {stores.filter(s => s.connected).length > 1 ? 'Publicar...' : `Publicar em ${activeStore?.marketConfig?.marketName || activeStore?.domain}`}
-                        </Button>
+                        {/* RIGHT — Shopify Preview */}
+                        <ShopifyProductPreview
+                          form={form}
+                          images={generatedImages}
+                          imagePreview={imagePreview}
+                          storeDomain={activeStore?.domain || ''}
+                          currencySymbol={currencySymbol}
+                        />
                       </div>
                     </div>
                   )}
