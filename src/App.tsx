@@ -48,6 +48,14 @@ function AnimatedRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/prompts"
+          element={
+            <ProtectedRoute>
+              <PageTransition><Prompts /></PageTransition>
+            </ProtectedRoute>
+          }
+        />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
