@@ -93,7 +93,7 @@ serve(async (req) => {
       product: {
         title: title || 'Produto sem título',
         body_html: description ? `<p>${description}</p>` : '',
-        vendor: 'Fashion Publisher',
+        vendor: 'Publify',
         product_type: collection || '',
         status: 'draft',
         options: [{ name: 'Tamanho', values: sizes && sizes.length > 0 ? sizes : ['Único'] }],

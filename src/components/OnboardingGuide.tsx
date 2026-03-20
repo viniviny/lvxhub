@@ -49,7 +49,7 @@ const steps: Step[] = [
   {
     icon: <KeyRound className="w-10 h-10" />,
     title: 'Passo 3 — Copie as credenciais',
-    text: 'Você vai precisar do Client ID e Client Secret do app para conectar ao Fashion Publisher.',
+    text: 'Você vai precisar do Client ID e Client Secret do app para conectar ao Publify.',
     instructions: [
       'No menu lateral clique em "Configurações"',
       'Copie o "ID do cliente"',
