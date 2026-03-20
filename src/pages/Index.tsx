@@ -11,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
-  Settings, Send, Loader2, Upload, ImageIcon, CheckCircle2, ExternalLink,
-  LogOut, Package, XCircle
+  Settings, Send, Loader2, Upload, CheckCircle2, ExternalLink,
+  Package, XCircle
 } from 'lucide-react';
 
 const initialForm: ProductFormData = {
