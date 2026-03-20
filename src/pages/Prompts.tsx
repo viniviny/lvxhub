@@ -99,7 +99,7 @@ export default function PromptsPage() {
   if (editing) {
     return (
       <div className="min-h-screen bg-background flex">
-        <DashboardSidebar stores={stores} activeStoreId={activeStoreId} onSelectStore={setActiveStore} onAddStore={() => {}} currentView={sidebarView} onViewChange={setSidebarView} />
+        <DashboardSidebar stores={stores} activeStoreId={activeStoreId} onSelectStore={setActiveStore} onAddStore={() => {}} currentView={'prompts' as DashboardView} onViewChange={handleSidebarNav} />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-[52px] flex items-center justify-between px-5 border-b border-border bg-card/50">
             <button onClick={() => setEditing(null)} className="flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground transition-colors">
