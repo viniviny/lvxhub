@@ -412,45 +412,22 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
           <h3 className="font-display font-semibold text-foreground text-base">
             Imagens do produto
           </h3>
-          <span className="text-xs text-muted-foreground">{images.length} imagens</span>
+          <span className="text-xs text-muted-foreground">
+            {images.length} imagens
+            {images.length > 1 && ' · arraste para reorganizar'}
+          </span>
         </div>
 
-        {/* Gallery grid */}
-        <div className="grid grid-cols-3 gap-2 auto-rows-[140px]">
-          {/* Cover slot */}
-          <div className="row-span-2 col-span-1">
-            <ImageSlot
-              label="Capa"
-              angle={coverImage?.angle || 'frente'}
-              image={coverImage || null}
-              isGenerating={generatingAngles.has(coverImage?.angle || 'frente')}
-              onRegenerate={() => coverImage && regenerateAngle(coverImage.angle)}
-              onRemove={() => coverImage && removeImage(coverImage.angle)}
-              onSetCover={() => { }}
-              isCover
-              tall
-            />
-          </div>
-          {/* Other slots */}
-          {[0, 1, 2, 3].map(i => {
-            const angle = otherSlots[i];
-            const img = angle ? images.find(im => im.angle === angle) : null;
-            const label = angle ? ANGLE_OPTIONS.find(a => a.id === angle)?.label || angle : undefined;
-            return (
-              <ImageSlot
-                key={i}
-                label={label}
-                angle={angle}
-                image={img || null}
-                isGenerating={!!angle && generatingAngles.has(angle)}
-                onRegenerate={() => angle && regenerateAngle(angle)}
-                onRemove={() => angle && removeImage(angle)}
-                onSetCover={() => angle && setCover(angle)}
-                isCover={false}
-              />
-            );
-          })}
-        </div>
+        {/* Gallery grid with drag-and-drop */}
+        <DraggableGallery
+          images={images}
+          allSlots={allSlots}
+          generatingAngles={generatingAngles}
+          onImagesChange={onImagesChange}
+          onRegenerate={regenerateAngle}
+          onRemove={removeImage}
+          onSetCover={setCover}
+        />
 
         {/* Bottom navigation */}
         <div className="flex items-center justify-between mt-6 pt-4 border-t border-[hsl(var(--sidebar-border))]">
