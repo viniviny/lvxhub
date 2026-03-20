@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import {
   Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
   ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical,
-  Clock, Check, ChevronLeft, ChevronRight, Camera, BookOpen
+  Clock, Check, ChevronLeft, ChevronRight, Camera, BookOpen, Search
 } from 'lucide-react';
 
 export type AspectRatio = '1:1' | '4:5';
@@ -58,8 +58,11 @@ type PromptMode = 'simple' | 'custom';
 
 export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange }: ImageGenerationStepProps) {
   const navigate = useNavigate();
-  const { recentPrompts, incrementUsage } = useUserPrompts();
+  const { prompts: savedPrompts, recentPrompts, incrementUsage } = useUserPrompts();
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
+  const [promptDropdownOpen, setPromptDropdownOpen] = useState(false);
+  const [promptSearch, setPromptSearch] = useState('');
+  const promptDropdownRef = useRef<HTMLDivElement>(null);
   const [prompt, setPrompt] = useState('');
   const [promptMode, setPromptMode] = useState<PromptMode>('simple');
   const [customAngleText, setCustomAngleText] = useState('');
@@ -77,7 +80,18 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const fileInputRef = useRef<HTMLInputElement>(null);
   const refImageInputRef = useRef<HTMLInputElement>(null);
 
-  // Aspect ratio — persisted in localStorage
+  // Close prompt dropdown on outside click / Escape
+  useEffect(() => {
+    if (!promptDropdownOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (promptDropdownRef.current && !promptDropdownRef.current.contains(e.target as Node)) setPromptDropdownOpen(false);
+    };
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setPromptDropdownOpen(false); };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => { document.removeEventListener('mousedown', handleClick); document.removeEventListener('keydown', handleKey); };
+  }, [promptDropdownOpen]);
+
   const [ratio, setRatio] = useState<AspectRatio>(() => {
     return (localStorage.getItem('publify_aspect_ratio') as AspectRatio) || '4:5';
   });
@@ -237,73 +251,140 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           )}
         </div>
 
-        {/* Prompt with mode toggle */}
+        {/* Prompt with dropdown selector */}
         <div>
           <div className="flex items-center justify-between gap-2 mb-1">
             <Label className="text-xs font-medium text-muted-foreground">Descreva o produto</Label>
-            <div className="flex items-center rounded-full border border-border p-px">
-              <button onClick={() => setPromptMode('simple')} className={`px-2 py-px rounded-full text-[10px] transition-colors ${promptMode === 'simple' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Simples</button>
-              <button onClick={() => setPromptMode('custom')} className={`px-2 py-px rounded-full text-[10px] transition-colors ${promptMode === 'custom' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>Personalizado</button>
+            <div className="relative" ref={promptDropdownRef}>
+              <button
+                onClick={() => { setPromptDropdownOpen(!promptDropdownOpen); setPromptSearch(''); }}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] border transition-all cursor-pointer ${
+                  activePromptId
+                    ? 'bg-card border-primary text-[#58A6FF]'
+                    : 'bg-card border-border text-muted-foreground hover:border-primary/50 hover:text-[#58A6FF]'
+                }`}
+                style={{ minWidth: 160 }}
+              >
+                {activePromptId ? (
+                  <>
+                    <BookOpen className="w-3 h-3 shrink-0" />
+                    <span className="truncate max-w-[100px]">{savedPrompts.find(p => p.id === activePromptId)?.name}</span>
+                    <button onClick={e => { e.stopPropagation(); setActivePromptId(null); setPrompt(''); setPromptMode('simple'); }} className="ml-0.5 hover:text-foreground"><X className="w-3 h-3" /></button>
+                  </>
+                ) : (
+                  <>
+                    <span>📝</span>
+                    <span>Selecionar prompt</span>
+                  </>
+                )}
+                <ChevronRight className={`w-3 h-3 ml-auto shrink-0 transition-transform ${promptDropdownOpen ? 'rotate-90' : ''}`} />
+              </button>
+
+              {/* Dropdown panel */}
+              {promptDropdownOpen && (
+                <div className="absolute right-0 top-full mt-1 w-[280px] max-h-[300px] overflow-y-auto bg-card border border-border rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.4)] z-50">
+                  {/* Search */}
+                  <div className="p-2 border-b border-border">
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                      <input
+                        value={promptSearch}
+                        onChange={e => setPromptSearch(e.target.value)}
+                        placeholder="Buscar prompt..."
+                        className="w-full bg-secondary border-none rounded-md pl-7 pr-2 py-1.5 text-[11px] text-foreground placeholder:text-muted-foreground/50 outline-none"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
+                  {/* Simple description option */}
+                  <button
+                    onClick={() => { setActivePromptId(null); setPromptMode('simple'); setPrompt(''); setPromptDropdownOpen(false); }}
+                    className={`w-full text-left px-3 py-2.5 hover:bg-primary/5 transition-colors flex items-start gap-2 ${
+                      !activePromptId ? 'bg-primary/10 border-l-2 border-l-primary' : 'border-l-2 border-l-transparent'
+                    }`}
+                  >
+                    <span className="text-[12px]">✏️</span>
+                    <div>
+                      <div className="text-[12px] text-foreground font-medium">Descrição simples</div>
+                      <div className="text-[10px] text-muted-foreground">Descreva o produto de forma simples</div>
+                    </div>
+                  </button>
+
+                  {/* Saved prompts */}
+                  {savedPrompts.length > 0 && (
+                    <>
+                      <div className="px-3 py-1.5 border-t border-border">
+                        <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">Meus prompts</span>
+                      </div>
+                      {savedPrompts
+                        .filter(p => !promptSearch || p.name.toLowerCase().includes(promptSearch.toLowerCase()) || (p.category || '').toLowerCase().includes(promptSearch.toLowerCase()))
+                        .map(p => (
+                          <button
+                            key={p.id}
+                            onClick={() => {
+                              setPrompt(p.prompt_text);
+                              setPromptMode('custom');
+                              setActivePromptId(p.id);
+                              if (p.default_angles.length > 0) setSelectedAngles(new Set(p.default_angles as ImageAngle[]));
+                              if (p.default_ratio && onAspectRatioChange) onAspectRatioChange(p.default_ratio as AspectRatio);
+                              incrementUsage.mutate(p.id);
+                              setPromptDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-3 py-2 hover:bg-primary/5 transition-colors flex items-start gap-2 ${
+                              activePromptId === p.id ? 'bg-primary/10 border-l-2 border-l-primary' : 'border-l-2 border-l-transparent'
+                            }`}
+                          >
+                            <BookOpen className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                            <div className="min-w-0">
+                              <div className="text-[12px] text-foreground font-medium truncate">{p.name}</div>
+                              <div className="text-[10px] text-muted-foreground truncate">{p.prompt_text.slice(0, 50)}{p.prompt_text.length > 50 ? '...' : ''}</div>
+                              {p.default_angles.length > 0 && (
+                                <div className="flex gap-1 mt-0.5">
+                                  {p.default_angles.slice(0, 4).map(a => (
+                                    <span key={a} className="text-[8px] text-muted-foreground/50">{ANGLE_OPTIONS.find(o => o.id === a)?.label?.[0] || a[0]}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                    </>
+                  )}
+
+                  {/* Empty state for saved prompts */}
+                  {savedPrompts.length === 0 && (
+                    <div className="px-3 py-3 border-t border-border text-center">
+                      <p className="text-[10px] text-muted-foreground/60">Você ainda não tem prompts salvos</p>
+                    </div>
+                  )}
+
+                  {/* Footer */}
+                  <div className="border-t border-border px-3 py-2">
+                    <button onClick={() => { setPromptDropdownOpen(false); navigate('/prompts'); }} className="text-[11px] text-[#388BFD] hover:text-[#58A6FF] transition-colors">
+                      + Criar novo prompt →
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <Textarea
             value={prompt}
-            onChange={e => setPrompt(e.target.value.slice(0, promptMode === 'custom' ? 2000 : 1000))}
-            placeholder={promptMode === 'simple' ? 'Ex: oversized denim jacket dark blue women white studio background' : 'Cole aqui seu prompt completo para o DALL-E 3.'}
-            rows={promptMode === 'simple' ? 2 : 3}
+            onChange={e => setPrompt(e.target.value.slice(0, activePromptId ? 2000 : 1000))}
+            placeholder={activePromptId ? 'Prompt carregado — edite se necessário' : 'Ex: oversized denim jacket dark blue women white studio background'}
+            rows={activePromptId ? 3 : 2}
             className="bg-secondary border-border resize-none text-xs min-h-0"
-            style={{ height: promptMode === 'simple' ? '52px' : '72px' }}
-            maxLength={promptMode === 'custom' ? 2000 : 1000}
+            style={{ height: activePromptId ? '72px' : '52px' }}
+            maxLength={activePromptId ? 2000 : 1000}
           />
-          {promptMode === 'custom' && (
+          {activePromptId && (
             <div className="flex items-center gap-1 mt-1">
               <Info className="w-2.5 h-2.5 text-muted-foreground shrink-0" />
               <span className="text-[9px] text-muted-foreground">Prompt enviado diretamente sem modificações</span>
             </div>
           )}
-          {/* Active prompt badge */}
-          {activePromptId && (
-            <div className="flex items-center gap-1 mt-1">
-              <span className="inline-flex items-center gap-1 text-[9px] bg-primary/10 text-[#58A6FF] border border-primary/30 rounded-full px-2 py-0.5">
-                <BookOpen className="w-2.5 h-2.5" />
-                {recentPrompts.find(p => p.id === activePromptId)?.name}
-                <button onClick={() => { setActivePromptId(null); setPrompt(''); }} className="ml-0.5 hover:text-foreground"><X className="w-2.5 h-2.5" /></button>
-              </span>
-            </div>
-          )}
         </div>
-
-        {/* Quick prompt access */}
-        {recentPrompts.length > 0 && (
-          <div>
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <BookOpen className="w-3 h-3 text-muted-foreground/60" />
-              <span className="text-[10px] text-muted-foreground/60">Meus prompts:</span>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {recentPrompts.map(p => (
-                <button key={p.id} onClick={() => {
-                  setPrompt(p.prompt_text);
-                  setPromptMode('custom');
-                  setActivePromptId(p.id);
-                  if (p.default_angles.length > 0) setSelectedAngles(new Set(p.default_angles as ImageAngle[]));
-                  if (p.default_ratio && onAspectRatioChange) onAspectRatioChange(p.default_ratio as AspectRatio);
-                  incrementUsage.mutate(p.id);
-                }}
-                  className={`px-2 py-1 rounded-md text-[10px] border transition-all truncate max-w-[120px] ${
-                    activePromptId === p.id
-                      ? 'bg-primary/15 border-primary text-[#58A6FF]'
-                      : 'bg-card border-border text-muted-foreground hover:border-primary/40'
-                  }`}>
-                  {p.name}
-                </button>
-              ))}
-              <button onClick={() => navigate('/prompts')} className="px-2 py-1 rounded-md text-[10px] border border-border text-muted-foreground/50 hover:text-muted-foreground hover:border-primary/30 transition-all">
-                + Ver todos
-              </button>
-            </div>
-          </div>
-        )}
 
         <div>
           <Label className="text-xs font-medium text-muted-foreground">Proporção das imagens</Label>
