@@ -1,13 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Store, Loader2, CheckCircle2, Eye, EyeOff, ExternalLink } from 'lucide-react';
+import { Store, Loader2, CheckCircle2, Eye, EyeOff, ExternalLink, Search, X, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
-import { CountrySelector } from '@/components/CountrySelector';
-import { AI_LANGUAGES, getAILanguageForCountry } from '@/data/languages';
+import { getAILanguageForCountry } from '@/data/languages';
 import { COUNTRIES, type Country } from '@/data/countries';
 import { type MarketConfig } from '@/hooks/useStoreManager';
 
@@ -27,11 +25,13 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected, onOpenOn
   const [isConnected, setIsConnected] = useState(false);
   const [shopName, setShopName] = useState('');
   const [errors, setErrors] = useState<{ domain?: string; clientId?: string; clientSecret?: string }>({});
+  const [marketPickerOpen, setMarketPickerOpen] = useState(false);
 
-  // Market config
-  const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(null);
+  // Default to US
+  const defaultCountry = COUNTRIES.find(c => c.code === 'US')!;
+  const [selectedCountryCode, setSelectedCountryCode] = useState<string>('US');
   const [selectedLanguage, setSelectedLanguage] = useState('en-US');
-  const [customCurrency, setCustomCurrency] = useState('');
+  const [customCurrency, setCustomCurrency] = useState('USD');
   const [decimalSep, setDecimalSep] = useState('.');
   const [thousandSep, setThousandSep] = useState(',');
   const [currencyPosition, setCurrencyPosition] = useState<'before' | 'after'>('before');
@@ -277,102 +277,42 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected, onOpenOn
                 </button>
               </div>
 
-              {/* Market config */}
-              <div className="border-t border-border pt-4 space-y-4">
-                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  🌍 Configuração de Mercado
+              {/* Market config — compact card */}
+              <div className="border-t border-border pt-4 space-y-3">
+                <h4 className="text-xs font-medium text-foreground flex items-center gap-2">
+                  🌍 Mercado alvo
                 </h4>
 
-                <div>
-                  <Label className="text-sm text-muted-foreground">País</Label>
-                  <div className="mt-1.5">
-                    <CountrySelector value={selectedCountryCode} onChange={handleCountrySelect} />
+                <button
+                  type="button"
+                  onClick={() => setMarketPickerOpen(true)}
+                  className="w-full flex items-center gap-3 rounded-lg bg-[hsl(var(--sidebar-card))] border border-[hsl(var(--sidebar-border))] px-3 py-2.5 hover:border-primary/60 transition-colors cursor-pointer group"
+                >
+                  <span className="text-[22px] leading-none">{selectedCountry?.flag || '🇺🇸'}</span>
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-[13px] font-medium text-foreground truncate">
+                      {selectedCountry?.name || 'Estados Unidos'}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {customCurrency || 'USD'} · {selectedLanguage}
+                    </p>
                   </div>
-                </div>
-
-                {selectedCountry && (
-                  <>
-                    <div>
-                      <Label className="text-sm text-muted-foreground">Idioma do conteúdo</Label>
-                      <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
-                        <SelectTrigger className="mt-1.5 bg-secondary border-border">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[200px]">
-                          {AI_LANGUAGES.map(l => (
-                            <SelectItem key={l.code} value={l.code}>
-                              {l.flag} {l.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-sm text-muted-foreground">Moeda</Label>
-                        <Input
-                          value={customCurrency}
-                          onChange={e => setCustomCurrency(e.target.value.toUpperCase())}
-                          placeholder="USD"
-                          className="mt-1.5 bg-secondary border-border"
-                          maxLength={4}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm text-muted-foreground">Posição do símbolo</Label>
-                        <Select value={currencyPosition} onValueChange={v => setCurrencyPosition(v as 'before' | 'after')}>
-                          <SelectTrigger className="mt-1.5 bg-secondary border-border">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="before">Antes ($ 10,00)</SelectItem>
-                            <SelectItem value="after">Depois (10,00 €)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <Label className="text-sm text-muted-foreground">Separador decimal</Label>
-                        <Select value={decimalSep} onValueChange={setDecimalSep}>
-                          <SelectTrigger className="mt-1.5 bg-secondary border-border">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value=".">Ponto (.)</SelectItem>
-                            <SelectItem value=",">Vírgula (,)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-sm text-muted-foreground">Separador de milhar</Label>
-                        <Select value={thousandSep} onValueChange={setThousandSep}>
-                          <SelectTrigger className="mt-1.5 bg-secondary border-border">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value=".">Ponto (.)</SelectItem>
-                            <SelectItem value=",">Vírgula (,)</SelectItem>
-                            <SelectItem value=" ">Espaço ( )</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-sm text-muted-foreground">Nome do mercado (opcional)</Label>
-                      <Input
-                        value={marketName}
-                        onChange={e => setMarketName(e.target.value)}
-                        placeholder="Ex: Europa Central, LATAM..."
-                        className="mt-1.5 bg-secondary border-border"
-                      />
-                    </div>
-                  </>
-                )}
+                  <span className="text-[11px] text-muted-foreground group-hover:text-primary transition-colors flex items-center gap-0.5 shrink-0">
+                    alterar <ChevronDown className="w-3 h-3" />
+                  </span>
+                </button>
               </div>
+
+              {/* Market picker modal */}
+              <MarketPickerModal
+                open={marketPickerOpen}
+                onOpenChange={setMarketPickerOpen}
+                selectedCode={selectedCountryCode}
+                onSelect={(country) => {
+                  handleCountrySelect(country);
+                  setMarketPickerOpen(false);
+                }}
+              />
             </div>
 
             <DialogFooter>
@@ -398,6 +338,113 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected, onOpenOn
             </DialogFooter>
           </>
         )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ─── Market Picker Modal ─── */
+const QUICK_MARKETS = ['US', 'GB', 'DE', 'FR', 'AU', 'CA'];
+
+interface MarketPickerModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedCode: string;
+  onSelect: (country: Country) => void;
+}
+
+function MarketPickerModal({ open, onOpenChange, selectedCode, onSelect }: MarketPickerModalProps) {
+  const [search, setSearch] = useState('');
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setSearch('');
+      setTimeout(() => searchRef.current?.focus(), 100);
+    }
+  }, [open]);
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return COUNTRIES;
+    const q = search.toLowerCase();
+    return COUNTRIES.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      c.currency.toLowerCase().includes(q) ||
+      c.language.toLowerCase().includes(q) ||
+      c.code.toLowerCase().includes(q)
+    );
+  }, [search]);
+
+  const quickCountries = QUICK_MARKETS.map(code => COUNTRIES.find(c => c.code === code)!).filter(Boolean);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg max-h-[80vh] flex flex-col p-0 gap-0">
+        <div className="px-5 pt-5 pb-3 border-b border-border space-y-3">
+          <DialogHeader>
+            <DialogTitle className="text-base">Selecionar mercado</DialogTitle>
+          </DialogHeader>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              ref={searchRef}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar país, moeda ou idioma..."
+              className="pl-9 bg-secondary border-border"
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Quick access pills */}
+          {!search && (
+            <div className="flex flex-wrap gap-1.5">
+              {quickCountries.map(c => (
+                <button
+                  key={c.code}
+                  onClick={() => onSelect(c)}
+                  className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] border transition-colors ${
+                    selectedCode === c.code
+                      ? 'bg-primary/15 border-primary/40 text-primary'
+                      : 'bg-secondary/50 border-[hsl(var(--sidebar-border))] text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                  }`}
+                >
+                  <span>{c.flag}</span>
+                  <span>{c.code === 'US' ? 'EUA' : c.code === 'GB' ? 'UK' : c.name.split(' ')[0]}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Country list */}
+        <div className="flex-1 overflow-y-auto px-2 py-2 min-h-0">
+          {filtered.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-8">Nenhum país encontrado</p>
+          ) : (
+            filtered.map(c => (
+              <button
+                key={c.code}
+                onClick={() => onSelect(c)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                  selectedCode === c.code
+                    ? 'bg-primary/10 border-l-2 border-primary'
+                    : 'hover:bg-secondary/80'
+                }`}
+              >
+                <span className="text-lg">{c.flag}</span>
+                <span className="flex-1 text-sm text-foreground truncate">{c.name}</span>
+                <span className="text-[11px] text-muted-foreground">{c.currency}</span>
+              </button>
+            ))
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
