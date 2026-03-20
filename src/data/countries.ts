@@ -19,7 +19,7 @@ export interface Country {
   currencyPosition: 'before' | 'after';
   language: string; // ISO 639-1
   decimalSeparator: ',' | '.';
-  thousandSeparator: '.' | ',' | ' ';
+  thousandSeparator: string;
   continent: Continent;
 }
 
