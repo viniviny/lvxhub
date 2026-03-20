@@ -22,6 +22,7 @@ import { ReviewChecklist, getCanPublish } from '@/components/ReviewChecklist';
 import { ShopifyProductPreview } from '@/components/ShopifyProductPreview';
 import { SEOCard } from '@/components/SEOCard';
 import { ColorManager, ProductColor } from '@/components/ColorManager';
+import { AIFieldButtons } from '@/components/AIFieldButtons';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -413,13 +414,32 @@ const Index = () => {
                         <h3 className="font-display font-semibold text-[13px] text-foreground">Detalhes do produto</h3>
 
                         <div>
-                          <Label className="text-xs font-medium text-muted-foreground">Título *</Label>
-                          <Input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value.slice(0, 255) }))} placeholder="Ex: Camiseta Urban Flow" className="mt-1 bg-secondary border-border text-xs h-8" maxLength={255} />
+                          <div className="flex items-center justify-between mb-1">
+                            <Label className="text-xs font-medium text-muted-foreground">Título *</Label>
+                            <AIFieldButtons
+                              type="title"
+                              brief={form.description || form.title || ''}
+                              language={activeStoreLang?.label || 'English'}
+                              currentValue={form.title}
+                              onGenerated={content => setForm(prev => ({ ...prev, title: content.slice(0, 255) }))}
+                            />
+                          </div>
+                          <Input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value.slice(0, 255) }))} placeholder="Ex: Camiseta Urban Flow" className="bg-secondary border-border text-xs h-8" maxLength={255} />
                         </div>
 
                         <div>
-                          <Label className="text-xs font-medium text-muted-foreground">Descrição</Label>
-                          <div className="mt-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <Label className="text-xs font-medium text-muted-foreground">Descrição</Label>
+                            <AIFieldButtons
+                              type="description"
+                              brief={form.title || ''}
+                              title={form.title}
+                              language={activeStoreLang?.label || 'English'}
+                              currentValue={form.description}
+                              onGenerated={html => setForm(prev => ({ ...prev, description: html }))}
+                            />
+                          </div>
+                          <div>
                             <RichTextEditor content={form.description} onChange={html => setForm(prev => ({ ...prev, description: html }))} placeholder="Descreva o produto..." />
                           </div>
                         </div>

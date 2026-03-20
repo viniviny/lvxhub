@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.shopify-get-themes]
 verify_jwt = false
+
+[functions.generate-text]
+verify_jwt = false
