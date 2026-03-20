@@ -58,8 +58,11 @@ type PromptMode = 'simple' | 'custom';
 
 export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange }: ImageGenerationStepProps) {
   const navigate = useNavigate();
-  const { recentPrompts, incrementUsage } = useUserPrompts();
+  const { prompts: savedPrompts, recentPrompts, incrementUsage } = useUserPrompts();
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
+  const [promptDropdownOpen, setPromptDropdownOpen] = useState(false);
+  const [promptSearch, setPromptSearch] = useState('');
+  const promptDropdownRef = useRef<HTMLDivElement>(null);
   const [prompt, setPrompt] = useState('');
   const [promptMode, setPromptMode] = useState<PromptMode>('simple');
   const [customAngleText, setCustomAngleText] = useState('');
