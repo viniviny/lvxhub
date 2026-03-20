@@ -1,13 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Store, Loader2, CheckCircle2, Eye, EyeOff, ExternalLink } from 'lucide-react';
+import { Store, Loader2, CheckCircle2, Eye, EyeOff, ExternalLink, Search, X, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
-import { CountrySelector } from '@/components/CountrySelector';
-import { AI_LANGUAGES, getAILanguageForCountry } from '@/data/languages';
+import { getAILanguageForCountry } from '@/data/languages';
 import { COUNTRIES, type Country } from '@/data/countries';
 import { type MarketConfig } from '@/hooks/useStoreManager';
 
