@@ -101,6 +101,7 @@ const Index = () => {
   const [wizardStep, setWizardStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [publishStatus, setPublishStatus] = useState<'draft' | 'active' | 'scheduled'>('active');
+  const [pubOpen, setPubOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currencySymbol = activeStore?.marketConfig?.currencySymbol || 'R$';
