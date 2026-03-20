@@ -84,10 +84,11 @@ const Index = () => {
   const [form, setForm] = useState<ProductFormData>(initialForm);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishStep, setPublishStep] = useState(0);
   const [publishResult, setPublishResult] = useState<{ title: string; shopifyUrl: string; imageUrl?: string } | null>(null);
-  const [wizardStep, setWizardStep] = useState(1); // 1-4
+  const [wizardStep, setWizardStep] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currencySymbol = activeStore?.marketConfig?.currencySymbol || 'R$';
