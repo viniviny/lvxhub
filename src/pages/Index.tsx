@@ -132,7 +132,13 @@ const Index = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleAddStore = () => setShowOnboarding(true);
+  const handleAddStore = () => {
+    if (stores.length > 0) {
+      setShowSettings(true);
+    } else {
+      setShowOnboarding(true);
+    }
+  };
 
   const handleCredentialsSubmit = (data: {
     domain: string; clientId: string; clientSecret: string;
