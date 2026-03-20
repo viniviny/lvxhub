@@ -587,7 +587,7 @@ interface ImageSlotProps {
   draggable?: boolean;
 }
 
-function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCover, isCover, tall }: ImageSlotProps) {
+function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCover, isCover, tall, draggable: isDraggable }: ImageSlotProps) {
   const [hovered, setHovered] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
 
