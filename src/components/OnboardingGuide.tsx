@@ -1,12 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import {
   ArrowRight, ArrowLeft, Sparkles, AppWindow, Shield, KeyRound, PlugZap,
-  Image, FileText, ShoppingBag, CheckCircle2
+  Image, FileText, ShoppingBag, CheckCircle2, X
 } from 'lucide-react';
-
-const ONBOARDING_KEY = 'onboarding_done';
 
 interface Step {
   icon: React.ReactNode;
