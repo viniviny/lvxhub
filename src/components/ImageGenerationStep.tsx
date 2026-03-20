@@ -403,7 +403,7 @@ interface DraggableGalleryProps {
   onSetCover: (angle: ImageAngle) => void;
 }
 
-function DraggableGallery({ images, allSlots, generatingAngles, onImagesChange, onRegenerate, onRemove, onSetCover }: DraggableGalleryProps) {
+function DraggableGallery({ images, allSlots, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover }: DraggableGalleryProps) {
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
