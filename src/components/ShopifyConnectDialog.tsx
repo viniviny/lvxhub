@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 interface ShopifyConnectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onConnected: (shopName: string, storeDomain: string) => void;
 }
 
 export function ShopifyConnectDialog({ open, onOpenChange }: ShopifyConnectDialogProps) {
