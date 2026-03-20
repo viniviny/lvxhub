@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
   Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
-  ArrowRight, ImageIcon, X, Info, Eye
+  ArrowRight, ImageIcon, X, Info, Eye, GripVertical
 } from 'lucide-react';
 
 export type ImageAngle =
