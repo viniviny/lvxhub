@@ -348,29 +348,28 @@ const Index = () => {
                     ))}
                   </div>
 
-                  {/* STEP 1: Image */}
+                  {/* STEP 1: AI Image Generation */}
                   {wizardStep === 1 && (
-                    <div className="glass-card p-6">
-                      <h3 className="font-display font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Imagem do Produto</h3>
-                      <input ref={fileInputRef} type="file" accept=".png,.jpg,.jpeg,.webp" onChange={handleImageSelect} className="hidden" />
-                      {imagePreview ? (
-                        <div className="relative max-w-md mx-auto">
-                          <img src={imagePreview} alt="Preview" className="w-full rounded-lg border border-border object-contain max-h-80" />
-                          <button onClick={removeImage} className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1.5 hover:bg-destructive/80 transition-colors">
-                            <XCircle className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button onClick={() => fileInputRef.current?.click()} className="w-full border-2 border-dashed border-border rounded-lg p-14 flex flex-col items-center gap-3 hover:border-primary/50 hover:bg-secondary/30 transition-all">
-                          <Upload className="w-10 h-10 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">Clique para enviar uma imagem</span>
-                          <span className="text-xs text-muted-foreground/60">PNG, JPG ou WEBP</span>
-                        </button>
-                      )}
-                      <div className="flex justify-end mt-4">
-                        <Button onClick={() => setWizardStep(2)} disabled={!imageFile}><ArrowRight className="w-4 h-4 mr-1" />Próximo</Button>
-                      </div>
-                    </div>
+                    <ImageGenerationStep
+                      images={generatedImages}
+                      onImagesChange={(imgs) => {
+                        setGeneratedImages(imgs);
+                        // Set the cover image as the main imagePreview for publishing
+                        const cover = imgs.find(i => i.isCover) || imgs[0];
+                        if (cover) {
+                          setImagePreview(cover.url);
+                          // Create a File from the base64 if needed for publishing
+                          if (cover.url.startsWith('data:')) {
+                            fetch(cover.url).then(r => r.blob()).then(blob => {
+                              const file = new File([blob], 'product-image.png', { type: 'image/png' });
+                              setImageFile(file);
+                            });
+                          }
+                        }
+                      }}
+                      onNext={() => setWizardStep(2)}
+                      onSkip={() => setWizardStep(2)}
+                    />
                   )}
 
                   {/* STEP 2: Details */}
