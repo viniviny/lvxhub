@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 
+const STORES_KEY = 'publify_stores';
+
 const Callback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -43,10 +45,31 @@ const Callback = () => {
           throw new Error(data?.error || error?.message || 'Erro ao trocar token');
         }
 
+        // Update the store in multi-store storage
+        const pendingStoreId = localStorage.getItem('publify_pending_store');
+        const storesRaw = localStorage.getItem(STORES_KEY);
+        const stores = storesRaw ? JSON.parse(storesRaw) : [];
+
+        const updatedStores = stores.map((s: any) =>
+          s.id === pendingStoreId
+            ? {
+                ...s,
+                accessToken: data.accessToken,
+                connected: true,
+                connectedAt: new Date().toISOString().split('T')[0],
+              }
+            : s
+        );
+
+        localStorage.setItem(STORES_KEY, JSON.stringify(updatedStores));
+        localStorage.setItem('publify_active_store', pendingStoreId || '');
+        localStorage.removeItem('publify_pending_store');
+
+        // Keep legacy keys for backward compat
         localStorage.setItem('shopify_access_token', data.accessToken);
         localStorage.setItem('shopify_connected', 'true');
-        setStatus('success');
 
+        setStatus('success');
         setTimeout(() => navigate('/', { replace: true }), 1200);
       } catch (err: any) {
         console.error('Token exchange error:', err);
