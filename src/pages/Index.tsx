@@ -53,7 +53,7 @@ const initialForm: ProductFormData = {
   weight: 0,
   weightUnit: 'kg',
   countryOfOrigin: '',
-  selectedChannels: [],
+  selectedChannels: ['online'],
   tags: '',
 };
 
