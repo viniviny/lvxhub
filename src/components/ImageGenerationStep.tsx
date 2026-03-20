@@ -162,7 +162,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
   const allSlots = Array.from(new Set([...images.map(i => i.angle), ...Array.from(selectedAngles)]));
 
   return (
-    <div className="grid grid-cols-[420px_1fr] gap-4">
+    <div className="grid grid-cols-[340px_1fr] gap-3">
       {/* LEFT COLUMN — Generation controls */}
       <div className="glass-card p-3.5 space-y-3">
         {/* Title + reference */}
