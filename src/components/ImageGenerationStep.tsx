@@ -4,11 +4,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
   Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
-  CheckCircle2, ArrowRight, ImageIcon, X, Info
+  ArrowRight, ImageIcon, X, Info, Eye
 } from 'lucide-react';
 
 export type ImageAngle =
@@ -495,6 +496,7 @@ interface ImageSlotProps {
 
 function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCover, isCover, tall }: ImageSlotProps) {
   const [hovered, setHovered] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   if (isGenerating) {
     return (
@@ -507,34 +509,41 @@ function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCo
 
   if (image) {
     return (
-      <div
-        className={`relative rounded-lg overflow-hidden bg-secondary group ${tall ? 'h-full' : 'h-full'}`}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        <img src={image.url} alt={label} className="w-full h-full object-cover" />
-        <span className="absolute top-1.5 left-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-black/60 text-white">
-          {label}
-        </span>
-        <span className="absolute top-1.5 right-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-[hsl(var(--success))]/80 text-white flex items-center gap-0.5">
-          <CheckCircle2 className="w-3 h-3" /> Pronta
-        </span>
-        {hovered && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-2 animate-fade-in">
-            <button onClick={onRegenerate} className="p-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors" title="Regenerar">
-              <RefreshCw className="w-4 h-4" />
-            </button>
-            <button onClick={onRemove} className="p-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors" title="Remover">
-              <Trash2 className="w-4 h-4" />
-            </button>
-            {!isCover && (
-              <button onClick={onSetCover} className="p-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors" title="Definir como capa">
-                <Star className="w-4 h-4" />
+      <>
+        <div
+          className={`relative rounded-lg overflow-hidden bg-secondary group ${tall ? 'h-full' : 'h-full'}`}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          <img src={image.url} alt={label} className="w-full h-full object-cover" />
+          <span className="absolute top-1.5 left-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-black/60 text-white">
+            {label}
+          </span>
+          {hovered && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-2 animate-fade-in">
+              <button onClick={() => setPreviewOpen(true)} className="p-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors" title="Ver imagem">
+                <Eye className="w-4 h-4" />
               </button>
-            )}
-          </div>
-        )}
-      </div>
+              <button onClick={onRegenerate} className="p-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors" title="Regenerar">
+                <RefreshCw className="w-4 h-4" />
+              </button>
+              <button onClick={onRemove} className="p-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors" title="Remover">
+                <Trash2 className="w-4 h-4" />
+              </button>
+              {!isCover && (
+                <button onClick={onSetCover} className="p-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors" title="Definir como capa">
+                  <Star className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="max-w-3xl p-2 bg-background border-[hsl(var(--sidebar-border))]">
+            <img src={image.url} alt={label} className="w-full h-auto rounded-lg object-contain max-h-[80vh]" />
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 
