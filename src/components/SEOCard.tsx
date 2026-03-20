@@ -21,7 +21,7 @@ interface SEOCardProps {
   countryName?: string;
 }
 
-export function SEOCard({ title, description, storeDomain, productTitle, onTitleChange, onDescriptionChange, compact }: SEOCardProps) {
+export function SEOCard({ title, description, storeDomain, productTitle, onTitleChange, onDescriptionChange, compact, language, languageCode, countryName }: SEOCardProps) {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
 
