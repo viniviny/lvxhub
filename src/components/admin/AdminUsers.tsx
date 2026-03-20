@@ -8,8 +8,9 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface UserProfile {
   id: string;
@@ -17,6 +18,43 @@ interface UserProfile {
   email: string | null;
   plan: string | null;
   created_at: string;
+}
+
+function UsersTableSkeleton() {
+  return (
+    <div className="animate-fade-in">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <Skeleton className="h-8 w-32 rounded mb-2" />
+          <Skeleton className="h-4 w-48 rounded" />
+        </div>
+      </div>
+      <div className="glass-card overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-border/50">
+              <TableHead className="text-muted-foreground">Nome</TableHead>
+              <TableHead className="text-muted-foreground">Email</TableHead>
+              <TableHead className="text-muted-foreground">Plano</TableHead>
+              <TableHead className="text-muted-foreground">Registrado em</TableHead>
+              <TableHead className="text-muted-foreground text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <TableRow key={i} className="border-border/30">
+                <TableCell><Skeleton className="h-4 w-28 rounded" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-40 rounded" /></TableCell>
+                <TableCell><Skeleton className="h-8 w-24 rounded" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-24 rounded" /></TableCell>
+                <TableCell className="text-right"><Skeleton className="h-8 w-8 rounded ml-auto" /></TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
 }
 
 export function AdminUsers() {
@@ -55,13 +93,7 @@ export function AdminUsers() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 text-primary animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return <UsersTableSkeleton />;
 
   return (
     <div className="animate-fade-in">
