@@ -31,6 +31,7 @@ const Index = () => {
   const [imageApproved, setImageApproved] = useState(false);
   const [publishedProduct, setPublishedProduct] = useState<Product | null>(null);
   const [showShopifyDialog, setShowShopifyDialog] = useState(false);
+  const { connection, connect, disconnect, isConnected: shopifyConnected } = useShopifyConnection();
 
   const {
     products,
