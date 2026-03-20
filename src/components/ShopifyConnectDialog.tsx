@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Store, Loader2, CheckCircle2, ExternalLink } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Store, Loader2, CheckCircle2, Eye, EyeOff, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { CountrySelector } from '@/components/CountrySelector';
 import { AI_LANGUAGES, getAILanguageForCountry } from '@/data/languages';
@@ -16,15 +15,18 @@ interface ShopifyConnectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConnected: (shopName: string, storeDomain: string, marketConfig?: MarketConfig) => void;
+  onOpenOnboarding?: () => void;
 }
 
-export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: ShopifyConnectDialogProps) {
+export function ShopifyConnectDialog({ open, onOpenChange, onConnected, onOpenOnboarding }: ShopifyConnectDialogProps) {
   const [storeDomain, setStoreDomain] = useState('');
-  const [accessToken, setAccessToken] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [clientSecret, setClientSecret] = useState('');
+  const [showSecret, setShowSecret] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [shopName, setShopName] = useState('');
-  const [errors, setErrors] = useState<{ domain?: string; token?: string }>({});
+  const [errors, setErrors] = useState<{ domain?: string; clientId?: string; clientSecret?: string }>({});
 
   // Market config
   const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(null);
@@ -37,7 +39,6 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
 
   const selectedCountry = selectedCountryCode ? COUNTRIES.find(c => c.code === selectedCountryCode) : null;
 
-  // Auto-fill when country changes
   const handleCountrySelect = (country: Country) => {
     setSelectedCountryCode(country.code);
     setCustomCurrency(country.currency);
@@ -49,7 +50,7 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
   };
 
   const validateInputs = (): boolean => {
-    const newErrors: { domain?: string; token?: string } = {};
+    const newErrors: { domain?: string; clientId?: string; clientSecret?: string } = {};
     const domain = storeDomain.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
 
     if (!domain) {
@@ -58,10 +59,14 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
       newErrors.domain = 'Use o formato: minha-loja.myshopify.com';
     }
 
-    if (!accessToken.trim()) {
-      newErrors.token = 'Token é obrigatório.';
-    } else if (accessToken.trim().length < 10) {
-      newErrors.token = 'Token parece inválido.';
+    if (!clientId.trim()) {
+      newErrors.clientId = 'Client ID é obrigatório.';
+    }
+
+    if (!clientSecret.trim()) {
+      newErrors.clientSecret = 'Client Secret é obrigatório.';
+    } else if (clientSecret.trim().length < 10) {
+      newErrors.clientSecret = 'Client Secret parece inválido.';
     }
 
     setErrors(newErrors);
@@ -90,22 +95,38 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
     const domain = storeDomain.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
 
     setIsConnecting(true);
+
     try {
-      const { data, error } = await supabase.functions.invoke('connect-shopify', {
-        body: { storeDomain: domain, accessToken },
-      });
+      // Save settings to localStorage for the callback page
+      const marketConfig = buildMarketConfig();
+      localStorage.setItem('shopify_settings', JSON.stringify({
+        storeDomain: domain,
+        clientId: clientId.trim(),
+        clientSecret: clientSecret.trim(),
+        marketConfig,
+      }));
 
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      // Generate a random state string for CSRF protection
+      const state = crypto.randomUUID();
+      localStorage.setItem('shopify_oauth_state', state);
 
-      setShopName(data.shopName || domain);
-      setIsConnected(true);
-      onConnected(data.shopName || domain, domain, buildMarketConfig());
-      toast.success('Loja Shopify conectada com sucesso!');
+      const scopes = [
+        'read_products', 'write_products',
+        'read_files', 'write_files',
+        'read_inventory', 'write_inventory',
+        'read_locations',
+        'read_publications', 'write_publications',
+        'write_metafields', 'read_themes',
+      ].join(',');
+
+      const redirectUri = `${window.location.origin}/callback`;
+
+      const authUrl = `https://${domain}/admin/oauth/authorize?client_id=${encodeURIComponent(clientId.trim())}&scope=${encodeURIComponent(scopes)}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+
+      window.location.href = authUrl;
     } catch (err: any) {
-      const msg = err?.message || 'Erro de conexão. Tente novamente.';
+      const msg = err?.message || 'Erro ao iniciar conexão. Tente novamente.';
       toast.error(msg);
-    } finally {
       setIsConnecting(false);
     }
   };
@@ -115,7 +136,9 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
     if (isConnected) {
       setTimeout(() => {
         setStoreDomain('');
-        setAccessToken('');
+        setClientId('');
+        setClientSecret('');
+        setShowSecret(false);
         setIsConnected(false);
         setShopName('');
         setErrors({});
@@ -125,6 +148,11 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
         setMarketName('');
       }, 300);
     }
+  };
+
+  const handleOpenOnboarding = () => {
+    handleClose();
+    onOpenOnboarding?.();
   };
 
   return (
@@ -167,6 +195,7 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
             <div className="space-y-5 py-4">
               {/* Connection fields */}
               <div className="space-y-4">
+                {/* Domain */}
                 <div>
                   <Label className="text-sm font-medium text-muted-foreground">Domínio da Loja</Label>
                   <Input
@@ -185,34 +214,67 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
                   )}
                 </div>
 
+                {/* Client ID */}
                 <div>
-                  <Label className="text-sm font-medium text-muted-foreground">Token de Acesso (Admin API)</Label>
+                  <Label className="text-sm font-medium text-muted-foreground">Client ID</Label>
                   <Input
-                    type="password"
-                    value={accessToken}
+                    value={clientId}
                     onChange={e => {
-                      setAccessToken(e.target.value);
-                      if (errors.token) setErrors(prev => ({ ...prev, token: undefined }));
+                      setClientId(e.target.value);
+                      if (errors.clientId) setErrors(prev => ({ ...prev, clientId: undefined }));
                     }}
-                    placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxx"
-                    className={`mt-1.5 bg-secondary border-border ${errors.token ? 'border-destructive' : ''}`}
+                    placeholder="Cole seu Client ID aqui"
+                    className={`mt-1.5 bg-secondary border-border ${errors.clientId ? 'border-destructive' : ''}`}
                   />
-                  {errors.token ? (
-                    <p className="text-xs text-destructive mt-1">{errors.token}</p>
+                  {errors.clientId ? (
+                    <p className="text-xs text-destructive mt-1">{errors.clientId}</p>
                   ) : (
-                    <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
-                      <ExternalLink className="w-3 h-3" />
-                      <a
-                        href="https://admin.shopify.com/store/settings/apps/development"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline hover:text-foreground transition-colors"
-                      >
-                        Como obter o token
-                      </a>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Encontrado em: Dev Dashboard → fashionAPP → Configurações → Credenciais
                     </p>
                   )}
                 </div>
+
+                {/* Client Secret */}
+                <div>
+                  <Label className="text-sm font-medium text-muted-foreground">Client Secret</Label>
+                  <div className="relative mt-1.5">
+                    <Input
+                      type={showSecret ? 'text' : 'password'}
+                      value={clientSecret}
+                      onChange={e => {
+                        setClientSecret(e.target.value);
+                        if (errors.clientSecret) setErrors(prev => ({ ...prev, clientSecret: undefined }));
+                      }}
+                      placeholder="Cole seu Client Secret aqui"
+                      className={`bg-secondary border-border pr-10 ${errors.clientSecret ? 'border-destructive' : ''}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSecret(!showSecret)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {errors.clientSecret ? (
+                    <p className="text-xs text-destructive mt-1">{errors.clientSecret}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Clique no olho ao lado da Chave secreta no Dev Dashboard para revelar
+                    </p>
+                  )}
+                </div>
+
+                {/* Helper link */}
+                <button
+                  type="button"
+                  onClick={handleOpenOnboarding}
+                  className="flex items-center gap-1 text-[11px] text-primary hover:text-primary/80 transition-colors"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Como encontrar minhas credenciais
+                </button>
               </div>
 
               {/* Market config */}
@@ -221,7 +283,6 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
                   🌍 Configuração de Mercado
                 </h4>
 
-                {/* Country selector */}
                 <div>
                   <Label className="text-sm text-muted-foreground">País</Label>
                   <div className="mt-1.5">
@@ -231,7 +292,6 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
 
                 {selectedCountry && (
                   <>
-                    {/* Language */}
                     <div>
                       <Label className="text-sm text-muted-foreground">Idioma do conteúdo</Label>
                       <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
@@ -248,7 +308,6 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
                       </Select>
                     </div>
 
-                    {/* Currency */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-sm text-muted-foreground">Moeda</Label>
@@ -274,7 +333,6 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
                       </div>
                     </div>
 
-                    {/* Separators */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-sm text-muted-foreground">Separador decimal</Label>
@@ -303,7 +361,6 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
                       </div>
                     </div>
 
-                    {/* Custom market name */}
                     <div>
                       <Label className="text-sm text-muted-foreground">Nome do mercado (opcional)</Label>
                       <Input
@@ -324,7 +381,7 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
               </Button>
               <Button
                 onClick={handleConnect}
-                disabled={isConnecting || !storeDomain.trim() || !accessToken.trim()}
+                disabled={isConnecting || !storeDomain.trim() || !clientId.trim() || !clientSecret.trim()}
               >
                 {isConnecting ? (
                   <>
