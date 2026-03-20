@@ -44,6 +44,87 @@ export type Database = {
         }
         Relationships: []
       }
+      published_products: {
+        Row: {
+          base_currency: string | null
+          base_price: number | null
+          collection: string | null
+          country_code: string | null
+          country_flag: string | null
+          country_name: string | null
+          created_at: string
+          currency: string | null
+          currency_symbol: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          language: string | null
+          language_label: string | null
+          local_price: number | null
+          market_name: string | null
+          region_group: string | null
+          shopify_product_id: string | null
+          shopify_url: string | null
+          sizes: string[] | null
+          status: string
+          store_domain: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          base_currency?: string | null
+          base_price?: number | null
+          collection?: string | null
+          country_code?: string | null
+          country_flag?: string | null
+          country_name?: string | null
+          created_at?: string
+          currency?: string | null
+          currency_symbol?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          language?: string | null
+          language_label?: string | null
+          local_price?: number | null
+          market_name?: string | null
+          region_group?: string | null
+          shopify_product_id?: string | null
+          shopify_url?: string | null
+          sizes?: string[] | null
+          status?: string
+          store_domain: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          base_currency?: string | null
+          base_price?: number | null
+          collection?: string | null
+          country_code?: string | null
+          country_flag?: string | null
+          country_name?: string | null
+          created_at?: string
+          currency?: string | null
+          currency_symbol?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          language?: string | null
+          language_label?: string | null
+          local_price?: number | null
+          market_name?: string | null
+          region_group?: string | null
+          shopify_product_id?: string | null
+          shopify_url?: string | null
+          sizes?: string[] | null
+          status?: string
+          store_domain?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       security_logs: {
         Row: {
           attempted_route: string | null
