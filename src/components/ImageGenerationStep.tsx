@@ -9,7 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
   Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
-  ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical
+  ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical,
+  Clock, Check
 } from 'lucide-react';
 
 export type AspectRatio = '1:1' | '4:5';
