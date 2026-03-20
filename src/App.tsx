@@ -16,6 +16,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Index";
 import Admin from "./pages/Admin";
 import Callback from "./pages/Callback";
+import Prompts from "./pages/Prompts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
