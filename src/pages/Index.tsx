@@ -99,9 +99,19 @@ const Index = () => {
               <PlusCircle className="w-4 h-4 mr-2" />
               Novo Produto
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowShopifyDialog(true)}
+            >
+              <Store className="w-4 h-4 mr-2" />
+              Conectar Shopify
+            </Button>
           </nav>
         </div>
       </header>
+
+      <ShopifyConnectDialog open={showShopifyDialog} onOpenChange={setShowShopifyDialog} />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         {view === 'dashboard' && (
