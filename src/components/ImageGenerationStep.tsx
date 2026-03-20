@@ -140,7 +140,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     setGeneratingAngles(new Set([angle]));
     try {
       const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImageUrl: referenceImage || undefined },
+        body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImageUrl: referenceImage || undefined, aspectRatio: activeRatio },
       });
       if (error || data?.error) { toast.error('Erro ao regenerar imagem'); return; }
       const updated = images.map(img => img.angle === angle ? { ...img, url: data.imageUrl } : img);
