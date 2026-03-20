@@ -585,9 +585,32 @@ const Index = () => {
                           </div>
                         </Collapsible>
 
-                        <Button className="w-full" onClick={handlePublish} disabled={!canPublish}>
-                          <Zap className="w-4 h-4 mr-1.5" />Publicar agora
-                        </Button>
+                        {canPublish ? (
+                          <Button className="w-full" onClick={handlePublish}>
+                            <Zap className="w-4 h-4 mr-1.5" />Publicar agora
+                          </Button>
+                        ) : (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div className="w-full">
+                                  <Button className="w-full" disabled>
+                                    <Zap className="w-4 h-4 mr-1.5" />Publicar agora
+                                  </Button>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-[240px] text-xs">
+                                <p className="font-medium mb-1">Campos obrigatórios faltando:</p>
+                                <ul className="space-y-0.5 text-muted-foreground">
+                                  {!form.title.trim() && <li>• Título do produto</li>}
+                                  {!(!!imageFile || generatedImages.some(i => i.url)) && <li>• Pelo menos 1 imagem</li>}
+                                  {form.price <= 0 && <li>• Preço maior que 0</li>}
+                                  {form.variants.length === 0 && form.sizes.length === 0 && <li>• Pelo menos 1 variante</li>}
+                                </ul>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </div>
 
                       {/* RIGHT — Shopify Preview */}
