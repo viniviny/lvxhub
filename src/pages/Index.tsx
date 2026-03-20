@@ -276,6 +276,7 @@ const Index = () => {
 
   const handleViewChange = (view: DashboardView) => {
     if (view === 'regions') { setShowRegions(true); return; }
+    if (view === 'prompts') { navigate('/prompts'); return; }
     setCurrentView(view);
   };
 
