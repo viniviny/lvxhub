@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, DragEvent, useEffect, useKeyboard } from 'react';
+import { useState, useRef, useCallback, DragEvent, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
