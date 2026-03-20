@@ -12,7 +12,7 @@ interface ShopifyProductPreviewProps {
 }
 
 export function ShopifyProductPreview({ form, images, imagePreview, storeDomain, currencySymbol }: ShopifyProductPreviewProps) {
-  const allImages = images.filter(i => i.url).map(i => ({ url: i.url!, label: i.angle }));
+  const allImages: { url: string; label: string }[] = images.filter(i => i.url).map(i => ({ url: i.url!, label: i.angle }));
   if (imagePreview && !allImages.some(i => i.url === imagePreview)) {
     allImages.unshift({ url: imagePreview, label: 'Capa' });
   }
