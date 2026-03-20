@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ImageGenerationStep, GeneratedImage } from '@/components/ImageGenerationStep';
 import { ProductFormData, ProductSize, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
 import { ProductHistory } from '@/components/ProductHistory';
