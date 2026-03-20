@@ -95,6 +95,19 @@ export function useStoreManager() {
     return newStore;
   }, [setActiveStore]);
 
+  const connectStoreWithMarket = useCallback((storeId: string, accessToken: string, marketConfig?: MarketConfig) => {
+    setStores(prev => {
+      const updated = prev.map(s =>
+        s.id === storeId
+          ? { ...s, accessToken, connected: true, connectedAt: new Date().toISOString().split('T')[0], ...(marketConfig ? { marketConfig } : {}) }
+          : s
+      );
+      persistStores(updated);
+      return updated;
+    });
+    setActiveStore(storeId);
+  }, [setActiveStore]);
+
   const connectStore = useCallback((storeId: string, accessToken: string) => {
     setStores(prev => {
       const updated = prev.map(s =>
