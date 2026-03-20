@@ -149,20 +149,20 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-2">
             {isAuthenticated && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-secondary border border-border text-sm">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[hsl(var(--success))] opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[hsl(var(--success))]"></span>
-                </span>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[hsl(var(--success)/0.1)] border border-[hsl(var(--success)/0.3)] text-sm">
+                <CheckCircle2 className="w-4 h-4 text-[hsl(var(--success))]" />
+                <span className="text-[hsl(var(--success))] font-medium text-xs">Loja Conectada</span>
+                <span className="text-muted-foreground text-xs">·</span>
                 <span className="text-foreground font-medium text-xs">{settings?.storeDomain}</span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                <button
                   onClick={clearToken}
+                  className="text-muted-foreground hover:text-destructive text-xs underline ml-1 transition-colors"
                   title="Desconectar"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  Desconectar
+                </button>
+              </div>
+            )}
                 </Button>
               </div>
             )}
