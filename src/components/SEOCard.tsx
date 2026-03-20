@@ -16,6 +16,9 @@ interface SEOCardProps {
   onTitleChange: (v: string) => void;
   onDescriptionChange: (v: string) => void;
   compact?: boolean;
+  language?: string;
+  languageCode?: string;
+  countryName?: string;
 }
 
 export function SEOCard({ title, description, storeDomain, productTitle, onTitleChange, onDescriptionChange, compact }: SEOCardProps) {
