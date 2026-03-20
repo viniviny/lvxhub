@@ -29,10 +29,19 @@ export function StoreSelector({ stores, activeStoreId, onSelectStore, onAddStore
           {stores.map(store => (
             <SelectItem key={store.id} value={store.id}>
               <div className="flex items-center gap-2">
-                <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                  store.connected ? 'bg-[hsl(var(--success))]' : 'bg-muted-foreground'
-                }`} />
-                <span className="truncate text-[13px]">{store.domain}</span>
+                <span className="text-sm flex-shrink-0">
+                  {store.marketConfig?.countryFlag || (
+                    <div className={`w-1.5 h-1.5 rounded-full ${
+                      store.connected ? 'bg-[hsl(var(--success))]' : 'bg-muted-foreground'
+                    }`} />
+                  )}
+                </span>
+                <span className="truncate text-[13px]">
+                  {store.marketConfig?.marketName || store.domain}
+                </span>
+                {store.marketConfig?.currency && (
+                  <span className="text-[11px] text-muted-foreground">{store.marketConfig.currency}</span>
+                )}
               </div>
             </SelectItem>
           ))}

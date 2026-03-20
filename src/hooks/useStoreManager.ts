@@ -1,5 +1,18 @@
 import { useState, useCallback } from 'react';
 
+export interface MarketConfig {
+  countryCode: string;
+  countryFlag: string;
+  countryName: string;
+  currency: string;
+  currencySymbol: string;
+  currencyPosition: 'before' | 'after';
+  language: string; // AI language code like 'en-US', 'pt-BR'
+  decimalSeparator: string;
+  thousandSeparator: string;
+  marketName: string; // custom label
+}
+
 export interface ShopifyStore {
   id: string;
   domain: string;
@@ -11,6 +24,7 @@ export interface ShopifyStore {
   connected: boolean;
   connectedAt: string | null;
   isDefault: boolean;
+  marketConfig?: MarketConfig;
 }
 
 const STORES_KEY = 'publify_stores';
@@ -79,6 +93,19 @@ export function useStoreManager() {
 
     setActiveStore(newStore.id);
     return newStore;
+  }, [setActiveStore]);
+
+  const connectStoreWithMarket = useCallback((storeId: string, accessToken: string, marketConfig?: MarketConfig) => {
+    setStores(prev => {
+      const updated = prev.map(s =>
+        s.id === storeId
+          ? { ...s, accessToken, connected: true, connectedAt: new Date().toISOString().split('T')[0], ...(marketConfig ? { marketConfig } : {}) }
+          : s
+      );
+      persistStores(updated);
+      return updated;
+    });
+    setActiveStore(storeId);
   }, [setActiveStore]);
 
   const connectStore = useCallback((storeId: string, accessToken: string) => {
@@ -169,6 +196,7 @@ export function useStoreManager() {
     setActiveStore,
     addStore,
     connectStore,
+    connectStoreWithMarket,
     disconnectStore,
     removeStore,
     setDefault,
