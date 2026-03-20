@@ -295,7 +295,7 @@ const Index = () => {
         <DashboardSidebar stores={stores} activeStoreId={activeStore?.id || null} onSelectStore={setActiveStore} onAddStore={handleAddStore} currentView={currentView} onViewChange={handleViewChange} />
 
           <main className="flex-1 overflow-y-auto">
-            <div className="max-w-4xl mx-auto px-6 py-8">
+            <div className="max-w-6xl mx-auto px-5 py-4">
 
               {/* PUBLISH VIEW */}
               {currentView === 'publish' && !publishResult && !isPublishing && !hasConnectedStore && (
