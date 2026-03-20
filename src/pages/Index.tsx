@@ -133,9 +133,6 @@ const Index = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Show setup screen if not configured
-  const showSetup = !hasSettings;
-
 
   return (
     <div className="min-h-screen bg-background">
