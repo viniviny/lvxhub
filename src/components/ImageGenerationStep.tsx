@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import {
   Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
   ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical,
-  Clock, Check
+  Clock, Check, ChevronLeft, ChevronRight, Camera
 } from 'lucide-react';
 
 export type AspectRatio = '1:1' | '4:5';
@@ -348,24 +348,23 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-display font-semibold text-foreground text-[13px]">Imagens do produto</h3>
           <span className="text-[10px] text-muted-foreground">
-            {images.length} imagens{images.length > 1 && ' · arraste para reorganizar'}
+            {images.length > 0 ? `${images.length} ${images.length === 1 ? 'imagem' : 'imagens'}` : 'Nenhuma imagem'}
           </span>
         </div>
 
-        {/* Gallery grid */}
-        <div className="flex-1 min-h-0">
-          <DraggableGallery
-            images={images}
-            allSlots={allSlots}
-            generatingAngles={generatingAngles}
-            completedAngles={completedAngles}
-            angleStartTimes={angleStartTimes}
-            onImagesChange={onImagesChange}
-            onRegenerate={regenerateAngle}
-            onRemove={removeImage}
-            onSetCover={setCover}
-          />
-        </div>
+        <ImageGallery
+          images={images}
+          allSlots={allSlots}
+          generatingAngles={generatingAngles}
+          completedAngles={completedAngles}
+          angleStartTimes={angleStartTimes}
+          onImagesChange={onImagesChange}
+          onRegenerate={regenerateAngle}
+          onRemove={removeImage}
+          onSetCover={setCover}
+          aspectRatio={activeRatio}
+          onAddUpload={() => fileInputRef.current?.click()}
+        />
 
         {/* Bottom navigation inside the card */}
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
@@ -390,8 +389,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   );
 }
 
-/* ─── Draggable Gallery ─── */
-interface DraggableGalleryProps {
+/* ─── Image Gallery (Main image + Thumbnail strip) ─── */
+interface ImageGalleryProps {
   images: GeneratedImage[];
   allSlots: ImageAngle[];
   generatingAngles: Set<ImageAngle>;
@@ -401,125 +400,307 @@ interface DraggableGalleryProps {
   onRegenerate: (angle: ImageAngle) => void;
   onRemove: (angle: ImageAngle) => void;
   onSetCover: (angle: ImageAngle) => void;
+  aspectRatio: AspectRatio;
+  onAddUpload: () => void;
 }
 
-function DraggableGallery({ images, allSlots, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover }: DraggableGalleryProps) {
+function ImageGallery({ images, allSlots, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover, aspectRatio, onAddUpload }: ImageGalleryProps) {
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const [hovered, setHovered] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // Build display list: real images first, then empty slots for generating/pending angles
   const imageAngles = images.map(i => i.angle);
-  const emptySlots = allSlots.filter(a => !imageAngles.includes(a));
+  const emptyAngles = allSlots.filter(a => !imageAngles.includes(a));
   const displayList: (GeneratedImage | { angle: ImageAngle; empty: true })[] = [
     ...images,
-    ...emptySlots.map(a => ({ angle: a, empty: true as const })),
+    ...emptyAngles.map(a => ({ angle: a, empty: true as const })),
   ];
-  const mainSlots = displayList.slice(0, 5);
-  const extraSlots = displayList.slice(5);
 
-  const handleDragStart = (e: DragEvent<HTMLDivElement>, idx: number) => {
-    const item = mainSlots[idx];
+  // Clamp selected index
+  const clampedIdx = Math.min(selectedIdx, Math.max(0, displayList.length - 1));
+  useEffect(() => { if (clampedIdx !== selectedIdx) setSelectedIdx(clampedIdx); }, [clampedIdx, selectedIdx]);
+
+  // Auto-select first completed image when it arrives
+  useEffect(() => {
+    if (images.length > 0 && selectedIdx >= images.length) {
+      setSelectedIdx(0);
+    }
+  }, [images.length, selectedIdx]);
+
+  const currentItem = displayList[clampedIdx];
+  const currentImage = currentItem && !('empty' in currentItem) ? currentItem as GeneratedImage : null;
+  const isCurrentGenerating = currentItem ? generatingAngles.has(currentItem.angle) : false;
+  const currentLabel = ANGLE_OPTIONS.find(a => a.id === currentItem?.angle)?.label || currentItem?.angle || '';
+
+  const goTo = (idx: number) => {
+    if (idx < 0) idx = displayList.length - 1;
+    if (idx >= displayList.length) idx = 0;
+    setSelectedIdx(idx);
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(clampedIdx - 1); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); goTo(clampedIdx + 1); }
+    };
+    el.addEventListener('keydown', handler);
+    return () => el.removeEventListener('keydown', handler);
+  }, [clampedIdx, displayList.length]);
+
+  // Drag reorder on thumbnails
+  const handleThumbDragStart = (e: DragEvent<HTMLDivElement>, idx: number) => {
+    const item = displayList[idx];
     if ('empty' in item) { e.preventDefault(); return; }
     setDragIdx(idx);
     e.dataTransfer.effectAllowed = 'move';
   };
-
-  const handleDragOver = (e: DragEvent<HTMLDivElement>, idx: number) => {
+  const handleThumbDragOver = (e: DragEvent<HTMLDivElement>, idx: number) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     if (dragOverIdx !== idx) setDragOverIdx(idx);
   };
-
-  const handleDrop = (e: DragEvent<HTMLDivElement>, dropIdx: number) => {
+  const handleThumbDrop = (e: DragEvent<HTMLDivElement>, dropIdx: number) => {
     e.preventDefault();
     if (dragIdx === null || dragIdx === dropIdx) { setDragIdx(null); setDragOverIdx(null); return; }
+    const fromItem = displayList[dragIdx];
+    if (!fromItem || 'empty' in fromItem) { setDragIdx(null); setDragOverIdx(null); return; }
     const reordered = [...images];
-    const fromImg = mainSlots[dragIdx];
-    const toImg = mainSlots[dropIdx];
-    if (!fromImg || 'empty' in fromImg) { setDragIdx(null); setDragOverIdx(null); return; }
-    const fromImageIdx = reordered.findIndex(i => i.angle === fromImg.angle);
+    const fromImageIdx = reordered.findIndex(i => i.angle === fromItem.angle);
     if (fromImageIdx < 0) { setDragIdx(null); setDragOverIdx(null); return; }
+    const toItem = displayList[dropIdx];
     let toImageIdx: number;
-    if ('empty' in toImg) { toImageIdx = reordered.length - 1; } else { toImageIdx = reordered.findIndex(i => i.angle === toImg.angle); }
+    if ('empty' in toItem) { toImageIdx = reordered.length - 1; } else { toImageIdx = reordered.findIndex(i => i.angle === toItem.angle); }
     const [moved] = reordered.splice(fromImageIdx, 1);
     reordered.splice(toImageIdx, 0, moved);
     const updated = reordered.map((img, i) => ({ ...img, isCover: i === 0 }));
     onImagesChange(updated);
+    setSelectedIdx(dropIdx);
     setDragIdx(null);
     setDragOverIdx(null);
   };
+  const handleThumbDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
 
-  const handleDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
+  const showArrows = displayList.length > 1;
+  const mainMaxH = aspectRatio === '4:5' ? '420px' : '380px';
+  const mainAspect = aspectRatio === '4:5' ? '4/5' : '1/1';
 
   return (
-    <div className="space-y-2 h-full">
-      {/* Main grid: cover left (3/4 ratio) + 2x2 right */}
-      <div className="grid grid-cols-[45%_1fr] gap-2 h-full" style={{ minHeight: '280px' }}>
-        {/* Cover slot */}
-        {mainSlots.length > 0 && (
-          <div
-            className={`${dragIdx === 0 ? 'opacity-40' : ''} ${dragOverIdx === 0 && dragIdx !== 0 ? 'ring-2 ring-primary rounded-lg' : ''} transition-all duration-150`}
-            draggable={!!(mainSlots[0] && !('empty' in mainSlots[0]))}
-            onDragStart={e => handleDragStart(e, 0)}
-            onDragOver={e => handleDragOver(e, 0)}
-            onDrop={e => handleDrop(e, 0)}
-            onDragEnd={handleDragEnd}
-          >
-            <ImageSlot
-              label="Capa"
-              angle={mainSlots[0].angle}
-              image={'empty' in mainSlots[0] ? null : (mainSlots[0] as GeneratedImage)}
-              isGenerating={generatingAngles.has(mainSlots[0].angle)}
-              justCompleted={completedAngles.has(mainSlots[0].angle)}
-              startTime={angleStartTimes[mainSlots[0].angle]}
-              onRegenerate={() => onRegenerate(mainSlots[0].angle)}
-              onRemove={() => onRemove(mainSlots[0].angle)}
-              onSetCover={() => onSetCover(mainSlots[0].angle)}
-              isCover={true}
-              tall={true}
-              draggable={!!(mainSlots[0] && !('empty' in mainSlots[0]))}
-            />
+    <div className="flex-1 flex flex-col min-h-0" ref={containerRef} tabIndex={0} style={{ outline: 'none' }}>
+      {/* Main image viewer */}
+      <div
+        className="relative rounded-[10px] overflow-hidden bg-card mx-auto w-full"
+        style={{ aspectRatio: mainAspect, maxHeight: mainMaxH }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        {/* Empty state */}
+        {displayList.length === 0 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-[10px]">
+            <Camera className="w-8 h-8 text-muted-foreground/40" />
+            <span className="text-[12px] text-muted-foreground">Gere ou faça upload das imagens</span>
+            <span className="text-[10px] text-muted-foreground/60">As imagens aparecerão aqui</span>
           </div>
         )}
-        {/* 2x2 grid */}
-        <div className="grid grid-cols-2 grid-rows-2 gap-2">
-          {mainSlots.slice(1, 5).map((slot, i) => {
-            const idx = i + 1;
-            const angle = slot.angle;
-            const isImage = !('empty' in slot);
-            const image = isImage ? (slot as GeneratedImage) : null;
-            const label = ANGLE_OPTIONS.find(a => a.id === angle)?.label || angle;
-            return (
-              <div
-                key={`${angle}-${idx}`}
-                className={`${dragIdx === idx ? 'opacity-40' : ''} ${dragOverIdx === idx && dragIdx !== idx ? 'ring-2 ring-primary rounded-lg' : ''} transition-all duration-150`}
-                draggable={!!image}
-                onDragStart={e => handleDragStart(e, idx)}
-                onDragOver={e => handleDragOver(e, idx)}
-                onDrop={e => handleDrop(e, idx)}
-                onDragEnd={handleDragEnd}
-              >
-                <ImageSlot label={label} angle={angle} image={image} isGenerating={generatingAngles.has(angle)} justCompleted={completedAngles.has(angle)} startTime={angleStartTimes[angle]} onRegenerate={() => onRegenerate(angle)} onRemove={() => onRemove(angle)} onSetCover={() => onSetCover(angle)} isCover={false} draggable={!!image} />
-              </div>
-            );
-          })}
-        </div>
+
+        {/* Generating state (no image yet) */}
+        {displayList.length > 0 && !currentImage && isCurrentGenerating && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 skeleton-shimmer" style={{ animation: 'pulse-border 1.5s infinite' }}>
+            {angleStartTimes[currentItem.angle] ? <SlotTimer startTime={angleStartTimes[currentItem.angle]} /> : (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                <span className="text-[11px] text-muted-foreground">Gerando...</span>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Empty slot (not generating) */}
+        {displayList.length > 0 && !currentImage && !isCurrentGenerating && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-border rounded-[10px]">
+            <Plus className="w-5 h-5 text-muted-foreground/40" />
+            <span className="text-[10px] text-muted-foreground/50">{currentLabel}</span>
+          </div>
+        )}
+
+        {/* Current image */}
+        {currentImage && (
+          <img
+            src={currentImage.url}
+            alt={currentLabel}
+            className="w-full h-full object-cover transition-opacity duration-200"
+            style={completedAngles.has(currentImage.angle) ? { animation: 'fade-in 0.3s ease-out' } : undefined}
+          />
+        )}
+
+        {/* Angle label top left */}
+        {displayList.length > 0 && (
+          <span className="absolute top-2 left-2 text-[10px] font-medium px-2 py-0.5 rounded-full bg-black/60 text-white/90 backdrop-blur-sm">
+            {currentLabel}
+          </span>
+        )}
+
+        {/* Image counter top right */}
+        {displayList.length > 1 && (
+          <span className="absolute top-2 right-2 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-black/60 text-white backdrop-blur-sm">
+            {clampedIdx + 1} / {displayList.length}
+          </span>
+        )}
+
+        {/* Success badge */}
+        {currentImage && completedAngles.has(currentImage.angle) && (
+          <span className="absolute top-2 right-2 flex items-center gap-0.5 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[hsl(var(--success))]/80 text-white" style={{ animation: 'scale-in 0.2s ease-out' }}>
+            <Check className="w-3 h-3" /> Pronta
+          </span>
+        )}
+
+        {/* Progress bar for generating */}
+        {isCurrentGenerating && angleStartTimes[currentItem.angle] && (
+          <GeneratingProgressBar startTime={angleStartTimes[currentItem.angle]} />
+        )}
+
+        {/* Hover action buttons */}
+        {currentImage && hovered && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 transition-opacity duration-150" style={{ animation: 'fade-in 0.15s ease-out' }}>
+            <button onClick={() => setPreviewOpen(true)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-[10px] transition-colors backdrop-blur-sm">
+              <Eye className="w-3.5 h-3.5" /> Ver
+            </button>
+            <button onClick={() => onRegenerate(currentImage.angle)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-[10px] transition-colors backdrop-blur-sm">
+              <RefreshCw className="w-3.5 h-3.5" /> Regenerar
+            </button>
+            <button onClick={() => onRemove(currentImage.angle)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-[10px] transition-colors backdrop-blur-sm">
+              <Trash2 className="w-3.5 h-3.5" /> Remover
+            </button>
+            {!currentImage.isCover && (
+              <button onClick={() => onSetCover(currentImage.angle)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-[10px] transition-colors backdrop-blur-sm">
+                <Star className="w-3.5 h-3.5" /> Capa
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Navigation arrows (visible on hover) */}
+        {showArrows && hovered && (
+          <>
+            <button
+              onClick={() => goTo(clampedIdx - 1)}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 border border-[#E5E7EB] flex items-center justify-center hover:bg-white hover:shadow-md transition-all"
+              style={{ animation: 'fade-in 0.15s ease-out' }}
+            >
+              <ChevronLeft className="w-4 h-4 text-[#374151]" />
+            </button>
+            <button
+              onClick={() => goTo(clampedIdx + 1)}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 border border-[#E5E7EB] flex items-center justify-center hover:bg-white hover:shadow-md transition-all"
+              style={{ animation: 'fade-in 0.15s ease-out' }}
+            >
+              <ChevronRight className="w-4 h-4 text-[#374151]" />
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Extra row for 5+ images */}
-      {extraSlots.length > 0 && (
-        <div className="grid grid-cols-4 gap-2">
-          {extraSlots.map((slot) => {
-            const angle = slot.angle;
-            const isImage = !('empty' in slot);
-            const image = isImage ? (slot as GeneratedImage) : null;
+      {/* Dot indicators */}
+      {displayList.length > 1 && (
+        <div className="flex items-center justify-center gap-[5px] mt-2">
+          {displayList.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setSelectedIdx(i)}
+              className={`w-1.5 h-1.5 rounded-full transition-all duration-150 ${i === clampedIdx ? 'bg-foreground' : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'}`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Summary + Add button */}
+      {displayList.length > 0 && (
+        <div className="flex items-center justify-between mt-2">
+          <span className="text-[10px] text-muted-foreground">
+            {images.length} {images.length === 1 ? 'imagem' : 'imagens'}{images.length > 1 ? ' · arraste para reorganizar' : ''}
+          </span>
+          <button
+            onClick={onAddUpload}
+            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Plus className="w-3 h-3" /> Adicionar
+          </button>
+        </div>
+      )}
+
+      {/* Thumbnail strip */}
+      {displayList.length > 0 && (
+        <div className="flex items-center gap-1.5 mt-2 overflow-x-auto scrollbar-thin pb-1" style={{ scrollbarWidth: 'thin' }}>
+          {displayList.map((item, i) => {
+            const isImg = !('empty' in item);
+            const img = isImg ? (item as GeneratedImage) : null;
+            const angle = item.angle;
+            const isActive = i === clampedIdx;
+            const isGen = generatingAngles.has(angle);
             const label = ANGLE_OPTIONS.find(a => a.id === angle)?.label || angle;
+            const isFirst = i === 0;
+
             return (
-              <div key={`extra-${angle}`}>
-                <ImageSlot label={label} angle={angle} image={image} isGenerating={generatingAngles.has(angle)} justCompleted={completedAngles.has(angle)} startTime={angleStartTimes[angle]} onRegenerate={() => onRegenerate(angle)} onRemove={() => onRemove(angle)} onSetCover={() => onSetCover(angle)} isCover={false} draggable={!!image} />
+              <div
+                key={`thumb-${angle}-${i}`}
+                className={`relative shrink-0 cursor-pointer rounded-md overflow-hidden transition-all duration-150
+                  ${isActive ? 'border-2 border-primary opacity-100' : 'border-2 border-transparent opacity-60 hover:opacity-100 hover:border-primary/40'}
+                  ${dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-primary' : ''}
+                  ${dragIdx === i ? 'opacity-30' : ''}
+                `}
+                style={{ width: '72px', aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
+                onClick={() => setSelectedIdx(i)}
+                draggable={!!img}
+                onDragStart={e => handleThumbDragStart(e, i)}
+                onDragOver={e => handleThumbDragOver(e, i)}
+                onDrop={e => handleThumbDrop(e, i)}
+                onDragEnd={handleThumbDragEnd}
+              >
+                {/* Image thumbnail */}
+                {img && (
+                  <img src={img.url} alt={label} className="w-full h-full object-cover" />
+                )}
+
+                {/* Generating thumbnail */}
+                {!img && isGen && (
+                  <div className="w-full h-full bg-card flex items-center justify-center" style={{ animation: 'pulse-border 1.5s infinite' }}>
+                    <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                  </div>
+                )}
+
+                {/* Empty thumbnail */}
+                {!img && !isGen && (
+                  <div className="w-full h-full bg-card border border-dashed border-border flex flex-col items-center justify-center gap-0.5 rounded-md">
+                    <Plus className="w-3 h-3 text-muted-foreground/40" />
+                    <span className="text-[8px] text-muted-foreground/40 leading-tight">{label}</span>
+                  </div>
+                )}
+
+                {/* "Capa" badge on first thumbnail */}
+                {isFirst && img && (
+                  <span className="absolute bottom-0.5 left-0.5 text-[7px] font-semibold px-1 py-px rounded bg-black/60 text-white/80">
+                    Capa
+                  </span>
+                )}
               </div>
             );
           })}
         </div>
+      )}
+
+      {/* Fullscreen preview dialog */}
+      {currentImage && (
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="max-w-3xl p-2 bg-background border-border">
+            <img src={currentImage.url} alt={currentLabel} className="w-full h-full rounded-lg object-contain max-h-[80vh]" />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
@@ -564,91 +745,17 @@ function SlotTimer({ startTime }: { startTime: number }) {
   );
 }
 
-/* ─── Image Slot ─── */
-interface ImageSlotProps {
-  label?: string;
-  angle?: ImageAngle;
-  image: GeneratedImage | null;
-  isGenerating: boolean;
-  justCompleted?: boolean;
-  startTime?: number;
-  onRegenerate: () => void;
-  onRemove: () => void;
-  onSetCover: () => void;
-  isCover: boolean;
-  tall?: boolean;
-  draggable?: boolean;
-}
-
-function ImageSlot({ label, image, isGenerating, justCompleted, startTime, onRegenerate, onRemove, onSetCover, isCover, tall, draggable: isDraggable }: ImageSlotProps) {
-  const [hovered, setHovered] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
-
-  if (isGenerating) {
-    return (
-      <div
-        className={`relative rounded-lg border border-primary/60 bg-card flex flex-col items-center justify-center gap-1.5 ${tall ? 'h-full' : 'aspect-square'}`}
-        style={{ animation: 'pulse-border 1.5s infinite' }}
-      >
-        {startTime ? <SlotTimer startTime={startTime} /> : (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin text-primary" />
-            <span className="text-[10px] text-muted-foreground">Gerando...</span>
-          </>
-        )}
-        {label && <span className="absolute top-1 left-1 text-[9px] font-medium px-1.5 py-px rounded bg-black/40 text-white/70">{label}</span>}
-      </div>
-    );
-  }
-
-  if (image) {
-    return (
-      <>
-        <div
-          className={`relative rounded-lg overflow-hidden bg-secondary group ${tall ? 'h-full' : 'aspect-square'} ${justCompleted ? 'ring-2 ring-[hsl(var(--success))]' : ''}`}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-          style={justCompleted ? { animation: 'fade-in 0.3s ease-out' } : undefined}
-        >
-          <img src={image.url} alt={label} className="w-full h-full object-cover" style={justCompleted ? { animation: 'fade-in 0.3s ease-out' } : undefined} />
-          <span className="absolute top-1 left-1 text-[9px] font-medium px-1.5 py-px rounded bg-black/60 text-white">{label}</span>
-          {justCompleted && (
-            <span className="absolute top-1 right-1 flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-px rounded bg-[hsl(var(--success))]/80 text-white" style={{ animation: 'scale-in 0.2s ease-out' }}>
-              <Check className="w-2.5 h-2.5" /> Pronta
-            </span>
-          )}
-          {isDraggable && !justCompleted && (
-            <span className="absolute top-1 right-1 text-white/60 hover:text-white cursor-grab active:cursor-grabbing transition-colors">
-              <GripVertical className="w-3 h-3" />
-            </span>
-          )}
-          {justCompleted && (
-            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-border/30 overflow-hidden rounded-b-lg">
-              <div className="h-full bg-[hsl(var(--success))] w-full transition-all duration-300" />
-            </div>
-          )}
-          {hovered && (
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-1.5 animate-fade-in">
-              <button onClick={() => setPreviewOpen(true)} className="p-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white transition-colors" title="Ver imagem"><Eye className="w-3.5 h-3.5" /></button>
-              <button onClick={onRegenerate} className="p-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white transition-colors" title="Regenerar"><RefreshCw className="w-3.5 h-3.5" /></button>
-              <button onClick={onRemove} className="p-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white transition-colors" title="Remover"><Trash2 className="w-3.5 h-3.5" /></button>
-              {!isCover && <button onClick={onSetCover} className="p-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white transition-colors" title="Definir como capa"><Star className="w-3.5 h-3.5" /></button>}
-            </div>
-          )}
-        </div>
-        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-          <DialogContent className="max-w-3xl p-2 bg-background border-border">
-            <img src={image.url} alt={label} className="w-full h-full rounded-lg object-contain max-h-[80vh]" />
-          </DialogContent>
-        </Dialog>
-      </>
-    );
-  }
-
+/* ─── Generating Progress Bar (for main viewer) ─── */
+function GeneratingProgressBar({ startTime }: { startTime: number }) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - startTime) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [startTime]);
+  const progress = Math.min(90, (elapsed / 30) * 90);
   return (
-    <div className={`rounded-lg border border-dashed border-border bg-card flex flex-col items-center justify-center gap-1 ${tall ? 'h-full' : 'aspect-square'}`}>
-      <Plus className="w-4 h-4 text-muted-foreground/50" />
-      {label && <span className="text-[9px] text-muted-foreground/50">{label}</span>}
+    <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-border/30 overflow-hidden">
+      <div className="h-full bg-primary transition-all duration-1000 ease-linear" style={{ width: `${progress}%` }} />
     </div>
   );
 }
