@@ -52,7 +52,7 @@ interface ImageGenerationStepProps {
 
 type PromptMode = 'simple' | 'custom';
 
-export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: ImageGenerationStepProps) {
+export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange }: ImageGenerationStepProps) {
   const [prompt, setPrompt] = useState('');
   const [promptMode, setPromptMode] = useState<PromptMode>('simple');
   const [customAngleText, setCustomAngleText] = useState('');
@@ -66,6 +66,17 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const refImageInputRef = useRef<HTMLInputElement>(null);
+
+  // Aspect ratio — persisted in localStorage
+  const [ratio, setRatio] = useState<AspectRatio>(() => {
+    return (localStorage.getItem('publify_aspect_ratio') as AspectRatio) || '4:5';
+  });
+  const activeRatio = externalRatio ?? ratio;
+  const handleRatioChange = (r: AspectRatio) => {
+    setRatio(r);
+    localStorage.setItem('publify_aspect_ratio', r);
+    onAspectRatioChange?.(r);
+  };
 
   const selectedCount = selectedAngles.size;
   const hasAtLeastOneImage = images.length > 0;
