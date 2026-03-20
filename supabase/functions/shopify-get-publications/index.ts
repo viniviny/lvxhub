@@ -22,11 +22,11 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const userClient = createClient(supabaseUrl, supabaseAnonKey, { global: { headers: { Authorization: authHeader } } });
-    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(authHeader.replace('Bearer ', ''));
-    if (claimsError || !claimsData?.claims) {
+    const { data: userData, error: userError } = await userClient.auth.getUser();
+    if (userError || !userData?.user) {
       return new Response(JSON.stringify({ error: 'Sessão inválida.' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
-    const userId = claimsData.claims.sub;
+    const userId = userData.user.id;
 
     if (cache && cache.userId === userId && Date.now() < cache.expiry) {
       return new Response(JSON.stringify(cache.data), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -44,7 +44,7 @@ serve(async (req) => {
     });
 
     if (!res.ok) {
-      const text = await res.text();
+      await res.text();
       return new Response(JSON.stringify({ error: 'Erro ao buscar canais de venda.' }), { status: res.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
@@ -55,6 +55,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify(result), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
+    console.error('shopify-get-publications error:', e);
     return new Response(JSON.stringify({ error: 'Erro interno.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });
