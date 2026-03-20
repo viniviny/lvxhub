@@ -418,6 +418,9 @@ const Index = () => {
                         onTitleChange={setSeoTitle}
                         onDescriptionChange={setSeoDescription}
                         compact
+                        language={activeStoreLang?.label || 'English'}
+                        languageCode={activeStore?.marketConfig?.language || 'en-US'}
+                        countryName={activeStore?.marketConfig?.marketName || ''}
                       />
 
                       {/* RIGHT — Product Details (main) */}
