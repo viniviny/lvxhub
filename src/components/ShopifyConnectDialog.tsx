@@ -342,3 +342,110 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected, onOpenOn
     </Dialog>
   );
 }
+
+/* ─── Market Picker Modal ─── */
+const QUICK_MARKETS = ['US', 'GB', 'DE', 'FR', 'AU', 'CA'];
+
+interface MarketPickerModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedCode: string;
+  onSelect: (country: Country) => void;
+}
+
+function MarketPickerModal({ open, onOpenChange, selectedCode, onSelect }: MarketPickerModalProps) {
+  const [search, setSearch] = useState('');
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setSearch('');
+      setTimeout(() => searchRef.current?.focus(), 100);
+    }
+  }, [open]);
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return COUNTRIES;
+    const q = search.toLowerCase();
+    return COUNTRIES.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      c.currency.toLowerCase().includes(q) ||
+      c.language.toLowerCase().includes(q) ||
+      c.code.toLowerCase().includes(q)
+    );
+  }, [search]);
+
+  const quickCountries = QUICK_MARKETS.map(code => COUNTRIES.find(c => c.code === code)!).filter(Boolean);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg max-h-[80vh] flex flex-col p-0 gap-0">
+        <div className="px-5 pt-5 pb-3 border-b border-border space-y-3">
+          <DialogHeader>
+            <DialogTitle className="text-base">Selecionar mercado</DialogTitle>
+          </DialogHeader>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              ref={searchRef}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar país, moeda ou idioma..."
+              className="pl-9 bg-secondary border-border"
+            />
+            {search && (
+              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Quick access pills */}
+          {!search && (
+            <div className="flex flex-wrap gap-1.5">
+              {quickCountries.map(c => (
+                <button
+                  key={c.code}
+                  onClick={() => onSelect(c)}
+                  className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] border transition-colors ${
+                    selectedCode === c.code
+                      ? 'bg-primary/15 border-primary/40 text-primary'
+                      : 'bg-secondary/50 border-[hsl(var(--sidebar-border))] text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                  }`}
+                >
+                  <span>{c.flag}</span>
+                  <span>{c.code === 'US' ? 'EUA' : c.code === 'GB' ? 'UK' : c.name.split(' ')[0]}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Country list */}
+        <div className="flex-1 overflow-y-auto px-2 py-2 min-h-0">
+          {filtered.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-8">Nenhum país encontrado</p>
+          ) : (
+            filtered.map(c => (
+              <button
+                key={c.code}
+                onClick={() => onSelect(c)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                  selectedCode === c.code
+                    ? 'bg-primary/10 border-l-2 border-primary'
+                    : 'hover:bg-secondary/80'
+                }`}
+              >
+                <span className="text-lg">{c.flag}</span>
+                <span className="flex-1 text-sm text-foreground truncate">{c.name}</span>
+                <span className="text-[11px] text-muted-foreground">{c.currency}</span>
+              </button>
+            ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
