@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { ProductFormData, ProductSize, AVAILABLE_SIZES, COLLECTIONS } from '@/types/product';
 import { useShopifyAuth } from '@/hooks/useShopifyAuth';
 import { SettingsDialog } from '@/components/SettingsDialog';
+import { OnboardingGuide, useOnboarding } from '@/components/OnboardingGuide';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
