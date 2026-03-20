@@ -19,12 +19,30 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [shopName, setShopName] = useState('');
+  const [errors, setErrors] = useState<{ domain?: string; token?: string }>({});
+
+  const validateInputs = (): boolean => {
+    const newErrors: { domain?: string; token?: string } = {};
+    const domain = storeDomain.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
+
+    if (!domain) {
+      newErrors.domain = 'Domínio é obrigatório.';
+    } else if (!/^[a-zA-Z0-9-]+\.myshopify\.com$/.test(domain)) {
+      newErrors.domain = 'Use o formato: minha-loja.myshopify.com';
+    }
+
+    if (!accessToken.trim()) {
+      newErrors.token = 'Token é obrigatório.';
+    } else if (accessToken.trim().length < 10) {
+      newErrors.token = 'Token parece inválido.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleConnect = async () => {
-    if (!storeDomain.trim() || !accessToken.trim()) {
-      toast.error('Preencha todos os campos.');
-      return;
-    }
+    if (!validateInputs()) return;
 
     const domain = storeDomain.trim().replace(/^https?:\/\//, '').replace(/\/$/, '');
 
@@ -42,8 +60,8 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
       onConnected(data.shopName || domain, domain);
       toast.success('Loja Shopify conectada com sucesso!');
     } catch (err: any) {
-      console.error('Erro ao conectar Shopify:', err);
-      toast.error(err.message || 'Erro ao conectar. Verifique suas credenciais.');
+      const msg = err?.message || 'Erro de conexão. Tente novamente.';
+      toast.error(msg);
     } finally {
       setIsConnecting(false);
     }
@@ -57,6 +75,7 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
         setAccessToken('');
         setIsConnected(false);
         setShopName('');
+        setErrors({});
       }, 300);
     }
   };
@@ -102,13 +121,20 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
                 </Label>
                 <Input
                   value={storeDomain}
-                  onChange={e => setStoreDomain(e.target.value)}
+                  onChange={e => {
+                    setStoreDomain(e.target.value);
+                    if (errors.domain) setErrors(prev => ({ ...prev, domain: undefined }));
+                  }}
                   placeholder="minha-loja.myshopify.com"
-                  className="mt-1.5 bg-secondary border-border"
+                  className={`mt-1.5 bg-secondary border-border ${errors.domain ? 'border-destructive' : ''}`}
                 />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Ex: minha-loja.myshopify.com
-                </p>
+                {errors.domain ? (
+                  <p className="text-xs text-destructive mt-1">{errors.domain}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Ex: minha-loja.myshopify.com
+                  </p>
+                )}
               </div>
 
               <div>
@@ -118,21 +144,28 @@ export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: Shopif
                 <Input
                   type="password"
                   value={accessToken}
-                  onChange={e => setAccessToken(e.target.value)}
+                  onChange={e => {
+                    setAccessToken(e.target.value);
+                    if (errors.token) setErrors(prev => ({ ...prev, token: undefined }));
+                  }}
                   placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxx"
-                  className="mt-1.5 bg-secondary border-border"
+                  className={`mt-1.5 bg-secondary border-border ${errors.token ? 'border-destructive' : ''}`}
                 />
-                <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
-                  <ExternalLink className="w-3 h-3" />
-                  <a
-                    href="https://admin.shopify.com/store/settings/apps/development"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline hover:text-foreground transition-colors"
-                  >
-                    Como obter o token
-                  </a>
-                </p>
+                {errors.token ? (
+                  <p className="text-xs text-destructive mt-1">{errors.token}</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
+                    <ExternalLink className="w-3 h-3" />
+                    <a
+                      href="https://admin.shopify.com/store/settings/apps/development"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-foreground transition-colors"
+                    >
+                      Como obter o token
+                    </a>
+                  </p>
+                )}
               </div>
             </div>
 

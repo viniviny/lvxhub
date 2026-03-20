@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 serve(async (req) => {
@@ -12,16 +12,58 @@ serve(async (req) => {
   }
 
   try {
+    // Authenticate user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Não autorizado.' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(
+      authHeader.replace('Bearer ', '')
+    );
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: 'Sessão inválida. Faça login novamente.' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+
     const { title, description, price, sizes, collection, imageUrl } = await req.json();
 
-    // Read Shopify credentials from database
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Input validation
+    if (!title || typeof title !== 'string' || title.length > 255) {
+      return new Response(
+        JSON.stringify({ error: 'Título inválido (máx. 255 caracteres).' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    const { data: conn, error: connError } = await supabase
+    if (price !== undefined && (typeof price !== 'number' || price < 0)) {
+      return new Response(
+        JSON.stringify({ error: 'Preço inválido.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Fetch user's active connection using service role
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const adminClient = createClient(supabaseUrl, serviceKey);
+
+    const { data: conn, error: connError } = await adminClient
       .from('shopify_connections')
       .select('store_domain, access_token')
+      .eq('user_id', userId)
       .eq('is_active', true)
       .maybeSingle();
 
@@ -32,44 +74,41 @@ serve(async (req) => {
       );
     }
 
-    const SHOPIFY_STORE = conn.store_domain;
-    const SHOPIFY_TOKEN = conn.access_token;
+    // Strip HTML from description
+    const cleanDescription = (description || '').replace(/<[^>]*>/g, '');
 
-    // Build variants from sizes
-    const variants = sizes.map((size: string) => ({
+    const variants = (sizes && sizes.length > 0 ? sizes : ['Único']).map((size: string) => ({
       option1: size,
-      price: price.toString(),
+      price: (price || 0).toString(),
       inventory_management: 'shopify',
     }));
 
     const productPayload = {
       product: {
         title,
-        body_html: `<p>${description}</p>`,
+        body_html: cleanDescription ? `<p>${cleanDescription}</p>` : '',
         vendor: 'Publify',
-        product_type: collection,
+        product_type: collection || '',
         status: 'draft',
-        options: [{ name: 'Tamanho', values: sizes }],
+        options: [{ name: 'Tamanho', values: sizes && sizes.length > 0 ? sizes : ['Único'] }],
         variants,
         images: imageUrl ? [{ src: imageUrl }] : [],
       },
     };
 
-    const shopifyUrl = `https://${SHOPIFY_STORE}/admin/api/2024-01/products.json`;
+    const shopifyUrl = `https://${conn.store_domain}/admin/api/2024-01/products.json`;
     const response = await fetch(shopifyUrl, {
       method: 'POST',
       headers: {
-        'X-Shopify-Access-Token': SHOPIFY_TOKEN,
+        'X-Shopify-Access-Token': conn.access_token,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(productPayload),
     });
 
     if (!response.ok) {
-      const err = await response.text();
-      console.error('Shopify error:', response.status, err);
       return new Response(
-        JSON.stringify({ error: 'Erro ao criar produto no Shopify', details: err }),
+        JSON.stringify({ error: 'Erro ao criar produto no Shopify. Tente novamente.' }),
         { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -80,14 +119,13 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         productId: product.id.toString(),
-        shopifyUrl: `https://${SHOPIFY_STORE}/admin/products/${product.id}`,
+        shopifyUrl: `https://${conn.store_domain}/admin/products/${product.id}`,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (e) {
-    console.error('publish-product error:', e);
     return new Response(
-      JSON.stringify({ error: e.message }),
+      JSON.stringify({ error: 'Erro interno. Tente novamente.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

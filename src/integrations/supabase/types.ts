@@ -44,6 +44,36 @@ export type Database = {
         }
         Relationships: []
       }
+      security_logs: {
+        Row: {
+          attempted_route: string | null
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attempted_route?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attempted_route?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       shopify_connections: {
         Row: {
           access_token: string
@@ -53,6 +83,7 @@ export type Database = {
           shop_name: string
           store_domain: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           access_token: string
@@ -62,6 +93,7 @@ export type Database = {
           shop_name: string
           store_domain: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           access_token?: string
@@ -71,6 +103,7 @@ export type Database = {
           shop_name?: string
           store_domain?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }

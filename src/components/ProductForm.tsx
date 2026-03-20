@@ -5,7 +5,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Sparkles, Loader2 } from 'lucide-react';
 
 interface ProductFormProps {
@@ -25,6 +24,28 @@ const initialForm: ProductFormData = {
 
 export function ProductForm({ onGenerateImage, isGenerating, hasImage }: ProductFormProps) {
   const [form, setForm] = useState<ProductFormData>(initialForm);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (form.title && form.title.length > 255) {
+      newErrors.title = 'Máximo de 255 caracteres.';
+    }
+
+    if (form.price < 0) {
+      newErrors.price = 'O preço deve ser positivo.';
+    } else if (form.price > 0 && !/^\d+(\.\d{1,2})?$/.test(form.price.toString())) {
+      newErrors.price = 'Máximo de 2 casas decimais.';
+    }
+
+    if (form.imagePrompt && form.imagePrompt.length > 1000) {
+      newErrors.imagePrompt = 'Máximo de 1000 caracteres.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const toggleSize = (size: ProductSize) => {
     setForm(prev => ({
@@ -37,8 +58,12 @@ export function ProductForm({ onGenerateImage, isGenerating, hasImage }: Product
 
   const handleGenerate = () => {
     if (!form.imagePrompt.trim()) return;
+    if (!validate()) return;
     onGenerateImage(form.imagePrompt);
   };
+
+  // Strip HTML tags from text input
+  const sanitizeText = (text: string) => text.replace(/<[^>]*>/g, '');
 
   return (
     <div className="space-y-5">
@@ -46,17 +71,23 @@ export function ProductForm({ onGenerateImage, isGenerating, hasImage }: Product
         <Label className="text-sm font-medium text-muted-foreground">Título do Produto</Label>
         <Input
           value={form.title}
-          onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
+          onChange={e => {
+            const val = sanitizeText(e.target.value).slice(0, 255);
+            setForm(prev => ({ ...prev, title: val }));
+            if (errors.title) setErrors(prev => ({ ...prev, title: '' }));
+          }}
           placeholder="Ex: Camiseta Urban Flow"
-          className="mt-1.5 bg-secondary border-border focus:ring-primary"
+          className={`mt-1.5 bg-secondary border-border focus:ring-primary ${errors.title ? 'border-destructive' : ''}`}
+          maxLength={255}
         />
+        {errors.title && <p className="text-xs text-destructive mt-1">{errors.title}</p>}
       </div>
 
       <div>
         <Label className="text-sm font-medium text-muted-foreground">Descrição</Label>
         <Textarea
           value={form.description}
-          onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
+          onChange={e => setForm(prev => ({ ...prev, description: sanitizeText(e.target.value) }))}
           placeholder="Descreva o produto..."
           rows={3}
           className="mt-1.5 bg-secondary border-border focus:ring-primary resize-none"
@@ -71,10 +102,15 @@ export function ProductForm({ onGenerateImage, isGenerating, hasImage }: Product
             min={0}
             step={0.01}
             value={form.price || ''}
-            onChange={e => setForm(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+            onChange={e => {
+              const val = parseFloat(e.target.value) || 0;
+              setForm(prev => ({ ...prev, price: Math.max(0, val) }));
+              if (errors.price) setErrors(prev => ({ ...prev, price: '' }));
+            }}
             placeholder="99.90"
-            className="mt-1.5 bg-secondary border-border focus:ring-primary"
+            className={`mt-1.5 bg-secondary border-border focus:ring-primary ${errors.price ? 'border-destructive' : ''}`}
           />
+          {errors.price && <p className="text-xs text-destructive mt-1">{errors.price}</p>}
         </div>
         <div>
           <Label className="text-sm font-medium text-muted-foreground">Coleção</Label>
@@ -112,14 +148,19 @@ export function ProductForm({ onGenerateImage, isGenerating, hasImage }: Product
       </div>
 
       <div>
-        <Label className="text-sm font-medium text-muted-foreground">Prompt da Imagem (DALL-E 3)</Label>
+        <Label className="text-sm font-medium text-muted-foreground">Prompt da Imagem (IA)</Label>
         <Textarea
           value={form.imagePrompt}
-          onChange={e => setForm(prev => ({ ...prev, imagePrompt: e.target.value }))}
+          onChange={e => {
+            setForm(prev => ({ ...prev, imagePrompt: e.target.value.slice(0, 1000) }));
+            if (errors.imagePrompt) setErrors(prev => ({ ...prev, imagePrompt: '' }));
+          }}
           placeholder="Ex: Camiseta preta com estampa urbana minimalista, fotografia de estúdio com fundo branco..."
           rows={3}
-          className="mt-1.5 bg-secondary border-border focus:ring-primary resize-none"
+          className={`mt-1.5 bg-secondary border-border focus:ring-primary resize-none ${errors.imagePrompt ? 'border-destructive' : ''}`}
+          maxLength={1000}
         />
+        {errors.imagePrompt && <p className="text-xs text-destructive mt-1">{errors.imagePrompt}</p>}
       </div>
 
       <Button

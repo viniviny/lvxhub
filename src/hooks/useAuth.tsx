@@ -71,6 +71,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
+    // Clear all sensitive data from localStorage
+    localStorage.removeItem('shopify_settings');
+    localStorage.removeItem('shopify_settings_safe');
+    localStorage.removeItem('shopify_access_token');
+    localStorage.removeItem('shopify_connected');
+    localStorage.removeItem('shopify_published_count');
     await supabase.auth.signOut();
   };
 
