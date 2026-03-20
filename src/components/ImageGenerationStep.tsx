@@ -40,6 +40,7 @@ export interface GeneratedImage {
   angle: ImageAngle;
   url: string;
   isCover: boolean;
+  justCompleted?: boolean;
 }
 
 interface ImageGenerationStepProps {
