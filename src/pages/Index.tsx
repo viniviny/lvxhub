@@ -203,7 +203,7 @@ const Index = () => {
                     </div>
 
                     <div>
-                      <Label className="text-sm font-medium text-muted-foreground">Prompt da Imagem (DALL-E 3)</Label>
+                      <Label className="text-sm font-medium text-muted-foreground">Prompt da Imagem (IA)</Label>
                       <Textarea
                         value={form.imagePrompt}
                         onChange={e => setForm(prev => ({ ...prev, imagePrompt: e.target.value }))}
