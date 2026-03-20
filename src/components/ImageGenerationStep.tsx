@@ -4,11 +4,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
   Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
-  CheckCircle2, ArrowRight, ImageIcon, X, Info
+  ArrowRight, ImageIcon, X, Info, Eye
 } from 'lucide-react';
 
 export type ImageAngle =
