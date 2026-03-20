@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { UserMenu } from '@/components/UserMenu';
 import {
   Send, Loader2, Upload, CheckCircle2, ExternalLink,
   Package, XCircle, Zap, HelpCircle, Store, ClipboardList, Settings
@@ -189,6 +190,7 @@ const Index = () => {
                 <Settings className="w-4.5 h-4.5" />
               </Button>
             )}
+            <UserMenu />
           </div>
         </div>
       </header>
