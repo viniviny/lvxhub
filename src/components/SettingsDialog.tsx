@@ -12,6 +12,8 @@ interface SettingsDialogProps {
   onOpenChange: (open: boolean) => void;
   currentSettings: ShopifySettings | null;
   onSave: (settings: ShopifySettings) => void;
+  onConnect: () => void;
+  isAuthenticated: boolean;
 }
 
 export function SettingsDialog({ open, onOpenChange, currentSettings, onSave }: SettingsDialogProps) {
