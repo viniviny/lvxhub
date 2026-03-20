@@ -256,20 +256,24 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b border-border bg-sidebar sticky top-0 z-10">
-        <div className="w-full px-5 py-3 flex items-center justify-between">
+      <header className="border-b border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] sticky top-0 z-10 h-[52px]">
+        <div className="w-full h-full px-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="font-display text-lg font-bold text-accent flex items-center gap-1.5">
-              <Zap className="w-5 h-5" />Publify
+            <h1 className="font-display text-base font-semibold text-[hsl(var(--info))] flex items-center gap-1.5">
+              <Zap className="w-4.5 h-4.5" />Publify
             </h1>
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-display font-medium tracking-wide uppercase border-border text-muted-foreground">beta</Badge>
-            {publishedCount > 0 && (
-              <Badge variant="secondary" className="font-display text-xs"><Package className="w-3 h-3 mr-1" />{publishedCount}</Badge>
-            )}
+            <span className="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full border border-[hsl(var(--info)/0.3)] bg-[hsl(var(--sidebar-primary)/0.15)] text-[hsl(var(--info))]">
+              beta
+            </span>
           </div>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowOnboarding(true)} title="Como funciona?"><HelpCircle className="w-4 h-4" /></Button>
-            {stores.length > 0 && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowManagement(true)} title="Gerenciar lojas"><Settings className="w-4 h-4" /></Button>}
+          <div className="flex items-center gap-1.5">
+            {publishedCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-[hsl(var(--sidebar-primary)/0.1)] text-[hsl(var(--info))]">
+                <Zap className="w-3 h-3" />{publishedCount} publicações
+              </span>
+            )}
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-[hsl(var(--sidebar-foreground))] hover:text-foreground" onClick={() => setShowOnboarding(true)} title="Como funciona?"><HelpCircle className="w-4 h-4" /></Button>
+            {stores.length > 0 && <Button variant="ghost" size="icon" className="h-8 w-8 text-[hsl(var(--sidebar-foreground))] hover:text-foreground" onClick={() => setShowManagement(true)} title="Gerenciar lojas"><Settings className="w-4 h-4" /></Button>}
             <UserMenu />
           </div>
         </div>

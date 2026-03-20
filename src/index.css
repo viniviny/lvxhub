@@ -36,14 +36,17 @@
 
     --radius: 0.5rem;
 
-    --sidebar-background: 215 17% 11%;
-    --sidebar-foreground: 212 11% 58%;
+    --sidebar-background: 216 28% 11%;
+    --sidebar-foreground: 215 14% 58%;
     --sidebar-primary: 215 84% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 27% 15%;
     --sidebar-accent-foreground: 210 29% 90%;
     --sidebar-border: 215 14% 21%;
     --sidebar-ring: 215 84% 52%;
+    --sidebar-card: 220 30% 16%;
+    --sidebar-card-border: 215 14% 24%;
+    --sidebar-card-hover: 215 84% 52%;
 
     --success: 140 64% 48%;
     --success-foreground: 0 0% 100%;
@@ -84,14 +87,17 @@
     --input: 215 14% 21%;
     --ring: 215 84% 52%;
 
-    --sidebar-background: 215 17% 11%;
-    --sidebar-foreground: 212 11% 58%;
+    --sidebar-background: 216 28% 11%;
+    --sidebar-foreground: 215 14% 58%;
     --sidebar-primary: 215 84% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 27% 15%;
     --sidebar-accent-foreground: 210 29% 90%;
     --sidebar-border: 215 14% 21%;
     --sidebar-ring: 215 84% 52%;
+    --sidebar-card: 220 30% 16%;
+    --sidebar-card-border: 215 14% 24%;
+    --sidebar-card-hover: 215 84% 52%;
 
     --success: 140 64% 48%;
     --success-foreground: 0 0% 100%;
@@ -192,6 +198,30 @@
   .stagger-3 { animation-delay: 100ms; }
   .stagger-4 { animation-delay: 150ms; }
   .stagger-5 { animation-delay: 200ms; }
+}
+
+/* ===== Pulse Dot (connected indicator) ===== */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.4); }
+}
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* ===== Sidebar nav active left border ===== */
+.nav-active-border {
+  position: relative;
+}
+.nav-active-border::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 1px;
+  background: hsl(var(--sidebar-primary));
 }
 
 /* ===== Reduced Motion ===== */
