@@ -474,7 +474,6 @@ const Index = () => {
                         </div>
                       </div>
                     </div>
-                    </div>
                   )}
 
                   {/* ═══ STEP 3: VARIANTS & SHIPPING ═══ */}
