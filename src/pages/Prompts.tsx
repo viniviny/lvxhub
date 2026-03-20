@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUserPrompts, UserPrompt, UserPromptInsert } from '@/hooks/useUserPrompts';
 import { BookOpen, Plus, Search, MoreHorizontal, Pencil, Copy, Trash2, ArrowLeft, SortAsc } from 'lucide-react';
 import { Button } from '@/components/ui/button';
