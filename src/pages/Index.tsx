@@ -180,6 +180,8 @@ const Index = () => {
         onOpenChange={setShowSettings}
         currentSettings={settings}
         onSave={saveSettings}
+        onConnect={startOAuth}
+        isAuthenticated={isAuthenticated}
       />
 
       <main className="max-w-4xl mx-auto px-6 py-8">
