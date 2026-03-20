@@ -188,6 +188,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_prompts: {
+        Row: {
+          category: string | null
+          created_at: string
+          default_angles: string[] | null
+          default_ratio: string | null
+          id: string
+          last_used_at: string | null
+          name: string
+          personal_notes: string | null
+          prompt_text: string
+          updated_at: string
+          usage_count: number
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          default_angles?: string[] | null
+          default_ratio?: string | null
+          id?: string
+          last_used_at?: string | null
+          name: string
+          personal_notes?: string | null
+          prompt_text: string
+          updated_at?: string
+          usage_count?: number
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          default_angles?: string[] | null
+          default_ratio?: string | null
+          id?: string
+          last_used_at?: string | null
+          name?: string
+          personal_notes?: string | null
+          prompt_text?: string
+          updated_at?: string
+          usage_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string

@@ -16,6 +16,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Index";
 import Admin from "./pages/Admin";
 import Callback from "./pages/Callback";
+import Prompts from "./pages/Prompts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,14 @@ function AnimatedRoutes() {
           element={
             <ProtectedRoute requireAdmin>
               <PageTransition><Admin /></PageTransition>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/prompts"
+          element={
+            <ProtectedRoute>
+              <PageTransition><Prompts /></PageTransition>
             </ProtectedRoute>
           }
         />

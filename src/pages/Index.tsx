@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ImageGenerationStep, GeneratedImage } from '@/components/ImageGenerationStep';
 import { ProductFormData, ProductSize, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
 import { ProductHistory } from '@/components/ProductHistory';
@@ -73,6 +74,7 @@ const PUBLISH_STEPS = [
 const STEP_LABELS = ['Imagem', 'Detalhes', 'Variantes & Envio', 'Revisão'];
 
 const Index = () => {
+  const navigate = useNavigate();
   const {
     stores, activeStore, activeStoreId, hasConnectedStore, publishedCount,
     setActiveStore, addStore, removeStore, setDefault, startOAuth, incrementPublished,
@@ -276,6 +278,7 @@ const Index = () => {
 
   const handleViewChange = (view: DashboardView) => {
     if (view === 'regions') { setShowRegions(true); return; }
+    if (view === 'prompts') { navigate('/prompts'); return; }
     setCurrentView(view);
   };
 

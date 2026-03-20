@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, DragEvent, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,11 +7,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserPrompts } from '@/hooks/useUserPrompts';
 import { toast } from 'sonner';
 import {
   Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
   ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical,
-  Clock, Check, ChevronLeft, ChevronRight, Camera
+  Clock, Check, ChevronLeft, ChevronRight, Camera, BookOpen
 } from 'lucide-react';
 
 export type AspectRatio = '1:1' | '4:5';
@@ -55,6 +57,9 @@ interface ImageGenerationStepProps {
 type PromptMode = 'simple' | 'custom';
 
 export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange }: ImageGenerationStepProps) {
+  const navigate = useNavigate();
+  const { recentPrompts, incrementUsage } = useUserPrompts();
+  const [activePromptId, setActivePromptId] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
   const [promptMode, setPromptMode] = useState<PromptMode>('simple');
   const [customAngleText, setCustomAngleText] = useState('');
@@ -256,9 +261,50 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
               <span className="text-[9px] text-muted-foreground">Prompt enviado diretamente sem modificações</span>
             </div>
           )}
+          {/* Active prompt badge */}
+          {activePromptId && (
+            <div className="flex items-center gap-1 mt-1">
+              <span className="inline-flex items-center gap-1 text-[9px] bg-primary/10 text-[#58A6FF] border border-primary/30 rounded-full px-2 py-0.5">
+                <BookOpen className="w-2.5 h-2.5" />
+                {recentPrompts.find(p => p.id === activePromptId)?.name}
+                <button onClick={() => { setActivePromptId(null); setPrompt(''); }} className="ml-0.5 hover:text-foreground"><X className="w-2.5 h-2.5" /></button>
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Aspect ratio selector */}
+        {/* Quick prompt access */}
+        {recentPrompts.length > 0 && (
+          <div>
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <BookOpen className="w-3 h-3 text-muted-foreground/60" />
+              <span className="text-[10px] text-muted-foreground/60">Meus prompts:</span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {recentPrompts.map(p => (
+                <button key={p.id} onClick={() => {
+                  setPrompt(p.prompt_text);
+                  setPromptMode('custom');
+                  setActivePromptId(p.id);
+                  if (p.default_angles.length > 0) setSelectedAngles(new Set(p.default_angles as ImageAngle[]));
+                  if (p.default_ratio && onAspectRatioChange) onAspectRatioChange(p.default_ratio as AspectRatio);
+                  incrementUsage.mutate(p.id);
+                }}
+                  className={`px-2 py-1 rounded-md text-[10px] border transition-all truncate max-w-[120px] ${
+                    activePromptId === p.id
+                      ? 'bg-primary/15 border-primary text-[#58A6FF]'
+                      : 'bg-card border-border text-muted-foreground hover:border-primary/40'
+                  }`}>
+                  {p.name}
+                </button>
+              ))}
+              <button onClick={() => navigate('/prompts')} className="px-2 py-1 rounded-md text-[10px] border border-border text-muted-foreground/50 hover:text-muted-foreground hover:border-primary/30 transition-all">
+                + Ver todos
+              </button>
+            </div>
+          </div>
+        )}
+
         <div>
           <Label className="text-xs font-medium text-muted-foreground">Proporção das imagens</Label>
           <div className="grid grid-cols-2 gap-1.5 mt-1.5">
