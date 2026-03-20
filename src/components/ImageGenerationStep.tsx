@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import {
   Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
-  CheckCircle2, ArrowRight, ImageIcon
+  CheckCircle2, ArrowRight, ImageIcon, X, Info
 } from 'lucide-react';
 
 export type ImageAngle =
@@ -45,8 +45,11 @@ interface ImageGenerationStepProps {
   onSkip: () => void;
 }
 
+type PromptMode = 'simple' | 'custom';
+
 export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: ImageGenerationStepProps) {
   const [prompt, setPrompt] = useState('');
+  const [promptMode, setPromptMode] = useState<PromptMode>('simple');
   const [customAngleText, setCustomAngleText] = useState('');
   const [selectedAngles, setSelectedAngles] = useState<Set<ImageAngle>>(
     new Set(ANGLE_OPTIONS.filter(a => a.defaultChecked).map(a => a.id))
@@ -55,7 +58,9 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedCount, setGeneratedCount] = useState(0);
   const [totalToGenerate, setTotalToGenerate] = useState(0);
+  const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const refImageInputRef = useRef<HTMLInputElement>(null);
 
   const selectedCount = selectedAngles.size;
   const hasAtLeastOneImage = images.length > 0;
@@ -69,6 +74,18 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
     });
   };
 
+  const handleReferenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const validTypes = ['image/png', 'image/jpeg', 'image/webp'];
+    if (!validTypes.includes(file.type)) { toast.error('Formato inválido. Use PNG, JPG ou WEBP.'); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error('Arquivo muito grande. Máx. 10MB.'); return; }
+    const reader = new FileReader();
+    reader.onload = () => setReferenceImage(reader.result as string);
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
   const generateImages = useCallback(async () => {
     if (!prompt.trim() || selectedAngles.size === 0) return;
 
@@ -79,12 +96,18 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
     setTotalToGenerate(angles.length);
 
     const results: GeneratedImage[] = [...images];
+    const isCustomPrompt = promptMode === 'custom';
 
-    // Generate all in parallel
     const promises = angles.map(async (angle) => {
       try {
         const { data, error } = await supabase.functions.invoke('generate-image', {
-          body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined },
+          body: {
+            prompt,
+            angle,
+            customAngleText: angle === 'personalizado' ? customAngleText : undefined,
+            isCustomPrompt,
+            referenceImageUrl: referenceImage || undefined,
+          },
         });
 
         if (error || data?.error) {
@@ -93,8 +116,6 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
         }
 
         const imageUrl = data.imageUrl;
-
-        // Remove existing image for this angle
         const idx = results.findIndex(img => img.angle === angle);
         const newImage: GeneratedImage = {
           angle,
@@ -121,7 +142,6 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
 
     await Promise.all(promises);
 
-    // Ensure at least one cover
     if (results.length > 0 && !results.some(r => r.isCover)) {
       results[0].isCover = true;
     }
@@ -134,7 +154,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
     if (successCount > 0) {
       toast.success(`${successCount} imagens geradas com sucesso ✓`);
     }
-  }, [prompt, selectedAngles, customAngleText, images, onImagesChange]);
+  }, [prompt, promptMode, selectedAngles, customAngleText, referenceImage, images, onImagesChange]);
 
   const regenerateAngle = useCallback(async (angle: ImageAngle) => {
     if (!prompt.trim()) return;
@@ -142,7 +162,13 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined },
+        body: {
+          prompt,
+          angle,
+          customAngleText: angle === 'personalizado' ? customAngleText : undefined,
+          isCustomPrompt: promptMode === 'custom',
+          referenceImageUrl: referenceImage || undefined,
+        },
       });
 
       if (error || data?.error) {
@@ -160,7 +186,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
     } finally {
       setGeneratingAngles(new Set());
     }
-  }, [prompt, customAngleText, images, onImagesChange]);
+  }, [prompt, promptMode, customAngleText, referenceImage, images, onImagesChange]);
 
   const removeImage = (angle: ImageAngle) => {
     const updated = images.filter(img => img.angle !== angle);
@@ -193,7 +219,6 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
     reader.readAsDataURL(file);
   };
 
-  // Gallery slots - show selected angles + filled ones
   const allSlots = Array.from(new Set([
     ...images.map(i => i.angle),
     ...Array.from(selectedAngles),
@@ -206,21 +231,97 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* LEFT COLUMN — Generation controls */}
       <div className="glass-card p-6 space-y-5">
-        <h3 className="font-display font-semibold text-foreground text-base">
-          Gerar imagens com IA
-        </h3>
+        {/* UPDATE 1: Title + reference image button */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="font-display font-semibold text-foreground text-base">
+              Gerar imagens com IA
+            </h3>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => refImageInputRef.current?.click()}
+                  className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] bg-transparent border border-[hsl(var(--sidebar-border))] text-muted-foreground hover:border-primary/60 hover:text-primary transition-colors"
+                >
+                  <Upload className="w-3 h-3" />
+                  Subir imagem de referência
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>Envie uma foto real do produto para guiar a geração da IA</p>
+              </TooltipContent>
+            </Tooltip>
+            <input
+              ref={refImageInputRef}
+              type="file"
+              accept=".png,.jpg,.jpeg,.webp"
+              onChange={handleReferenceUpload}
+              className="hidden"
+            />
+          </div>
+          {referenceImage && (
+            <div className="flex items-center gap-2">
+              <div className="relative w-12 h-12 rounded-md overflow-hidden border border-[hsl(var(--sidebar-border))]">
+                <img src={referenceImage} alt="Referência" className="w-full h-full object-cover" />
+                <button
+                  onClick={() => setReferenceImage(null)}
+                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                >
+                  <X className="w-2.5 h-2.5" />
+                </button>
+              </div>
+              <span className="text-[10px] text-muted-foreground">Imagem de referência</span>
+            </div>
+          )}
+        </div>
 
-        {/* Prompt */}
+        {/* UPDATE 2: Prompt with mode toggle */}
         <div>
-          <Label className="text-sm font-medium text-muted-foreground">Descreva o produto</Label>
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <Label className="text-sm font-medium text-muted-foreground">Descreva o produto</Label>
+            <div className="flex items-center rounded-full border border-[hsl(var(--sidebar-border))] p-0.5">
+              <button
+                onClick={() => setPromptMode('simple')}
+                className={`px-2.5 py-0.5 rounded-full text-[11px] transition-colors ${
+                  promptMode === 'simple'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Descrição simples
+              </button>
+              <button
+                onClick={() => setPromptMode('custom')}
+                className={`px-2.5 py-0.5 rounded-full text-[11px] transition-colors ${
+                  promptMode === 'custom'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Prompt personalizado
+              </button>
+            </div>
+          </div>
           <Textarea
             value={prompt}
-            onChange={e => setPrompt(e.target.value.slice(0, 1000))}
-            placeholder="Ex: oversized denim jacket dark blue women white studio background"
-            rows={3}
-            className="mt-1.5 bg-secondary border-[hsl(var(--sidebar-border))] resize-none"
-            maxLength={1000}
+            onChange={e => setPrompt(e.target.value.slice(0, promptMode === 'custom' ? 2000 : 1000))}
+            placeholder={
+              promptMode === 'simple'
+                ? 'Ex: oversized denim jacket dark blue women white studio background'
+                : 'Cole aqui seu prompt completo para o DALL-E 3.\nEx: Ultra-realistic professional e-commerce product photography. Dark blue oversized denim jacket on white seamless studio background. Soft diffused key light. Premium fashion catalog.'
+            }
+            rows={promptMode === 'simple' ? 3 : 5}
+            className="bg-secondary border-[hsl(var(--sidebar-border))] resize-none"
+            maxLength={promptMode === 'custom' ? 2000 : 1000}
           />
+          {promptMode === 'custom' && (
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <Info className="w-3 h-3 text-muted-foreground shrink-0" />
+              <span className="text-[10px] text-muted-foreground">
+                O prompt será enviado diretamente ao DALL-E 3 sem modificações
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Angle checkboxes */}
@@ -315,7 +416,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
 
         {/* Gallery grid */}
         <div className="grid grid-cols-3 gap-2 auto-rows-[140px]">
-          {/* Cover slot - spans 2 rows */}
+          {/* Cover slot */}
           <div className="row-span-2 col-span-1">
             <ImageSlot
               label="Capa"
@@ -329,7 +430,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
               tall
             />
           </div>
-          {/* Other slots - 2x2 on right */}
+          {/* Other slots */}
           {[0, 1, 2, 3].map(i => {
             const angle = otherSlots[i];
             const img = angle ? images.find(im => im.angle === angle) : null;
@@ -412,15 +513,12 @@ function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCo
         onMouseLeave={() => setHovered(false)}
       >
         <img src={image.url} alt={label} className="w-full h-full object-cover" />
-        {/* Angle label pill */}
         <span className="absolute top-1.5 left-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-black/60 text-white">
           {label}
         </span>
-        {/* Ready badge */}
         <span className="absolute top-1.5 right-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded bg-[hsl(var(--success))]/80 text-white flex items-center gap-0.5">
           <CheckCircle2 className="w-3 h-3" /> Pronta
         </span>
-        {/* Hover overlay */}
         {hovered && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center gap-2 animate-fade-in">
             <button onClick={onRegenerate} className="p-2 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors" title="Regenerar">
@@ -440,7 +538,6 @@ function ImageSlot({ label, image, isGenerating, onRegenerate, onRemove, onSetCo
     );
   }
 
-  // Empty slot
   return (
     <div className={`rounded-lg border border-dashed border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-card))] flex flex-col items-center justify-center gap-1.5 ${tall ? 'h-full' : 'h-full'}`}>
       <Plus className="w-5 h-5 text-muted-foreground/50" />
