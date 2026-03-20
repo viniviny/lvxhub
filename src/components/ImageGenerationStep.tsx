@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, DragEvent, useEffect } from 'react';
+import { useState, useRef, useCallback, DragEvent, useEffect, useKeyboard } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import {
   Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
   ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical,
-  Clock, Check
+  Clock, Check, ChevronLeft, ChevronRight, Camera
 } from 'lucide-react';
 
 export type AspectRatio = '1:1' | '4:5';
