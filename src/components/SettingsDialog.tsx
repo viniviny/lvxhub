@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { ShopifySettings } from '@/hooks/useShopifyAuth';
-import { Save, ExternalLink } from 'lucide-react';
+import { Save, Store } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface SettingsDialogProps {
@@ -12,9 +12,11 @@ interface SettingsDialogProps {
   onOpenChange: (open: boolean) => void;
   currentSettings: ShopifySettings | null;
   onSave: (settings: ShopifySettings) => void;
+  onConnect: () => void;
+  isAuthenticated: boolean;
 }
 
-export function SettingsDialog({ open, onOpenChange, currentSettings, onSave }: SettingsDialogProps) {
+export function SettingsDialog({ open, onOpenChange, currentSettings, onSave, onConnect, isAuthenticated }: SettingsDialogProps) {
   const [form, setForm] = useState<ShopifySettings>({
     storeDomain: '',
     clientId: '',
@@ -43,7 +45,17 @@ export function SettingsDialog({ open, onOpenChange, currentSettings, onSave }: 
     }
     onSave(form);
     toast.success('Configurações salvas com sucesso!');
+  };
+
+  const handleSaveAndConnect = () => {
+    if (!form.storeDomain.trim() || !form.clientId.trim() || !form.clientSecret.trim()) {
+      toast.error('Preencha todos os campos obrigatórios.');
+      return;
+    }
+    onSave(form);
     onOpenChange(false);
+    // Small delay to let state update before redirect
+    setTimeout(() => onConnect(), 100);
   };
 
   return (
@@ -107,10 +119,18 @@ export function SettingsDialog({ open, onOpenChange, currentSettings, onSave }: 
             </div>
           </div>
 
-          <Button onClick={handleSave} className="w-full font-display font-semibold">
-            <Save className="w-4 h-4 mr-2" />
-            Salvar Configurações
-          </Button>
+          <div className="flex gap-3">
+            <Button onClick={handleSave} variant="secondary" className="flex-1 font-display font-semibold">
+              <Save className="w-4 h-4 mr-2" />
+              Salvar
+            </Button>
+            {!isAuthenticated && (
+              <Button onClick={handleSaveAndConnect} className="flex-1 font-display font-semibold">
+                <Store className="w-4 h-4 mr-2" />
+                Conectar Loja
+              </Button>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
