@@ -50,6 +50,9 @@ const Callback = () => {
         const storesRaw = localStorage.getItem(STORES_KEY);
         const stores = storesRaw ? JSON.parse(storesRaw) : [];
 
+        // Recover market config saved before OAuth redirect
+        const marketConfig = settings.marketConfig || undefined;
+
         const updatedStores = stores.map((s: any) =>
           s.id === pendingStoreId
             ? {
@@ -57,6 +60,7 @@ const Callback = () => {
                 accessToken: data.accessToken,
                 connected: true,
                 connectedAt: new Date().toISOString().split('T')[0],
+                ...(marketConfig ? { marketConfig } : {}),
               }
             : s
         );

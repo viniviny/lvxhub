@@ -284,7 +284,7 @@ const Index = () => {
       {/* Dialogs */}
       <SettingsDialog open={showSettings} onOpenChange={setShowSettings} onSaveAndConnect={handleCredentialsSubmit} />
       <OnboardingGuide open={showOnboarding} onOpenChange={setShowOnboarding} onConfigureCredentials={() => { setShowOnboarding(false); setShowConnect(true); }} />
-      <ShopifyConnectDialog open={showConnect} onOpenChange={setShowConnect} onConnected={handleStoreConnected} />
+      <ShopifyConnectDialog open={showConnect} onOpenChange={setShowConnect} onConnected={handleStoreConnected} onOpenOnboarding={() => { setShowConnect(false); setShowOnboarding(true); }} />
       <StoreManagementDialog open={showManagement} onOpenChange={setShowManagement} stores={stores} onRemove={removeStore} onReconnect={handleReconnect} onSetDefault={setDefault} onUpdateMarket={updateStoreMarket} />
       <RegionGroupManager open={showRegions} onOpenChange={setShowRegions} groups={groups} stores={stores} onAddGroup={addGroup} onUpdateGroup={updateGroup} onRemoveGroup={removeGroup} />
       <GlobalPublishFlow open={showGlobalPublish} onOpenChange={setShowGlobalPublish} stores={stores} groups={groups} activeStore={activeStore} basePrice={form.price} productTitle={form.title} convert={convert} onPublish={handlePublishToStore} />
