@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { ProductFormData, ProductSize, AVAILABLE_SIZES, COLLECTIONS } from '@/types/product';
+import { ProductHistory } from '@/components/ProductHistory';
 import { useStoreManager, type MarketConfig } from '@/hooks/useStoreManager';
 import { useRegionGroups } from '@/hooks/useRegionGroups';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
