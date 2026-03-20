@@ -13,7 +13,7 @@ interface ShopifyConnectDialogProps {
   onConnected: (shopName: string, storeDomain: string) => void;
 }
 
-export function ShopifyConnectDialog({ open, onOpenChange }: ShopifyConnectDialogProps) {
+export function ShopifyConnectDialog({ open, onOpenChange, onConnected }: ShopifyConnectDialogProps) {
   const [storeDomain, setStoreDomain] = useState('');
   const [accessToken, setAccessToken] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
