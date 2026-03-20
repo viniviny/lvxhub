@@ -26,7 +26,7 @@ const steps: Step[] = [
   {
     icon: <AppWindow className="w-10 h-10" />,
     title: 'Passo 1 — Crie um app na Shopify',
-    text: 'Acesse o painel admin da sua loja e crie um app de desenvolvimento para conectar ao Fashion Publisher.',
+    text: 'Acesse o painel admin da sua loja e crie um app de desenvolvimento para conectar ao Publify.',
     instructions: [
       'Acesse sua loja em myshopify.com/admin',
       'Vá em Configurações → Apps e canais de vendas',
