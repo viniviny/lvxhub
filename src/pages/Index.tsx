@@ -31,7 +31,7 @@ const Index = () => {
     publishedCount, saveSettings, startOAuth, clearToken, incrementPublished,
   } = useShopifyAuth();
 
-  const { showOnboarding, completeOnboarding } = useOnboarding();
+  const [showHelp, setShowHelp] = useState(false);
 
   const [showSettings, setShowSettings] = useState(false);
   const [form, setForm] = useState<ProductFormData>(initialForm);
