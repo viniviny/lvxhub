@@ -91,6 +91,7 @@ export default function PromptsPage() {
 
   // Form view
   if (editing) {
+    return (
       <div className="min-h-screen bg-background flex">
         <DashboardSidebar stores={stores} activeStoreId={activeStoreId} onSelectStore={setActiveStore} onAddStore={() => {}} currentView={sidebarView} onViewChange={setSidebarView} />
         <div className="flex-1 flex flex-col min-w-0">
