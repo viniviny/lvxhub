@@ -1,22 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 export interface ShopifySettings {
   storeDomain: string;
   clientId: string;
-  clientSecret: string;
   apiVersion: string;
   redirectUri: string;
 }
 
 export interface ShopifyAuthState {
   settings: ShopifySettings | null;
-  accessToken: string | null;
   isAuthenticated: boolean;
   publishedCount: number;
 }
 
-const SETTINGS_KEY = 'shopify_settings';
-const TOKEN_KEY = 'shopify_access_token';
+const SETTINGS_KEY = 'shopify_settings_safe';
 const CONNECTED_KEY = 'shopify_connected';
 const COUNT_KEY = 'shopify_published_count';
 
@@ -29,36 +26,35 @@ function loadSettings(): ShopifySettings | null {
 
 export function useShopifyAuth() {
   const [settings, setSettings] = useState<ShopifySettings | null>(loadSettings);
-  const [accessToken, setAccessToken] = useState<string | null>(
-    () => localStorage.getItem(TOKEN_KEY)
-  );
   const [publishedCount, setPublishedCount] = useState<number>(
     () => parseInt(localStorage.getItem(COUNT_KEY) || '0', 10)
   );
-
   const [isConnected, setIsConnected] = useState<boolean>(
     () => localStorage.getItem(CONNECTED_KEY) === 'true'
   );
 
-  const isAuthenticated = !!accessToken && isConnected;
-  const hasSettings = !!settings?.storeDomain && !!settings?.clientId && !!settings?.clientSecret;
+  const isAuthenticated = isConnected;
+  const hasSettings = !!settings?.storeDomain && !!settings?.clientId;
 
   const saveSettings = useCallback((s: ShopifySettings) => {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
-    setSettings(s);
+    // Never store client_secret or access_token in localStorage
+    const safeSettings: ShopifySettings = {
+      storeDomain: s.storeDomain,
+      clientId: s.clientId,
+      apiVersion: s.apiVersion,
+      redirectUri: s.redirectUri,
+    };
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(safeSettings));
+    setSettings(safeSettings);
   }, []);
 
-  const saveToken = useCallback((token: string) => {
-    localStorage.setItem(TOKEN_KEY, token);
+  const markConnected = useCallback(() => {
     localStorage.setItem(CONNECTED_KEY, 'true');
-    setAccessToken(token);
     setIsConnected(true);
   }, []);
 
-  const clearToken = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
+  const clearConnection = useCallback(() => {
     localStorage.removeItem(CONNECTED_KEY);
-    setAccessToken(null);
     setIsConnected(false);
   }, []);
 
@@ -80,13 +76,13 @@ export function useShopifyAuth() {
 
   return {
     settings,
-    accessToken,
+    accessToken: null, // Token is never exposed to frontend
     isAuthenticated,
     hasSettings,
     publishedCount,
     saveSettings,
-    saveToken,
-    clearToken,
+    saveToken: markConnected, // Kept for API compat but only marks connected
+    clearToken: clearConnection,
     startOAuth,
     incrementPublished,
   };

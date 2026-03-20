@@ -5,3 +5,12 @@ verify_jwt = false
 
 [functions.publish-product]
 verify_jwt = false
+
+[functions.connect-shopify]
+verify_jwt = false
+
+[functions.shopify-publish]
+verify_jwt = false
+
+[functions.shopify-exchange-token]
+verify_jwt = false

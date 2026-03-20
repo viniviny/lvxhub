@@ -34,9 +34,14 @@ export default function Login() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) {
-      toast.error(error.message === 'Invalid login credentials'
-        ? 'Email ou senha incorretos.'
-        : error.message);
+      // Friendly error messages — never expose raw errors
+      if (error.message === 'Invalid login credentials') {
+        toast.error('Credenciais inválidas.');
+      } else if (error.message.includes('Email not confirmed')) {
+        toast.error('Email não confirmado. Verifique sua caixa de entrada.');
+      } else {
+        toast.error('Erro de conexão. Tente novamente.');
+      }
     }
   };
 
@@ -46,7 +51,7 @@ export default function Login() {
       redirect_uri: window.location.origin,
     });
     setGoogleLoading(false);
-    if (error) toast.error('Erro ao entrar com Google.');
+    if (error) toast.error('Erro ao entrar com Google. Tente novamente.');
   };
 
   return (
