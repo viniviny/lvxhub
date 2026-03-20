@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ProductFormData, calculateDiscount } from '@/types/product';
 import { GeneratedImage } from '@/components/ImageGenerationStep';
-import { ChevronDown, ChevronRight, ShoppingCart, Search, User, Star, Monitor, Tablet, Smartphone, Maximize2, Minimize2, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronLeft, ShoppingCart, Search, User, Star, Monitor, Tablet, Smartphone, Maximize2, Minimize2, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
@@ -73,6 +73,7 @@ function PreviewContent({ form, images, imagePreview, storeDomain, currencySymbo
   const [selectedSize, setSelectedSize] = useState(form.sizes[0] || form.variants[0]?.name || '');
   const [openAccordion, setOpenAccordion] = useState<string | null>('description');
   const [qty, setQty] = useState(1);
+  const [showArrows, setShowArrows] = useState(false);
 
   const discount = calculateDiscount(form.price, form.compareAtPrice);
   const handle = form.title ? form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : 'product';
@@ -132,20 +133,70 @@ function PreviewContent({ form, images, imagePreview, storeDomain, currencySymbo
       <div className={`bg-white ${isMobile ? 'p-4' : isTablet ? 'p-5 grid grid-cols-2 gap-5' : 'p-6 grid grid-cols-2 gap-6'}`}>
         {/* Images */}
         <div className="space-y-2">
-          <div className={`rounded-lg bg-[hsl(220,14%,97%)] overflow-hidden border border-[hsl(220,13%,93%)] ${isMobile ? 'aspect-square w-full' : 'aspect-square'}`}>
+          <div
+            className={`relative rounded-lg bg-[hsl(220,14%,97%)] overflow-hidden border border-[hsl(220,13%,93%)] group/img ${isMobile ? 'aspect-square w-full' : 'aspect-square'}`}
+            onMouseEnter={() => setShowArrows(true)}
+            onMouseLeave={() => setShowArrows(false)}
+          >
             {currentImg ? (
-              <img src={currentImg} alt={form.title} className="w-full h-full object-cover" />
+              <img
+                key={mainImage}
+                src={currentImg}
+                alt={form.title}
+                className="w-full h-full object-cover animate-[fadeImg_0.2s_ease-out]"
+                style={{ animationFillMode: 'forwards' }}
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-[hsl(220,9%,76%)] text-sm">Sem imagem</div>
             )}
+
+            {/* Image counter */}
+            {allImages.length > 1 && (
+              <div className="absolute top-2.5 right-2.5 bg-black/50 text-white text-[11px] rounded-full px-2 py-0.5 font-medium">
+                {mainImage + 1} / {allImages.length}
+              </div>
+            )}
+
+            {/* Navigation arrows */}
+            {allImages.length > 1 && (
+              <>
+                <button
+                  onClick={() => setMainImage(i => i <= 0 ? allImages.length - 1 : i - 1)}
+                  className={`absolute left-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 border border-[hsl(220,13%,90%)] flex items-center justify-center transition-all duration-150 hover:bg-white hover:shadow-md ${showArrows ? 'opacity-100' : 'opacity-0'}`}
+                >
+                  <ChevronLeft className="w-4 h-4 text-[hsl(220,13%,26%)]" />
+                </button>
+                <button
+                  onClick={() => setMainImage(i => i >= allImages.length - 1 ? 0 : i + 1)}
+                  className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 border border-[hsl(220,13%,90%)] flex items-center justify-center transition-all duration-150 hover:bg-white hover:shadow-md ${showArrows ? 'opacity-100' : 'opacity-0'}`}
+                >
+                  <ChevronRight className="w-4 h-4 text-[hsl(220,13%,26%)]" />
+                </button>
+              </>
+            )}
+
+            {/* Dot indicators */}
+            {allImages.length > 1 && (
+              <div className={`absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-[5px] transition-opacity duration-150 ${showArrows ? 'opacity-100' : 'opacity-60'}`}>
+                {allImages.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setMainImage(i)}
+                    className={`w-1.5 h-1.5 rounded-full transition-all duration-150 ${i === mainImage ? 'bg-[hsl(220,13%,13%)] scale-125' : 'bg-[hsl(220,13%,82%)] hover:bg-[hsl(220,13%,60%)]'}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* Thumbnails */}
           {allImages.length > 1 && (
             <div className="flex gap-2 overflow-x-auto pb-1">
               {allImages.map((img, i) => (
                 <button
                   key={i}
                   onClick={() => setMainImage(i)}
-                  className={`w-14 h-14 rounded-md overflow-hidden border-2 flex-shrink-0 transition-all ${i === mainImage ? 'border-[hsl(220,13%,13%)]' : 'border-[hsl(220,13%,90%)] hover:border-[hsl(220,13%,70%)]'}`}
+                  className={`w-14 h-14 rounded-md overflow-hidden border-2 flex-shrink-0 transition-all ${i === mainImage ? 'border-[hsl(220,13%,13%)] opacity-100' : 'border-transparent opacity-60 hover:opacity-100'}`}
                 >
                   <img src={img.url} alt={img.label} className="w-full h-full object-cover" />
                 </button>
