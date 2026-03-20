@@ -46,6 +46,8 @@ interface ImageGenerationStepProps {
   onImagesChange: (images: GeneratedImage[]) => void;
   onNext: () => void;
   onSkip: () => void;
+  aspectRatio?: AspectRatio;
+  onAspectRatioChange?: (ratio: AspectRatio) => void;
 }
 
 type PromptMode = 'simple' | 'custom';
