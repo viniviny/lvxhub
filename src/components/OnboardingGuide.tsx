@@ -93,7 +93,8 @@ export function OnboardingGuide({ open, onOpenChange, onConfigureCredentials }: 
 
   const goNext = () => {
     if (isLast) {
-      handleClose();
+      setCurrentStep(0);
+      onConfigureCredentials();
       return;
     }
     setDirection('next');
