@@ -1,5 +1,6 @@
 import { ShopifyStore } from '@/hooks/useStoreManager';
 import { StoreSelector } from '@/components/StoreSelector';
+import { Badge } from '@/components/ui/badge';
 import { Package, ClipboardList, Store, Settings, Plus, Layers, Globe } from 'lucide-react';
 
 export type DashboardView = 'publish' | 'history' | 'stores' | 'regions' | 'settings';
