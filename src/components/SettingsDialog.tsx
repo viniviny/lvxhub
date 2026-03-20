@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { ShopifySettings } from '@/hooks/useShopifyAuth';
-import { Save, ExternalLink } from 'lucide-react';
+import { Save, Store } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface SettingsDialogProps {
