@@ -323,12 +323,6 @@ const Index = () => {
                 <div className="animate-fade-in">
                   <div className="mb-3">
                     <h2 className="font-display text-xl font-bold text-foreground">Publicar Produto</h2>
-                    <p className="text-muted-foreground text-xs mt-0.5 flex items-center gap-1.5">
-                      Publicando em{' '}
-                      {activeStore?.marketConfig?.countryFlag && <span className="text-sm">{activeStore.marketConfig.countryFlag}</span>}
-                      <span className="text-primary font-medium">{activeStore?.marketConfig?.marketName || activeStore?.domain}</span>
-                      {activeStoreLang && <span className="text-muted-foreground">• {activeStoreLang.flag} {activeStoreLang.label}</span>}
-                    </p>
                   </div>
 
                   {/* Wizard steps indicator */}
