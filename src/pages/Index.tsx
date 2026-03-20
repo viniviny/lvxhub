@@ -2,7 +2,8 @@ import { useState, useRef, useMemo } from 'react';
 import { ImageGenerationStep, GeneratedImage } from '@/components/ImageGenerationStep';
 import { ProductFormData, ProductSize, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
 import { ProductHistory } from '@/components/ProductHistory';
-import { useStoreManager, type MarketConfig } from '@/hooks/useStoreManager';
+import { useStoreContext } from '@/hooks/useStoreContext';
+import { type MarketConfig } from '@/hooks/useStoreManager';
 import { useRegionGroups } from '@/hooks/useRegionGroups';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { SettingsDialog } from '@/components/SettingsDialog';
@@ -68,7 +69,7 @@ const Index = () => {
     stores, activeStore, activeStoreId, hasConnectedStore, publishedCount,
     setActiveStore, addStore, removeStore, setDefault, startOAuth, incrementPublished,
     connectStoreWithMarket, updateStoreMarket,
-  } = useStoreManager();
+  } = useStoreContext();
 
   const { groups, addGroup, updateGroup, removeGroup } = useRegionGroups();
   const baseCurrency = activeStore?.marketConfig?.currency || 'USD';
