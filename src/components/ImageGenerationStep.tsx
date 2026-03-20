@@ -458,6 +458,121 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip }: 
   );
 }
 
+/* ─── Draggable Gallery ─── */
+interface DraggableGalleryProps {
+  images: GeneratedImage[];
+  allSlots: ImageAngle[];
+  generatingAngles: Set<ImageAngle>;
+  onImagesChange: (images: GeneratedImage[]) => void;
+  onRegenerate: (angle: ImageAngle) => void;
+  onRemove: (angle: ImageAngle) => void;
+  onSetCover: (angle: ImageAngle) => void;
+}
+
+function DraggableGallery({
+  images, allSlots, generatingAngles, onImagesChange, onRegenerate, onRemove, onSetCover,
+}: DraggableGalleryProps) {
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  // Build display list: images first (in order), then empty slots
+  const imageAngles = images.map(i => i.angle);
+  const emptySlots = allSlots.filter(a => !imageAngles.includes(a));
+  const displayList: (GeneratedImage | { angle: ImageAngle; empty: true })[] = [
+    ...images,
+    ...emptySlots.map(a => ({ angle: a, empty: true as const })),
+  ];
+  // Cap at 5 slots
+  const slots = displayList.slice(0, 5);
+
+  const handleDragStart = (e: DragEvent<HTMLDivElement>, idx: number) => {
+    const item = slots[idx];
+    if ('empty' in item) { e.preventDefault(); return; }
+    setDragIdx(idx);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>, idx: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverIdx !== idx) setDragOverIdx(idx);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>, dropIdx: number) => {
+    e.preventDefault();
+    if (dragIdx === null || dragIdx === dropIdx) { setDragIdx(null); setDragOverIdx(null); return; }
+
+    // Only reorder actual images
+    const reordered = [...images];
+    // Map display indices to image indices
+    const fromImg = slots[dragIdx];
+    const toImg = slots[dropIdx];
+    if (!fromImg || 'empty' in fromImg) { setDragIdx(null); setDragOverIdx(null); return; }
+
+    const fromImageIdx = reordered.findIndex(i => i.angle === fromImg.angle);
+    if (fromImageIdx < 0) { setDragIdx(null); setDragOverIdx(null); return; }
+
+    // If dropping onto an empty slot, move to end
+    let toImageIdx: number;
+    if ('empty' in toImg) {
+      toImageIdx = reordered.length - 1;
+    } else {
+      toImageIdx = reordered.findIndex(i => i.angle === toImg.angle);
+    }
+
+    const [moved] = reordered.splice(fromImageIdx, 1);
+    reordered.splice(toImageIdx, 0, moved);
+
+    // First image is always cover
+    const updated = reordered.map((img, i) => ({ ...img, isCover: i === 0 }));
+    onImagesChange(updated);
+
+    setDragIdx(null);
+    setDragOverIdx(null);
+  };
+
+  const handleDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
+
+  return (
+    <div className="grid grid-cols-3 gap-2 auto-rows-[140px]">
+      {slots.map((slot, idx) => {
+        const isFirst = idx === 0;
+        const angle = slot.angle;
+        const isImage = !('empty' in slot);
+        const image = isImage ? (slot as GeneratedImage) : null;
+        const label = isFirst ? 'Capa' : (ANGLE_OPTIONS.find(a => a.id === angle)?.label || angle);
+        const isDragging = dragIdx === idx;
+        const isDragOver = dragOverIdx === idx && dragIdx !== idx;
+
+        return (
+          <div
+            key={`${angle}-${idx}`}
+            className={`${isFirst ? 'row-span-2 col-span-1' : ''} ${isDragging ? 'opacity-40' : ''} ${isDragOver ? 'ring-2 ring-primary rounded-lg' : ''} transition-all duration-150`}
+            draggable={!!image}
+            onDragStart={e => handleDragStart(e, idx)}
+            onDragOver={e => handleDragOver(e, idx)}
+            onDrop={e => handleDrop(e, idx)}
+            onDragEnd={handleDragEnd}
+          >
+            <ImageSlot
+              label={label}
+              angle={angle}
+              image={image}
+              isGenerating={generatingAngles.has(angle)}
+              onRegenerate={() => onRegenerate(angle)}
+              onRemove={() => onRemove(angle)}
+              onSetCover={() => onSetCover(angle)}
+              isCover={isFirst}
+              tall={isFirst}
+              draggable={!!image}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ─── Image Slot sub-component ─── */
 interface ImageSlotProps {
   label?: string;
