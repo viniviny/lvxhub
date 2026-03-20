@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { ProductFormData, ProductSize, AVAILABLE_SIZES, COLLECTIONS } from '@/types/product';
 import { useShopifyAuth } from '@/hooks/useShopifyAuth';
 import { SettingsDialog } from '@/components/SettingsDialog';
+import { OnboardingGuide, useOnboarding } from '@/components/OnboardingGuide';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,6 +30,8 @@ const Index = () => {
     settings, accessToken, isAuthenticated, hasSettings,
     publishedCount, saveSettings, startOAuth, clearToken, incrementPublished,
   } = useShopifyAuth();
+
+  const { showOnboarding, completeOnboarding } = useOnboarding();
 
   const [showSettings, setShowSettings] = useState(false);
   const [form, setForm] = useState<ProductFormData>(initialForm);
@@ -132,6 +135,17 @@ const Index = () => {
 
   // Show setup screen if not configured
   const showSetup = !hasSettings;
+
+  if (showOnboarding) {
+    return (
+      <OnboardingGuide
+        onComplete={() => {
+          completeOnboarding();
+          setShowSettings(true);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
