@@ -305,6 +305,7 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
   ];
 
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="flex flex-col">
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-3">
