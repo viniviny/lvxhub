@@ -66,6 +66,9 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const [generatedCount, setGeneratedCount] = useState(0);
   const [totalToGenerate, setTotalToGenerate] = useState(0);
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
+  const [genStartTime, setGenStartTime] = useState<number | null>(null);
+  const [angleStartTimes, setAngleStartTimes] = useState<Record<string, number>>({});
+  const [completedAngles, setCompletedAngles] = useState<Set<ImageAngle>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const refImageInputRef = useRef<HTMLInputElement>(null);
 
