@@ -45,7 +45,17 @@ export function SettingsDialog({ open, onOpenChange, currentSettings, onSave, on
     }
     onSave(form);
     toast.success('Configurações salvas com sucesso!');
+  };
+
+  const handleSaveAndConnect = () => {
+    if (!form.storeDomain.trim() || !form.clientId.trim() || !form.clientSecret.trim()) {
+      toast.error('Preencha todos os campos obrigatórios.');
+      return;
+    }
+    onSave(form);
     onOpenChange(false);
+    // Small delay to let state update before redirect
+    setTimeout(() => onConnect(), 100);
   };
 
   return (
