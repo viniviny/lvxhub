@@ -32,7 +32,7 @@ const steps: Step[] = [
       'Vá em Configurações → Apps e canais de vendas',
       'Clique em "Desenvolver apps"',
       'Clique em "Criar um app"',
-      'Dê o nome "Fashion Publisher" e salve',
+      'Dê o nome "Publify" e salve',
     ],
   },
   {
