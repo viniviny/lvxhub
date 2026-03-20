@@ -1,22 +1,26 @@
 import { useState, useRef, useEffect } from 'react';
 import { Sparkles, Keyboard, Loader2, Check, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface AIFieldButtonsProps {
   type: 'title' | 'description';
   brief: string;
   title?: string;
   language: string;
+  languageCode?: string;
+  countryName?: string;
+  countryFlag?: string;
   currentValue: string;
   onGenerated: (content: string) => void;
 }
 
-export function AIFieldButtons({ type, brief, title, language, currentValue, onGenerated }: AIFieldButtonsProps) {
+export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated }: AIFieldButtonsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [generatedLang, setGeneratedLang] = useState('');
   const [showPopover, setShowPopover] = useState(false);
   const [customPrompt, setCustomPrompt] = useState('');
   const [isCustomGenerating, setIsCustomGenerating] = useState(false);
@@ -56,17 +60,18 @@ export function AIFieldButtons({ type, brief, title, language, currentValue, onG
 
   const flashSuccess = () => {
     setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 2000);
+    setTimeout(() => { setShowSuccess(false); setGeneratedLang(''); }, 3000);
   };
 
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-text', {
-        body: { type, brief, title, language },
+        body: { type, brief, title, language, languageCode, countryName },
       });
       if (error) throw error;
       if (data?.content) {
+        setGeneratedLang(data.language || language);
         applyContent(data.content);
       }
     } catch (e: any) {
@@ -81,10 +86,11 @@ export function AIFieldButtons({ type, brief, title, language, currentValue, onG
     setIsCustomGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-text', {
-        body: { type, customPrompt, language },
+        body: { type, customPrompt, language, languageCode, countryName },
       });
       if (error) throw error;
       if (data?.content) {
+        setGeneratedLang(data.language || language);
         applyContent(data.content);
         setShowPopover(false);
         setCustomPrompt('');
@@ -95,6 +101,8 @@ export function AIFieldButtons({ type, brief, title, language, currentValue, onG
       setIsCustomGenerating(false);
     }
   };
+
+  const tooltipLabel = `Gerar em ${language || 'Inglês'}`;
 
   return (
     <div className="relative flex items-center gap-1">
@@ -124,30 +132,46 @@ export function AIFieldButtons({ type, brief, title, language, currentValue, onG
         </div>
       )}
 
-      {/* Generate button */}
-      <button
-        onClick={handleGenerate}
-        disabled={isGenerating}
-        className={`flex items-center gap-1 h-[22px] px-2 rounded text-[10px] font-medium transition-all border ${
-          showSuccess
-            ? 'border-[hsl(var(--chart-2))] bg-[hsl(var(--chart-2))]/15 text-[hsl(var(--chart-2))]'
-            : 'border-primary/50 bg-primary/15 text-[hsl(213,97%,67%)] hover:bg-primary/25'
-        }`}
-      >
-        {isGenerating ? (
-          <Loader2 className="w-3 h-3 animate-spin" />
-        ) : showSuccess ? (
-          <>
-            <Check className="w-3 h-3" />
-            Gerado
-          </>
-        ) : (
-          <>
-            <Sparkles className="w-3 h-3" />
-            Gerar
-          </>
-        )}
-      </button>
+      {/* Generated language badge */}
+      {showSuccess && generatedLang && (
+        <span className="text-[9px] text-muted-foreground mr-0.5">
+          {countryFlag || '🌐'} {generatedLang}
+        </span>
+      )}
+
+      {/* Generate button with tooltip */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={handleGenerate}
+              disabled={isGenerating}
+              className={`flex items-center gap-1 h-[22px] px-2 rounded text-[10px] font-medium transition-all border ${
+                showSuccess
+                  ? 'border-[hsl(var(--chart-2))] bg-[hsl(var(--chart-2))]/15 text-[hsl(var(--chart-2))]'
+                  : 'border-primary/50 bg-primary/15 text-[hsl(213,97%,67%)] hover:bg-primary/25'
+              }`}
+            >
+              {isGenerating ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : showSuccess ? (
+                <>
+                  <Check className="w-3 h-3" />
+                  Gerado
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3 h-3" />
+                  Gerar
+                </>
+              )}
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-[10px]">
+            {tooltipLabel}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       {/* Custom prompt button */}
       <button
@@ -181,7 +205,10 @@ export function AIFieldButtons({ type, brief, title, language, currentValue, onG
             className="bg-secondary border-border text-xs min-h-[80px] resize-none"
             rows={4}
           />
-          <div className="flex items-center justify-between mt-2">
+          <p className="text-[9px] text-muted-foreground mt-1.5 mb-2">
+            ℹ Escreva em qualquer idioma — a resposta será em {language || 'Inglês'}
+          </p>
+          <div className="flex items-center justify-between">
             <button
               onClick={() => { setShowPopover(false); setCustomPrompt(''); }}
               className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"

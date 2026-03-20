@@ -16,9 +16,12 @@ interface SEOCardProps {
   onTitleChange: (v: string) => void;
   onDescriptionChange: (v: string) => void;
   compact?: boolean;
+  language?: string;
+  languageCode?: string;
+  countryName?: string;
 }
 
-export function SEOCard({ title, description, storeDomain, productTitle, onTitleChange, onDescriptionChange, compact }: SEOCardProps) {
+export function SEOCard({ title, description, storeDomain, productTitle, onTitleChange, onDescriptionChange, compact, language, languageCode, countryName }: SEOCardProps) {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
 
@@ -42,16 +45,22 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
       const [titleRes, descRes] = await Promise.all([
         supabase.functions.invoke('generate-text', {
           body: {
-            type: 'title',
-            customPrompt: `Write an SEO-optimized product title for: "${productTitle}". Max 60 characters. Only return the title, nothing else.`,
-            language: 'Portuguese',
+            type: 'seo-title',
+            brief: productTitle,
+            title: productTitle,
+            language: language || 'English',
+            languageCode: languageCode || 'en-US',
+            countryName: countryName || '',
           },
         }),
         supabase.functions.invoke('generate-text', {
           body: {
-            type: 'description',
-            customPrompt: `Write an SEO meta description for the product "${productTitle}". Max 155 characters. Compelling, with keywords. Only return the description, nothing else.`,
-            language: 'Portuguese',
+            type: 'seo-description',
+            brief: productTitle,
+            title: productTitle,
+            language: language || 'English',
+            languageCode: languageCode || 'en-US',
+            countryName: countryName || '',
           },
         }),
       ]);

@@ -418,6 +418,9 @@ const Index = () => {
                         onTitleChange={setSeoTitle}
                         onDescriptionChange={setSeoDescription}
                         compact
+                        language={activeStoreLang?.label || 'English'}
+                        languageCode={activeStore?.marketConfig?.language || 'en-US'}
+                        countryName={activeStore?.marketConfig?.marketName || ''}
                       />
 
                       {/* RIGHT — Product Details (main) */}
@@ -431,6 +434,9 @@ const Index = () => {
                               type="title"
                               brief={form.description || form.title || ''}
                               language={activeStoreLang?.label || 'English'}
+                              languageCode={activeStore?.marketConfig?.language || 'en-US'}
+                              countryName={activeStore?.marketConfig?.marketName || ''}
+                              countryFlag={activeStore?.marketConfig?.countryFlag || ''}
                               currentValue={form.title}
                               onGenerated={content => setForm(prev => ({ ...prev, title: content.slice(0, 255) }))}
                             />
@@ -446,6 +452,9 @@ const Index = () => {
                               brief={form.title || ''}
                               title={form.title}
                               language={activeStoreLang?.label || 'English'}
+                              languageCode={activeStore?.marketConfig?.language || 'en-US'}
+                              countryName={activeStore?.marketConfig?.marketName || ''}
+                              countryFlag={activeStore?.marketConfig?.countryFlag || ''}
                               currentValue={form.description}
                               onGenerated={html => setForm(prev => ({ ...prev, description: html }))}
                             />
