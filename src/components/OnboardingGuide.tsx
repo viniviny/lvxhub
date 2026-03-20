@@ -74,9 +74,10 @@ const steps: Step[] = [
 interface OnboardingGuideProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onConfigureCredentials: () => void;
 }
 
-export function OnboardingGuide({ open, onOpenChange }: OnboardingGuideProps) {
+export function OnboardingGuide({ open, onOpenChange, onConfigureCredentials }: OnboardingGuideProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState<'next' | 'prev'>('next');
 
@@ -92,7 +93,8 @@ export function OnboardingGuide({ open, onOpenChange }: OnboardingGuideProps) {
 
   const goNext = () => {
     if (isLast) {
-      handleClose();
+      setCurrentStep(0);
+      onConfigureCredentials();
       return;
     }
     setDirection('next');
@@ -242,7 +244,7 @@ export function OnboardingGuide({ open, onOpenChange }: OnboardingGuideProps) {
           >
             {isLast ? (
               <>
-                Fechar
+                Já configurei, conectar agora
                 <ArrowRight className="w-4 h-4 ml-1.5" />
               </>
             ) : (

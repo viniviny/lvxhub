@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import {
   Settings, Send, Loader2, Upload, CheckCircle2, ExternalLink,
-  Package, XCircle, Zap, HelpCircle
+  Package, XCircle, Zap
 } from 'lucide-react';
 
 const initialForm: ProductFormData = {
@@ -31,7 +31,7 @@ const Index = () => {
     publishedCount, saveSettings, startOAuth, clearToken, incrementPublished,
   } = useShopifyAuth();
 
-  const [showHelp, setShowHelp] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const [showSettings, setShowSettings] = useState(false);
   const [form, setForm] = useState<ProductFormData>(initialForm);
@@ -133,9 +133,6 @@ const Index = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // Show setup screen if not configured
-  const showSetup = !hasSettings;
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -173,14 +170,6 @@ const Index = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setShowHelp(true)}
-              title="Tutorial"
-            >
-              <HelpCircle className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
               onClick={() => setShowSettings(true)}
               title="Configurações"
             >
@@ -199,28 +188,18 @@ const Index = () => {
         isAuthenticated={isAuthenticated}
       />
 
-      <OnboardingGuide open={showHelp} onOpenChange={setShowHelp} />
+      <OnboardingGuide
+        open={showOnboarding}
+        onOpenChange={setShowOnboarding}
+        onConfigureCredentials={() => {
+          setShowOnboarding(false);
+          setShowSettings(true);
+        }}
+      />
 
       <main className="max-w-4xl mx-auto px-6 py-8">
-        {/* Setup Screen */}
-        {showSetup && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="glass-card p-10 text-center max-w-md w-full">
-              <Settings className="w-16 h-16 mx-auto text-primary mb-6" />
-              <h2 className="font-display text-2xl font-bold text-foreground mb-2">Configuração Inicial</h2>
-              <p className="text-muted-foreground text-sm mb-6">
-                Configure suas credenciais do Shopify para começar a publicar produtos.
-              </p>
-              <Button onClick={() => setShowSettings(true)} className="w-full font-display font-semibold">
-                <Settings className="w-4 h-4 mr-2" />
-                Configurar Shopify
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Connect Screen */}
-        {hasSettings && !isAuthenticated && (
+        {/* Not connected screen */}
+        {!isAuthenticated && (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="glass-card p-10 text-center max-w-md w-full">
               <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-6">
@@ -228,9 +207,9 @@ const Index = () => {
               </div>
               <h2 className="font-display text-2xl font-bold text-foreground mb-2">Conectar ao Shopify</h2>
               <p className="text-muted-foreground text-sm mb-6">
-                Suas configurações estão salvas. Agora conecte-se ao Shopify via OAuth para autorizar o app.
+                Conecte sua loja Shopify para começar a publicar produtos em segundos.
               </p>
-              <Button onClick={startOAuth} className="w-full font-display font-semibold">
+              <Button onClick={() => setShowOnboarding(true)} className="w-full font-display font-semibold">
                 <ExternalLink className="w-4 h-4 mr-2" />
                 Conectar ao Shopify
               </Button>
