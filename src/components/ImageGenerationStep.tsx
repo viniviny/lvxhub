@@ -406,6 +406,9 @@ interface ImageGalleryProps {
 
 function ImageGallery({ images, allSlots, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover, aspectRatio, onAddUpload }: ImageGalleryProps) {
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [slideDir, setSlideDir] = useState<'left' | 'right' | null>(null);
+  const [isSliding, setIsSliding] = useState(false);
+  const prevIdxRef = useRef(0);
   const [hovered, setHovered] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
@@ -439,7 +442,18 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
   const goTo = (idx: number) => {
     if (idx < 0) idx = displayList.length - 1;
     if (idx >= displayList.length) idx = 0;
-    setSelectedIdx(idx);
+    if (idx === selectedIdx) return;
+    const dir = idx > prevIdxRef.current ? 'right' : 'left';
+    // Handle wrap-around: going from last to first = right, first to last = left
+    if (prevIdxRef.current === displayList.length - 1 && idx === 0) setSlideDir('right');
+    else if (prevIdxRef.current === 0 && idx === displayList.length - 1) setSlideDir('left');
+    else setSlideDir(dir);
+    setIsSliding(true);
+    setTimeout(() => {
+      prevIdxRef.current = idx;
+      setSelectedIdx(idx);
+      setIsSliding(false);
+    }, 150);
   };
 
   // Keyboard navigation
@@ -529,13 +543,19 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
           </div>
         )}
 
-        {/* Current image */}
         {currentImage && (
           <img
             src={currentImage.url}
             alt={currentLabel}
-            className="w-full h-full object-cover transition-opacity duration-200"
-            style={completedAngles.has(currentImage.angle) ? { animation: 'fade-in 0.3s ease-out' } : undefined}
+            className="w-full h-full object-cover"
+            style={{
+              transition: 'transform 0.15s ease-out, opacity 0.15s ease-out',
+              transform: isSliding
+                ? `translateX(${slideDir === 'right' ? '-30px' : '30px'})`
+                : 'translateX(0)',
+              opacity: isSliding ? 0 : 1,
+              ...(completedAngles.has(currentImage.angle) && !isSliding ? { animation: 'fade-in 0.3s ease-out' } : {}),
+            }}
           />
         )}
 
