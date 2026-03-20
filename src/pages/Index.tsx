@@ -431,6 +431,9 @@ const Index = () => {
                               type="title"
                               brief={form.description || form.title || ''}
                               language={activeStoreLang?.label || 'English'}
+                              languageCode={activeStore?.marketConfig?.language || 'en-US'}
+                              countryName={activeStore?.marketConfig?.marketName || ''}
+                              countryFlag={activeStore?.marketConfig?.countryFlag || ''}
                               currentValue={form.title}
                               onGenerated={content => setForm(prev => ({ ...prev, title: content.slice(0, 255) }))}
                             />
