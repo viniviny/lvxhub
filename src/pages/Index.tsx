@@ -69,7 +69,7 @@ const Index = () => {
     stores, activeStore, activeStoreId, hasConnectedStore, publishedCount,
     setActiveStore, addStore, removeStore, setDefault, startOAuth, incrementPublished,
     connectStoreWithMarket, updateStoreMarket,
-  } = useStoreManager();
+  } = useStoreContext();
 
   const { groups, addGroup, updateGroup, removeGroup } = useRegionGroups();
   const baseCurrency = activeStore?.marketConfig?.currency || 'USD';
