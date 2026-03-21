@@ -642,7 +642,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
   const handleThumbDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
 
   const showArrows = displayList.length > 1;
-  const mainMaxH = aspectRatio === '4:5' ? '420px' : '380px';
+  const mainMaxH = aspectRatio === '4:5' ? '480px' : '420px';
   const mainAspect = aspectRatio === '4:5' ? '4/5' : '1/1';
 
   return (
