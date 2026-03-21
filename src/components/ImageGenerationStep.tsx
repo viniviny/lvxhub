@@ -484,8 +484,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
       </div>
 
       {/* RIGHT COLUMN — Image gallery */}
-      <div className="glass-card p-3.5 flex flex-col">
-        <div className="flex items-center justify-between mb-3">
+      <div className="glass-card p-3 flex flex-col">
+        <div className="flex items-center justify-between mb-2">
           <h3 className="font-display font-semibold text-foreground text-[13px]">Imagens do produto</h3>
           <span className="text-[10px] text-muted-foreground">
             {images.length > 0 ? `${images.length} ${images.length === 1 ? 'imagem' : 'imagens'}` : 'Nenhuma imagem'}
@@ -506,8 +506,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           onAddUpload={() => fileInputRef.current?.click()}
         />
 
-        {/* Bottom navigation inside the card */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+        {/* Bottom navigation */}
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
           <button onClick={onSkip} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
             Adicionar imagens depois
           </button>
@@ -525,7 +525,6 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           </Tooltip>
         </div>
       </div>
-    </div>
   );
 }
 
