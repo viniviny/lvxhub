@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { GoogleGenerativeAI } from "npm:@google/generative-ai";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,67 +74,66 @@ serve(async (req) => {
     const ratioInstruction = RATIO_PROMPTS[aspectRatio] || RATIO_PROMPTS['4:5'];
     fullPrompt = `${fullPrompt}. ${ratioInstruction}`;
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
+    const GOOGLE_API_KEY = Deno.env.get('GOOGLE_API_KEY');
+    if (!GOOGLE_API_KEY) {
       return new Response(
-        JSON.stringify({ error: 'LOVABLE_API_KEY não configurada.' }),
+        JSON.stringify({ error: 'GOOGLE_API_KEY não configurada.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Build messages for Lovable AI Gateway
-    const content: any[] = [{ type: 'text', text: `Generate a high-quality product photo: ${fullPrompt}` }];
-    if (referenceImageUrl) {
-      content.push({
-        type: 'image_url',
-        image_url: { url: referenceImageUrl },
-      });
-    }
-
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-3-pro-image-preview',
-        messages: [{ role: 'user', content }],
-        modalities: ['image', 'text'],
-      }),
+    // Initialize Google Generative AI with Nano Banana Pro
+    const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-3-pro-image-preview',
+      generationConfig: {
+        responseModalities: ['TEXT', 'IMAGE'],
+      } as any,
     });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Limite de requisições atingido. Tente novamente em instantes.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+    // Build content parts
+    const parts: any[] = [];
+
+    // Add reference image if provided
+    if (referenceImageUrl) {
+      try {
+        const imgResponse = await fetch(referenceImageUrl);
+        if (imgResponse.ok) {
+          const imgBuffer = await imgResponse.arrayBuffer();
+          const imgBase64 = btoa(String.fromCharCode(...new Uint8Array(imgBuffer)));
+          const contentType = imgResponse.headers.get('content-type') || 'image/jpeg';
+          parts.push({
+            inlineData: {
+              data: imgBase64,
+              mimeType: contentType,
+            },
+          });
+        }
+      } catch (e) {
+        console.error('Failed to fetch reference image:', e);
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Créditos insuficientes para gerar imagens.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-      const errorText = await response.text();
-      console.error('Lovable AI Gateway error:', response.status, errorText);
-      return new Response(
-        JSON.stringify({ error: 'Erro ao gerar imagem. Tente novamente.' }),
-        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
     }
 
-    const data = await response.json();
+    parts.push({ text: `Generate a professional e-commerce product photo: ${fullPrompt}` });
 
-    // Extract image from gateway response
-    let imageBase64Url: string | null = null;
-    const choice = data.choices?.[0];
-    if (choice?.message?.images?.[0]?.image_url?.url) {
-      imageBase64Url = choice.message.images[0].image_url.url;
+    const result = await model.generateContent(parts);
+
+    // Extract image from response
+    let imageBase64: string | null = null;
+    let imageMimeType = 'image/png';
+
+    const candidates = result.response.candidates;
+    if (candidates && candidates.length > 0) {
+      for (const part of candidates[0].content.parts) {
+        if ((part as any).inlineData) {
+          imageBase64 = (part as any).inlineData.data;
+          imageMimeType = (part as any).inlineData.mimeType || 'image/png';
+          break;
+        }
+      }
     }
 
-    if (!imageBase64Url) {
+    if (!imageBase64) {
       return new Response(
         JSON.stringify({ error: 'Nenhuma imagem foi gerada. Tente outro prompt.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -142,56 +142,59 @@ serve(async (req) => {
 
     // Upload to Supabase Storage
     try {
-      const match = imageBase64Url.match(/^data:(image\/\w+);base64,(.+)$/);
-      if (match) {
-        const mimeType = match[1];
-        const base64Data = match[2];
-        const binaryStr = atob(base64Data);
-        const bytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) {
-          bytes[i] = binaryStr.charCodeAt(i);
-        }
-
-        const adminClient = createClient(supabaseUrl, serviceRoleKey);
-        const ext = mimeType.includes('webp') ? 'webp' : 'png';
-        const fileName = `${user.id}/${angle || 'custom'}-${Date.now()}.${ext}`;
-
-        const { error: uploadError } = await adminClient.storage
-          .from('product-images')
-          .upload(fileName, bytes.buffer, {
-            contentType: mimeType,
-            upsert: false,
-          });
-
-        if (!uploadError) {
-          const { data: urlData } = adminClient.storage
-            .from('product-images')
-            .getPublicUrl(fileName);
-
-          return new Response(
-            JSON.stringify({
-              imageUrl: urlData.publicUrl,
-              format: ext,
-              size: bytes.length,
-              stored: true,
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-
-        console.error('Storage upload failed:', uploadError);
+      const binaryStr = atob(imageBase64);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
       }
+
+      const adminClient = createClient(supabaseUrl, serviceRoleKey);
+      const ext = imageMimeType.includes('webp') ? 'webp' : imageMimeType.includes('jpeg') ? 'jpg' : 'png';
+      const fileName = `${user.id}/${angle || 'custom'}-${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await adminClient.storage
+        .from('product-images')
+        .upload(fileName, bytes.buffer, {
+          contentType: imageMimeType,
+          upsert: false,
+        });
+
+      if (!uploadError) {
+        const { data: urlData } = adminClient.storage
+          .from('product-images')
+          .getPublicUrl(fileName);
+
+        return new Response(
+          JSON.stringify({
+            imageUrl: urlData.publicUrl,
+            format: ext,
+            size: bytes.length,
+            stored: true,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.error('Storage upload failed:', uploadError);
     } catch (storageErr) {
       console.error('Storage error:', storageErr);
     }
 
-    // Fallback: return the base64 URL directly
+    // Fallback: return base64 data URL
     return new Response(
-      JSON.stringify({ imageUrl: imageBase64Url }),
+      JSON.stringify({ imageUrl: `data:${imageMimeType};base64,${imageBase64}` }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-  } catch (e) {
+  } catch (e: any) {
     console.error('Internal error:', e);
+
+    if (e?.status === 429 || e?.message?.includes('429')) {
+      return new Response(
+        JSON.stringify({ error: 'Limite de requisições atingido. Tente novamente em instantes.' }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: 'Erro interno. Tente novamente.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
