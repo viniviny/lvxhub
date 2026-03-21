@@ -141,8 +141,15 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const isCustomPrompt = promptMode === 'custom';
     const promises = angles.map(async (angle) => {
       try {
+        // Extract base64 and mimeType from data URL if reference image exists
+        let refBase64: string | undefined;
+        let refMimeType: string | undefined;
+        if (referenceImage) {
+          const match = referenceImage.match(/^data:([^;]+);base64,(.+)$/);
+          if (match) { refMimeType = match[1]; refBase64 = match[2]; }
+        }
         const { data, error } = await supabase.functions.invoke('generate-image', {
-          body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt, referenceImageUrl: referenceImage || undefined, aspectRatio: activeRatio },
+          body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt, referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
         });
         if (error || data?.error) { toast.error(`Erro ao gerar imagem (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`); return null; }
         const imageUrl = data.imageUrl;
