@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
@@ -232,8 +231,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   return (
     <div className="grid grid-cols-[340px_1fr] gap-3">
       {/* LEFT COLUMN — Generation controls */}
-      <div className="glass-card p-3.5 space-y-3">
-        {/* Title + reference */}
+      <div className="glass-card p-3 space-y-2.5">
+        {/* 1. Header row */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             <h3 className="font-display font-semibold text-foreground text-[13px]">Gerar imagens com IA</h3>
@@ -251,6 +250,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
             </Tooltip>
             <input ref={refImageInputRef} type="file" accept=".png,.jpg,.jpeg,.webp" onChange={handleReferenceUpload} className="hidden" />
           </div>
+          {/* 2. Reference image */}
           {referenceImage && (
             <div className="flex items-center gap-2">
               <div className="relative w-10 h-10 rounded overflow-hidden border border-border">
@@ -264,7 +264,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           )}
         </div>
 
-        {/* Prompt with dropdown selector */}
+        {/* 3. Prompt with dropdown selector */}
         <div>
           <div className="flex items-center justify-between gap-2 mb-1">
             <Label className="text-xs font-medium text-muted-foreground">Descreva o produto</Label>
@@ -385,10 +385,10 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           <Textarea
             value={prompt}
             onChange={e => setPrompt(e.target.value.slice(0, activePromptId ? 2000 : 1000))}
-            placeholder={activePromptId ? 'Prompt carregado — edite se necessário' : 'Ex: oversized denim jacket dark blue women white studio background'}
-            rows={activePromptId ? 3 : 2}
+            placeholder={activePromptId ? 'Prompt carregado — edite se necessário' : 'Ex: oversized denim jacket, white background...'}
+            rows={2}
             className="bg-secondary border-border resize-none text-xs min-h-0"
-            style={{ height: activePromptId ? '72px' : '52px' }}
+            style={{ height: '48px' }}
             maxLength={activePromptId ? 2000 : 1000}
           />
           {activePromptId && (
@@ -399,47 +399,22 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           )}
         </div>
 
+        {/* 4. Ângulos — Toggle pills */}
         <div>
-          <Label className="text-xs font-medium text-muted-foreground">Proporção das imagens</Label>
-          <div className="grid grid-cols-2 gap-1.5 mt-1.5">
-            <button
-              onClick={() => handleRatioChange('1:1')}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all border ${
-                activeRatio === '1:1'
-                  ? 'bg-primary/15 border-primary text-[#58A6FF]'
-                  : 'bg-[hsl(var(--card))] border-border text-muted-foreground hover:border-primary/40'
-              }`}
-            >
-              <Square className="w-3 h-3" />
-              <span>1:1 Quadrado</span>
-            </button>
-            <button
-              onClick={() => handleRatioChange('4:5')}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all border ${
-                activeRatio === '4:5'
-                  ? 'bg-primary/15 border-primary text-[#58A6FF]'
-                  : 'bg-[hsl(var(--card))] border-border text-muted-foreground hover:border-primary/40'
-              }`}
-            >
-              <RectangleVertical className="w-3 h-3" />
-              <span>4:5 Retrato</span>
-            </button>
-          </div>
-          <p className="text-[9px] text-muted-foreground mt-1">
-            {activeRatio === '1:1' ? '1024×1024px · WebP · Padrão Shopify' : '1024×1280px · WebP · Ideal para moda'}
-            {activeRatio === '4:5' && <span className="ml-1 text-[#58A6FF]">Instagram ready</span>}
-          </p>
-        </div>
-
-        {/* Angle checkboxes — 3 columns */}
-        <div>
-          <Label className="text-xs font-medium text-muted-foreground">Selecione os ângulos</Label>
-          <div className="grid grid-cols-3 gap-1.5 mt-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">Ângulos</Label>
+          <div className="flex flex-wrap gap-1.5 mt-1.5">
             {ANGLE_OPTIONS.map(opt => (
-              <label key={opt.id} className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-secondary/50 border border-border cursor-pointer hover:border-primary/40 transition-colors text-[11px]">
-                <Checkbox checked={selectedAngles.has(opt.id)} onCheckedChange={() => toggleAngle(opt.id)} className="w-3.5 h-3.5" />
-                <span className="text-foreground/90 truncate">{opt.label}</span>
-              </label>
+              <button
+                key={opt.id}
+                onClick={() => toggleAngle(opt.id)}
+                className={`h-7 px-3 rounded-full text-[11px] font-medium border transition-all ${
+                  selectedAngles.has(opt.id)
+                    ? 'bg-primary/20 border-primary text-[#58A6FF]'
+                    : 'bg-card border-border text-muted-foreground hover:border-primary/40'
+                }`}
+              >
+                {opt.label}
+              </button>
             ))}
           </div>
         </div>
@@ -452,28 +427,46 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           </div>
         )}
 
-        {/* Estimated time */}
-        {!isGenerating && selectedCount > 0 && (
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-            <Clock className="w-3 h-3" />
-            <span>~30s por imagem · {selectedCount} {selectedCount === 1 ? 'imagem' : 'imagens'} = ~{selectedCount > 1 ? '30' : '30'}s</span>
+        {/* 5. Proporção */}
+        <div>
+          <Label className="text-xs font-medium text-muted-foreground">Proporção</Label>
+          <div className="grid grid-cols-2 gap-1.5 mt-1.5">
+            <button
+              onClick={() => handleRatioChange('1:1')}
+              className={`flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium transition-all border ${
+                activeRatio === '1:1'
+                  ? 'bg-primary/20 border-primary text-[#58A6FF]'
+                  : 'bg-card border-border text-muted-foreground hover:border-primary/40'
+              }`}
+            >
+              <Square className="w-3 h-3" />
+              <span>1:1 Quadrado</span>
+            </button>
+            <button
+              onClick={() => handleRatioChange('4:5')}
+              className={`flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium transition-all border ${
+                activeRatio === '4:5'
+                  ? 'bg-primary/20 border-primary text-[#58A6FF]'
+                  : 'bg-card border-border text-muted-foreground hover:border-primary/40'
+              }`}
+            >
+              <RectangleVertical className="w-3 h-3" />
+              <span>4:5 Retrato</span>
+            </button>
           </div>
-        )}
+          <p className="text-[9px] text-muted-foreground mt-1">
+            {activeRatio === '1:1' ? '1024×1024px · WebP' : '1024×1280px · WebP'}
+          </p>
+        </div>
+
+        {/* Generation status */}
         {isGenerating && genStartTime && <GenerationCountdown startTime={genStartTime} totalImages={totalToGenerate} completedCount={generatedCount} />}
 
-        {/* Generate button */}
-        <Button onClick={isGenerating && images.length > 0 ? undefined : generateImages} disabled={isGenerating || !prompt.trim() || selectedAngles.size === 0} className="w-full font-display font-semibold h-9 text-xs">
+        {/* 6. Generate button */}
+        <Button onClick={isGenerating && images.length > 0 ? undefined : generateImages} disabled={isGenerating || !prompt.trim() || selectedAngles.size === 0} className="w-full font-display font-semibold h-11 text-xs">
           {isGenerating ? (<><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Gerando {generatedCount}/{totalToGenerate}...</>) : images.length > 0 ? (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Regenerar tudo</>) : (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Gerar {selectedCount} {selectedCount === 1 ? 'imagem' : 'imagens'}</>)}
         </Button>
-
-        {/* Model badge + Counter */}
-        <div className="flex items-center justify-center gap-1.5 -mt-1">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-medium bg-primary/10 text-primary border border-primary/20">
-            <Sparkles className="w-2.5 h-2.5" />
-            Nano Banana Pro
-          </span>
-          <span className="text-[10px] text-muted-foreground">· Gemini 3 Pro Image</span>
-        </div>
+        <p className="text-[10px] text-muted-foreground text-center -mt-1">~30s por imagem · Nano Banana Pro</p>
 
         {/* Divider + upload */}
         <div className="flex items-center gap-2">
@@ -490,8 +483,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
       </div>
 
       {/* RIGHT COLUMN — Image gallery */}
-      <div className="glass-card p-3.5 flex flex-col">
-        <div className="flex items-center justify-between mb-3">
+      <div className="glass-card p-3 flex flex-col">
+        <div className="flex items-center justify-between mb-2">
           <h3 className="font-display font-semibold text-foreground text-[13px]">Imagens do produto</h3>
           <span className="text-[10px] text-muted-foreground">
             {images.length > 0 ? `${images.length} ${images.length === 1 ? 'imagem' : 'imagens'}` : 'Nenhuma imagem'}
@@ -512,8 +505,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           onAddUpload={() => fileInputRef.current?.click()}
         />
 
-        {/* Bottom navigation inside the card */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+        {/* Bottom navigation */}
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
           <button onClick={onSkip} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
             Adicionar imagens depois
           </button>
@@ -648,7 +641,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
   const handleThumbDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
 
   const showArrows = displayList.length > 1;
-  const mainMaxH = aspectRatio === '4:5' ? '420px' : '380px';
+  const mainMaxH = aspectRatio === '4:5' ? '480px' : '420px';
   const mainAspect = aspectRatio === '4:5' ? '4/5' : '1/1';
 
   return (
@@ -802,7 +795,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
 
       {/* Thumbnail strip */}
       {displayList.length > 0 && (
-        <div className="flex items-center gap-1.5 mt-2 overflow-x-auto scrollbar-thin pb-1" style={{ scrollbarWidth: 'thin' }}>
+        <div className="flex items-center gap-2 mt-2 overflow-x-auto scrollbar-thin pb-1" style={{ scrollbarWidth: 'thin' }}>
           {displayList.map((item, i) => {
             const isImg = !('empty' in item);
             const img = isImg ? (item as GeneratedImage) : null;
@@ -820,7 +813,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
                   ${dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-primary' : ''}
                   ${dragIdx === i ? 'opacity-30' : ''}
                 `}
-                style={{ width: '72px', aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
+                style={{ width: '90px', aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
                 onClick={() => setSelectedIdx(i)}
                 draggable={!!img}
                 onDragStart={e => handleThumbDragStart(e, i)}
@@ -850,7 +843,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
 
                 {/* "Capa" badge on first thumbnail */}
                 {isFirst && img && (
-                  <span className="absolute bottom-0.5 left-0.5 text-[7px] font-semibold px-1 py-px rounded bg-black/60 text-white/80">
+                  <span className="absolute bottom-1 left-1 text-[8px] font-semibold px-1.5 py-0.5 rounded bg-black/70 text-white/90">
                     Capa
                   </span>
                 )}
