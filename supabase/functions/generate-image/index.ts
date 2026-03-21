@@ -73,32 +73,42 @@ serve(async (req) => {
     const ratioInstruction = RATIO_PROMPTS[aspectRatio] || RATIO_PROMPTS['4:5'];
     fullPrompt = `${fullPrompt}. ${ratioInstruction}`;
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
+    const GOOGLE_API_KEY = Deno.env.get('GOOGLE_API_KEY');
+    if (!GOOGLE_API_KEY) {
       return new Response(
-        JSON.stringify({ error: 'Serviço de geração de imagem indisponível.' }),
+        JSON.stringify({ error: 'GOOGLE_API_KEY não configurada.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Build message content
-    const messageContent: any[] = [{ type: 'text', text: `Generate a high-quality product photo: ${fullPrompt}` }];
+    // Build request parts for Gemini
+    const parts: any[] = [{ text: `Generate a high-quality product photo: ${fullPrompt}` }];
     if (referenceImageUrl) {
-      messageContent.push({ type: 'image_url', image_url: { url: referenceImageUrl } });
+      // If reference image is a base64 data URL, extract the data
+      const match = referenceImageUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+      if (match) {
+        parts.push({
+          inlineData: {
+            mimeType: match[1],
+            data: match[2],
+          },
+        });
+      }
     }
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-3.1-flash-image-preview',
-        messages: [{ role: 'user', content: messageContent }],
-        modalities: ['image', 'text'],
-      }),
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GOOGLE_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts }],
+          generationConfig: {
+            responseModalities: ['TEXT', 'IMAGE'],
+          },
+        }),
+      }
+    );
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -107,12 +117,14 @@ serve(async (req) => {
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      if (response.status === 402) {
+      if (response.status === 403) {
         return new Response(
-          JSON.stringify({ error: 'Créditos insuficientes.' }),
+          JSON.stringify({ error: 'API key inválida ou sem permissão para gerar imagens.' }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+      const errorText = await response.text();
+      console.error('Google AI image error:', response.status, errorText);
       return new Response(
         JSON.stringify({ error: 'Erro ao gerar imagem. Tente novamente.' }),
         { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -120,31 +132,46 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const base64Url = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
-    if (!base64Url) {
+    // Extract image from Gemini response
+    let imageBase64: string | null = null;
+    let imageMimeType = 'image/png';
+    const candidate = data.candidates?.[0];
+    if (candidate?.content?.parts) {
+      for (const part of candidate.content.parts) {
+        if (part.inlineData) {
+          imageBase64 = part.inlineData.data;
+          imageMimeType = part.inlineData.mimeType || 'image/png';
+          break;
+        }
+      }
+    }
+
+    if (!imageBase64) {
       return new Response(
         JSON.stringify({ error: 'Nenhuma imagem foi gerada. Tente outro prompt.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    const base64Url = `data:${imageMimeType};base64,${imageBase64}`;
+
     // Upload to Supabase Storage as WebP
     try {
-      const base64Data = base64Url.replace(/^data:image\/\w+;base64,/, '');
-      const binaryStr = atob(base64Data);
+      const binaryStr = atob(imageBase64);
       const bytes = new Uint8Array(binaryStr.length);
       for (let i = 0; i < binaryStr.length; i++) {
         bytes[i] = binaryStr.charCodeAt(i);
       }
 
       const adminClient = createClient(supabaseUrl, serviceRoleKey);
-      const fileName = `${user.id}/${angle || 'custom'}-${Date.now()}.webp`;
+      const ext = imageMimeType.includes('webp') ? 'webp' : 'png';
+      const fileName = `${user.id}/${angle || 'custom'}-${Date.now()}.${ext}`;
 
       const { error: uploadError } = await adminClient.storage
         .from('product-images')
         .upload(fileName, bytes.buffer, {
-          contentType: 'image/webp',
+          contentType: imageMimeType,
           upsert: false,
         });
 
@@ -156,7 +183,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({
             imageUrl: urlData.publicUrl,
-            format: 'webp',
+            format: ext,
             size: bytes.length,
             stored: true,
           }),
@@ -164,7 +191,6 @@ serve(async (req) => {
         );
       }
 
-      // If upload fails, fall back to returning base64 URL
       console.error('Storage upload failed:', uploadError);
     } catch (storageErr) {
       console.error('Storage error:', storageErr);
