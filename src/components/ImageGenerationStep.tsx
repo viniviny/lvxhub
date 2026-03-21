@@ -844,7 +844,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
 
                 {/* "Capa" badge on first thumbnail */}
                 {isFirst && img && (
-                  <span className="absolute bottom-0.5 left-0.5 text-[7px] font-semibold px-1 py-px rounded bg-black/60 text-white/80">
+                  <span className="absolute bottom-1 left-1 text-[8px] font-semibold px-1.5 py-0.5 rounded bg-black/70 text-white/90">
                     Capa
                   </span>
                 )}
