@@ -453,8 +453,14 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           {isGenerating ? (<><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Gerando {generatedCount}/{totalToGenerate}...</>) : images.length > 0 ? (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Regenerar tudo</>) : (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Gerar {selectedCount} {selectedCount === 1 ? 'imagem' : 'imagens'}</>)}
         </Button>
 
-        {/* Counter */}
-        <p className="text-center text-[10px] text-muted-foreground -mt-1">8 de 20 gerações disponíveis hoje</p>
+        {/* Model badge + Counter */}
+        <div className="flex items-center justify-center gap-1.5 -mt-1">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-medium bg-primary/10 text-primary border border-primary/20">
+            <Sparkles className="w-2.5 h-2.5" />
+            Nano Banana Pro
+          </span>
+          <span className="text-[10px] text-muted-foreground">· Gemini 3 Pro Image</span>
+        </div>
 
         {/* Divider + upload */}
         <div className="flex items-center gap-2">
