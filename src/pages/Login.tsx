@@ -45,14 +45,6 @@ export default function Login() {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setGoogleLoading(true);
-    const { error } = await lovable.auth.signInWithOAuth('google', {
-      redirect_uri: window.location.origin,
-    });
-    setGoogleLoading(false);
-    if (error) toast.error('Erro ao entrar com Google. Tente novamente.');
-  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
