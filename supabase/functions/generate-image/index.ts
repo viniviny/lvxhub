@@ -93,28 +93,25 @@ serve(async (req) => {
 
     // Build content parts
     const parts: any[] = [];
+    const hasReference = referenceImage && typeof referenceImage === 'string' && referenceImage.length > 100;
 
-    // Add reference image if provided
-    if (referenceImageUrl) {
-      try {
-        const imgResponse = await fetch(referenceImageUrl);
-        if (imgResponse.ok) {
-          const imgBuffer = await imgResponse.arrayBuffer();
-          const imgBase64 = btoa(String.fromCharCode(...new Uint8Array(imgBuffer)));
-          const contentType = imgResponse.headers.get('content-type') || 'image/jpeg';
-          parts.push({
-            inlineData: {
-              data: imgBase64,
-              mimeType: contentType,
-            },
-          });
-        }
-      } catch (e) {
-        console.error('Failed to fetch reference image:', e);
-      }
+    // Add reference image if provided as base64
+    if (hasReference) {
+      console.log('Reference image included, size:', referenceImage.length);
+      parts.push({
+        inlineData: {
+          data: referenceImage,
+          mimeType: referenceMimeType || 'image/jpeg',
+        },
+      });
     }
 
-    parts.push({ text: `Generate a professional e-commerce product photo: ${fullPrompt}` });
+    // Use different prompt when reference image exists
+    if (hasReference) {
+      parts.push({ text: `This is the exact product to photograph. Use it as your only reference. Keep all details: colors, patterns, cuts, buttons, zippers, fabric texture exactly as shown in the reference. Generate a professional studio e-commerce photo. ${fullPrompt}. White seamless background. Soft diffused studio lighting. Sharp detail throughout. Premium fashion catalog quality. Do not change any product details. No text, no logos, no watermarks.` });
+    } else {
+      parts.push({ text: `Generate a professional e-commerce product photo: ${fullPrompt}` });
+    }
 
     const result = await model.generateContent(parts);
 
