@@ -232,8 +232,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   return (
     <div className="grid grid-cols-[340px_1fr] gap-3">
       {/* LEFT COLUMN — Generation controls */}
-      <div className="glass-card p-3.5 space-y-3">
-        {/* Title + reference */}
+      <div className="glass-card p-3 space-y-2.5">
+        {/* 1. Header row */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             <h3 className="font-display font-semibold text-foreground text-[13px]">Gerar imagens com IA</h3>
@@ -251,6 +251,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
             </Tooltip>
             <input ref={refImageInputRef} type="file" accept=".png,.jpg,.jpeg,.webp" onChange={handleReferenceUpload} className="hidden" />
           </div>
+          {/* 2. Reference image */}
           {referenceImage && (
             <div className="flex items-center gap-2">
               <div className="relative w-10 h-10 rounded overflow-hidden border border-border">
@@ -264,7 +265,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           )}
         </div>
 
-        {/* Prompt with dropdown selector */}
+        {/* 3. Prompt with dropdown selector */}
         <div>
           <div className="flex items-center justify-between gap-2 mb-1">
             <Label className="text-xs font-medium text-muted-foreground">Descreva o produto</Label>
@@ -385,10 +386,10 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           <Textarea
             value={prompt}
             onChange={e => setPrompt(e.target.value.slice(0, activePromptId ? 2000 : 1000))}
-            placeholder={activePromptId ? 'Prompt carregado — edite se necessário' : 'Ex: oversized denim jacket dark blue women white studio background'}
-            rows={activePromptId ? 3 : 2}
+            placeholder={activePromptId ? 'Prompt carregado — edite se necessário' : 'Ex: oversized denim jacket, white background...'}
+            rows={2}
             className="bg-secondary border-border resize-none text-xs min-h-0"
-            style={{ height: activePromptId ? '72px' : '52px' }}
+            style={{ height: '48px' }}
             maxLength={activePromptId ? 2000 : 1000}
           />
           {activePromptId && (
@@ -399,47 +400,22 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           )}
         </div>
 
+        {/* 4. Ângulos — Toggle pills */}
         <div>
-          <Label className="text-xs font-medium text-muted-foreground">Proporção das imagens</Label>
-          <div className="grid grid-cols-2 gap-1.5 mt-1.5">
-            <button
-              onClick={() => handleRatioChange('1:1')}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all border ${
-                activeRatio === '1:1'
-                  ? 'bg-primary/15 border-primary text-[#58A6FF]'
-                  : 'bg-[hsl(var(--card))] border-border text-muted-foreground hover:border-primary/40'
-              }`}
-            >
-              <Square className="w-3 h-3" />
-              <span>1:1 Quadrado</span>
-            </button>
-            <button
-              onClick={() => handleRatioChange('4:5')}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-all border ${
-                activeRatio === '4:5'
-                  ? 'bg-primary/15 border-primary text-[#58A6FF]'
-                  : 'bg-[hsl(var(--card))] border-border text-muted-foreground hover:border-primary/40'
-              }`}
-            >
-              <RectangleVertical className="w-3 h-3" />
-              <span>4:5 Retrato</span>
-            </button>
-          </div>
-          <p className="text-[9px] text-muted-foreground mt-1">
-            {activeRatio === '1:1' ? '1024×1024px · WebP · Padrão Shopify' : '1024×1280px · WebP · Ideal para moda'}
-            {activeRatio === '4:5' && <span className="ml-1 text-[#58A6FF]">Instagram ready</span>}
-          </p>
-        </div>
-
-        {/* Angle checkboxes — 3 columns */}
-        <div>
-          <Label className="text-xs font-medium text-muted-foreground">Selecione os ângulos</Label>
-          <div className="grid grid-cols-3 gap-1.5 mt-1.5">
+          <Label className="text-xs font-medium text-muted-foreground">Ângulos</Label>
+          <div className="flex flex-wrap gap-1.5 mt-1.5">
             {ANGLE_OPTIONS.map(opt => (
-              <label key={opt.id} className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-secondary/50 border border-border cursor-pointer hover:border-primary/40 transition-colors text-[11px]">
-                <Checkbox checked={selectedAngles.has(opt.id)} onCheckedChange={() => toggleAngle(opt.id)} className="w-3.5 h-3.5" />
-                <span className="text-foreground/90 truncate">{opt.label}</span>
-              </label>
+              <button
+                key={opt.id}
+                onClick={() => toggleAngle(opt.id)}
+                className={`h-7 px-3 rounded-full text-[11px] font-medium border transition-all ${
+                  selectedAngles.has(opt.id)
+                    ? 'bg-primary/20 border-primary text-[#58A6FF]'
+                    : 'bg-card border-border text-muted-foreground hover:border-primary/40'
+                }`}
+              >
+                {opt.label}
+              </button>
             ))}
           </div>
         </div>
@@ -452,28 +428,46 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           </div>
         )}
 
-        {/* Estimated time */}
-        {!isGenerating && selectedCount > 0 && (
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-            <Clock className="w-3 h-3" />
-            <span>~30s por imagem · {selectedCount} {selectedCount === 1 ? 'imagem' : 'imagens'} = ~{selectedCount > 1 ? '30' : '30'}s</span>
+        {/* 5. Proporção */}
+        <div>
+          <Label className="text-xs font-medium text-muted-foreground">Proporção</Label>
+          <div className="grid grid-cols-2 gap-1.5 mt-1.5">
+            <button
+              onClick={() => handleRatioChange('1:1')}
+              className={`flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium transition-all border ${
+                activeRatio === '1:1'
+                  ? 'bg-primary/20 border-primary text-[#58A6FF]'
+                  : 'bg-card border-border text-muted-foreground hover:border-primary/40'
+              }`}
+            >
+              <Square className="w-3 h-3" />
+              <span>1:1 Quadrado</span>
+            </button>
+            <button
+              onClick={() => handleRatioChange('4:5')}
+              className={`flex items-center gap-1.5 h-7 px-2.5 rounded-full text-[11px] font-medium transition-all border ${
+                activeRatio === '4:5'
+                  ? 'bg-primary/20 border-primary text-[#58A6FF]'
+                  : 'bg-card border-border text-muted-foreground hover:border-primary/40'
+              }`}
+            >
+              <RectangleVertical className="w-3 h-3" />
+              <span>4:5 Retrato</span>
+            </button>
           </div>
-        )}
+          <p className="text-[9px] text-muted-foreground mt-1">
+            {activeRatio === '1:1' ? '1024×1024px · WebP' : '1024×1280px · WebP'}
+          </p>
+        </div>
+
+        {/* Generation status */}
         {isGenerating && genStartTime && <GenerationCountdown startTime={genStartTime} totalImages={totalToGenerate} completedCount={generatedCount} />}
 
-        {/* Generate button */}
-        <Button onClick={isGenerating && images.length > 0 ? undefined : generateImages} disabled={isGenerating || !prompt.trim() || selectedAngles.size === 0} className="w-full font-display font-semibold h-9 text-xs">
+        {/* 6. Generate button */}
+        <Button onClick={isGenerating && images.length > 0 ? undefined : generateImages} disabled={isGenerating || !prompt.trim() || selectedAngles.size === 0} className="w-full font-display font-semibold h-11 text-xs">
           {isGenerating ? (<><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Gerando {generatedCount}/{totalToGenerate}...</>) : images.length > 0 ? (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Regenerar tudo</>) : (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Gerar {selectedCount} {selectedCount === 1 ? 'imagem' : 'imagens'}</>)}
         </Button>
-
-        {/* Model badge + Counter */}
-        <div className="flex items-center justify-center gap-1.5 -mt-1">
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-medium bg-primary/10 text-primary border border-primary/20">
-            <Sparkles className="w-2.5 h-2.5" />
-            Nano Banana Pro
-          </span>
-          <span className="text-[10px] text-muted-foreground">· Gemini 3 Pro Image</span>
-        </div>
+        <p className="text-[10px] text-muted-foreground text-center -mt-1">~30s por imagem · Nano Banana Pro</p>
 
         {/* Divider + upload */}
         <div className="flex items-center gap-2">
