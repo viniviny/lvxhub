@@ -128,11 +128,8 @@ export default function Login() {
           )}
         </Button>
 
-        <p className="mt-8 text-center text-sm text-muted-foreground">
-          Não tem conta?{' '}
-          <Link to="/register" className="text-primary hover:underline font-medium">
-            Criar conta grátis
-          </Link>
+        <p className="mt-8 text-center text-xs text-muted-foreground/50">
+          Acesso restrito
         </p>
       </div>
     </div>
