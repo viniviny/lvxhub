@@ -51,7 +51,7 @@ serve(async (req) => {
       );
     }
 
-    const { prompt, angle, customAngleText, isCustomPrompt, referenceImageUrl, aspectRatio } = await req.json();
+    const { prompt, angle, customAngleText, isCustomPrompt, referenceImage, referenceMimeType, aspectRatio } = await req.json();
 
     if (!prompt || typeof prompt !== 'string' || prompt.length > 2000) {
       return new Response(
