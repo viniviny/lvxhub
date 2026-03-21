@@ -525,6 +525,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           </Tooltip>
         </div>
       </div>
+    </div>
   );
 }
 
