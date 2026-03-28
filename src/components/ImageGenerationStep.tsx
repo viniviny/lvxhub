@@ -761,7 +761,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
                   <Trash2 className="w-4 h-4" />
                 </button>
                 <button onClick={() => setPreviewOpen(true)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Ampliar">
-                  <Expand className="w-4 h-4" />
+                  <Eye className="w-4 h-4" />
                 </button>
               </div>
             )}
