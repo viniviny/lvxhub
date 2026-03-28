@@ -647,7 +647,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
 
   return (
     <div className="flex-1 flex flex-col min-h-0" ref={containerRef} tabIndex={0} style={{ outline: 'none' }}>
-      <div className="flex gap-2 flex-1 min-h-0">
+      <div className="flex gap-3 flex-1 min-h-0">
         {/* Thumbnail strip — vertical, left side */}
         {displayList.length > 0 && (
           <div className="flex flex-col gap-2 overflow-y-auto scrollbar-thin pr-0.5" style={{ scrollbarWidth: 'thin', maxHeight: mainMaxH }}>
