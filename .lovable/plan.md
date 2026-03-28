@@ -1,41 +1,45 @@
 
 
-## Update Image Generation Model
+## Ajustar card da imagem principal para formato vertical
 
-### What changes
+### O que muda
 
-Switch the image generation model from `google/gemini-2.5-flash-image` to `google/gemini-3.1-flash-image-preview` (Nano Banana 2) in the existing edge function. No API key changes needed — the Lovable AI Gateway already supports this model via `LOVABLE_API_KEY`.
+O card da imagem principal (coluna direita do Step 1) será redimensionado para respeitar a proporção escolhida na geração (1:1 ou 4:5), com layout vertical mais compacto.
 
-**Important**: No need for `@google/generative-ai` npm package or a separate `GOOGLE_API_KEY`. The Lovable AI Gateway handles everything with the existing `LOVABLE_API_KEY`.
+### Alterações em `src/components/ImageGenerationStep.tsx`
 
-### File: `supabase/functions/generate-image/index.ts`
+**1. Container principal da galeria (linha ~486)**
+- Mudar de `flex flex-col` para centralizar o conteúdo com largura máxima controlada
+- Adicionar `items-center` para centralizar horizontalmente
 
-**Single change** — update the model name on line ~93:
+**2. Viewer principal da imagem (linha ~650-652)**
+- Reduzir `maxHeight` de `480px` para `400px` (4:5) e `340px` (1:1)
+- Adicionar `max-width` proporcional: `320px` para 4:5, `340px` para 1:1
+- Manter `aspectRatio` dinâmico baseado na proporção selecionada
+- Centralizar com `mx-auto`
 
+**3. Thumbnails (linha ~798)**
+- Reduzir largura dos thumbs de `90px` para `72px`
+- Centralizar a strip com `justify-center`
+
+**4. Layout geral**
+- O card da coluna direita fica mais estreito e vertical
+- Grid principal muda de `grid-cols-[340px_1fr]` para `grid-cols-[340px_minmax(0,1fr)]` (sem mudança funcional, garante que não estoure)
+
+### Resumo visual
+
+```text
+ANTES:                          DEPOIS:
+┌──────────┬────────────────┐   ┌──────────┬──────────────┐
+│ Controls │  ┌──────────┐  │   │ Controls │  ┌────────┐  │
+│          │  │          │  │   │          │  │        │  │
+│          │  │  GRANDE  │  │   │          │  │ MENOR  │  │
+│          │  │          │  │   │          │  │VERTICAL│  │
+│          │  │          │  │   │          │  │        │  │
+│          │  └──────────┘  │   │          │  └────────┘  │
+│          │  [thumbs....]  │   │          │ [thumbs...]  │
+└──────────┴────────────────┘   └──────────┴──────────────┘
 ```
-model: 'google/gemini-2.5-flash-image'
-```
-→
-```
-model: 'google/gemini-3.1-flash-image-preview'
-```
 
-Everything else (prompt structure, reference image support, angle suffixes, auth, error handling) stays exactly the same — the API format is identical between models.
-
-### Why this is simple
-
-The current function already:
-- Uses the Lovable AI Gateway (`ai.gateway.lovable.dev`)
-- Sends `modalities: ['image', 'text']`
-- Supports reference images via `image_url` in message content
-- Handles all error codes (429, 402, etc.)
-
-The only difference is the model identifier. Nano Banana 2 produces higher quality images with the same API interface.
-
-### No other changes needed
-
-- No new secrets required
-- No new dependencies
-- No config.toml changes
-- Frontend code unchanged
+Nenhuma mudança de funcionalidade — apenas CSS/layout.
 
