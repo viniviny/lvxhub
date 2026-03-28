@@ -641,8 +641,8 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
   const handleThumbDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
 
   const showArrows = displayList.length > 1;
-  const mainMaxH = aspectRatio === '4:5' ? '400px' : '340px';
-  const mainMaxW = aspectRatio === '4:5' ? '320px' : '340px';
+  const mainMaxH = aspectRatio === '4:5' ? '520px' : '440px';
+  const mainMaxW = aspectRatio === '4:5' ? '416px' : '440px';
   const mainAspect = aspectRatio === '4:5' ? '4/5' : '1/1';
 
   return (
@@ -668,7 +668,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
                     ${dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-primary' : ''}
                     ${dragIdx === i ? 'opacity-30' : ''}
                   `}
-                  style={{ width: '56px', aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
+                  style={{ width: '64px', aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
                   onClick={() => setSelectedIdx(i)}
                   draggable={!!img}
                   onDragStart={e => handleThumbDragStart(e, i)}
@@ -702,7 +702,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
             <button
               onClick={onAddUpload}
               className="shrink-0 flex items-center justify-center rounded-md border border-dashed border-border hover:border-primary/40 transition-colors"
-              style={{ width: '56px', aspectRatio: '1/1' }}
+              style={{ width: '64px', aspectRatio: '1/1' }}
             >
               <Plus className="w-3.5 h-3.5 text-muted-foreground/50" />
             </button>
@@ -710,9 +710,9 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
         )}
 
         {/* Main image viewer */}
-        <div className="flex-1 flex flex-col items-center justify-center min-h-0">
+        <div className="flex-1 flex flex-col items-center justify-center min-h-0 min-w-0">
           <div
-            className="relative rounded-[10px] overflow-hidden bg-card w-full"
+            className="relative rounded-[10px] overflow-hidden bg-card w-full mx-auto"
             style={{ aspectRatio: mainAspect, maxHeight: mainMaxH, maxWidth: mainMaxW }}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
