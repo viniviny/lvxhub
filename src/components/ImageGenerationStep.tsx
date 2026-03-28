@@ -483,7 +483,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
       </div>
 
       {/* RIGHT COLUMN — Image gallery */}
-      <div className="glass-card p-3 flex flex-col">
+      <div className="glass-card p-3 flex flex-col items-center">
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-display font-semibold text-foreground text-[13px]">Imagens do produto</h3>
           <span className="text-[10px] text-muted-foreground">
