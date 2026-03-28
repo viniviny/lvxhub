@@ -752,7 +752,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
             {currentImage && hovered && (
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3 transition-opacity">
                 <button onClick={() => onRegenerate(currentImage.angle)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Regenerar">
-                  <RefreshCcw className="w-4 h-4" />
+                  <RefreshCw className="w-4 h-4" />
                 </button>
                 <button onClick={() => onSetCover(currentImage.angle)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Definir como capa">
                   <Star className="w-4 h-4" />
