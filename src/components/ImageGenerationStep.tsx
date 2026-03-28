@@ -668,7 +668,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
                     ${dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-primary' : ''}
                     ${dragIdx === i ? 'opacity-30' : ''}
                   `}
-                  style={{ width: '56px', aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
+                  style={{ width: '64px', aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
                   onClick={() => setSelectedIdx(i)}
                   draggable={!!img}
                   onDragStart={e => handleThumbDragStart(e, i)}
