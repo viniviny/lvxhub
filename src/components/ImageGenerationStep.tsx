@@ -483,7 +483,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
       </div>
 
       {/* RIGHT COLUMN — Image gallery */}
-      <div className="glass-card p-3 flex flex-col">
+      <div className="glass-card p-3 flex flex-col items-center">
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-display font-semibold text-foreground text-[13px]">Imagens do produto</h3>
           <span className="text-[10px] text-muted-foreground">
@@ -641,15 +641,16 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
   const handleThumbDragEnd = () => { setDragIdx(null); setDragOverIdx(null); };
 
   const showArrows = displayList.length > 1;
-  const mainMaxH = aspectRatio === '4:5' ? '480px' : '420px';
+  const mainMaxH = aspectRatio === '4:5' ? '400px' : '340px';
+  const mainMaxW = aspectRatio === '4:5' ? '320px' : '340px';
   const mainAspect = aspectRatio === '4:5' ? '4/5' : '1/1';
 
   return (
     <div className="flex-1 flex flex-col min-h-0" ref={containerRef} tabIndex={0} style={{ outline: 'none' }}>
       {/* Main image viewer */}
       <div
-        className="relative rounded-[10px] overflow-hidden bg-card mx-auto w-full"
-        style={{ aspectRatio: mainAspect, maxHeight: mainMaxH }}
+        className="relative rounded-[10px] overflow-hidden bg-card mx-auto"
+        style={{ aspectRatio: mainAspect, maxHeight: mainMaxH, maxWidth: mainMaxW, width: '100%' }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
@@ -795,7 +796,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
 
       {/* Thumbnail strip */}
       {displayList.length > 0 && (
-        <div className="flex items-center gap-2 mt-2 overflow-x-auto scrollbar-thin pb-1" style={{ scrollbarWidth: 'thin' }}>
+        <div className="flex items-center justify-center gap-2 mt-2 overflow-x-auto scrollbar-thin pb-1" style={{ scrollbarWidth: 'thin' }}>
           {displayList.map((item, i) => {
             const isImg = !('empty' in item);
             const img = isImg ? (item as GeneratedImage) : null;
@@ -813,7 +814,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
                   ${dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-primary' : ''}
                   ${dragIdx === i ? 'opacity-30' : ''}
                 `}
-                style={{ width: '90px', aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
+                style={{ width: '72px', aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
                 onClick={() => setSelectedIdx(i)}
                 draggable={!!img}
                 onDragStart={e => handleThumbDragStart(e, i)}
