@@ -650,7 +650,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
       <div className="flex gap-2 flex-1 min-h-0">
         {/* Thumbnail strip — vertical, left side */}
         {displayList.length > 0 && (
-          <div className="flex flex-col gap-1.5 overflow-y-auto scrollbar-thin pr-0.5" style={{ scrollbarWidth: 'thin', maxHeight: mainMaxH }}>
+          <div className="flex flex-col gap-2 overflow-y-auto scrollbar-thin pr-0.5" style={{ scrollbarWidth: 'thin', maxHeight: mainMaxH }}>
             {displayList.map((item, i) => {
               const isImg = !('empty' in item);
               const img = isImg ? (item as GeneratedImage) : null;
