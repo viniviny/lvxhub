@@ -702,7 +702,7 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
             <button
               onClick={onAddUpload}
               className="shrink-0 flex items-center justify-center rounded-md border border-dashed border-border hover:border-primary/40 transition-colors"
-              style={{ width: '56px', aspectRatio: '1/1' }}
+              style={{ width: '64px', aspectRatio: '1/1' }}
             >
               <Plus className="w-3.5 h-3.5 text-muted-foreground/50" />
             </button>
