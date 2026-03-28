@@ -710,9 +710,9 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
         )}
 
         {/* Main image viewer */}
-        <div className="flex-1 flex flex-col items-center justify-center min-h-0">
+        <div className="flex-1 flex flex-col items-center justify-center min-h-0 min-w-0">
           <div
-            className="relative rounded-[10px] overflow-hidden bg-card w-full"
+            className="relative rounded-[10px] overflow-hidden bg-card w-full mx-auto"
             style={{ aspectRatio: mainAspect, maxHeight: mainMaxH, maxWidth: mainMaxW }}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
