@@ -647,212 +647,168 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
 
   return (
     <div className="flex-1 flex flex-col min-h-0" ref={containerRef} tabIndex={0} style={{ outline: 'none' }}>
-      {/* Main image viewer */}
-      <div
-        className="relative rounded-[10px] overflow-hidden bg-card mx-auto"
-        style={{ aspectRatio: mainAspect, maxHeight: mainMaxH, maxWidth: mainMaxW, width: '100%' }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        {/* Empty state */}
-        {displayList.length === 0 && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-[10px]">
-            <Camera className="w-8 h-8 text-muted-foreground/40" />
-            <span className="text-[12px] text-muted-foreground">Gere ou faça upload das imagens</span>
-            <span className="text-[10px] text-muted-foreground/60">As imagens aparecerão aqui</span>
-          </div>
-        )}
-
-        {/* Generating state (no image yet) */}
-        {displayList.length > 0 && !currentImage && isCurrentGenerating && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 skeleton-shimmer" style={{ animation: 'pulse-border 1.5s infinite' }}>
-            {angleStartTimes[currentItem.angle] ? <SlotTimer startTime={angleStartTimes[currentItem.angle]} /> : (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                <span className="text-[11px] text-muted-foreground">Gerando...</span>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Empty slot (not generating) */}
-        {displayList.length > 0 && !currentImage && !isCurrentGenerating && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 border-2 border-dashed border-border rounded-[10px]">
-            <Plus className="w-5 h-5 text-muted-foreground/40" />
-            <span className="text-[10px] text-muted-foreground/50">{currentLabel}</span>
-          </div>
-        )}
-
-        {currentImage && (
-          <img
-            src={currentImage.url}
-            alt={currentLabel}
-            className="w-full h-full object-cover"
-            style={{
-              transition: 'transform 0.15s ease-out, opacity 0.15s ease-out',
-              transform: isSliding
-                ? `translateX(${slideDir === 'right' ? '-30px' : '30px'})`
-                : 'translateX(0)',
-              opacity: isSliding ? 0 : 1,
-              ...(completedAngles.has(currentImage.angle) && !isSliding ? { animation: 'fade-in 0.3s ease-out' } : {}),
-            }}
-          />
-        )}
-
-        {/* Angle label top left */}
+      <div className="flex gap-2 flex-1 min-h-0">
+        {/* Thumbnail strip — vertical, left side */}
         {displayList.length > 0 && (
-          <span className="absolute top-2 left-2 text-[10px] font-medium px-2 py-0.5 rounded-full bg-black/60 text-white/90 backdrop-blur-sm">
-            {currentLabel}
-          </span>
-        )}
+          <div className="flex flex-col gap-1.5 overflow-y-auto scrollbar-thin pr-0.5" style={{ scrollbarWidth: 'thin', maxHeight: mainMaxH }}>
+            {displayList.map((item, i) => {
+              const isImg = !('empty' in item);
+              const img = isImg ? (item as GeneratedImage) : null;
+              const angle = item.angle;
+              const isActive = i === clampedIdx;
+              const isGen = generatingAngles.has(angle);
+              const label = ANGLE_OPTIONS.find(a => a.id === angle)?.label || angle;
+              const isFirst = i === 0;
 
-        {/* Image counter top right */}
-        {displayList.length > 1 && (
-          <span className="absolute top-2 right-2 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-black/60 text-white backdrop-blur-sm">
-            {clampedIdx + 1} / {displayList.length}
-          </span>
-        )}
-
-        {/* Success badge */}
-        {currentImage && completedAngles.has(currentImage.angle) && (
-          <span className="absolute top-2 right-2 flex items-center gap-0.5 text-[10px] font-medium px-2 py-0.5 rounded-full bg-[hsl(var(--success))]/80 text-white" style={{ animation: 'scale-in 0.2s ease-out' }}>
-            <Check className="w-3 h-3" /> Pronta
-          </span>
-        )}
-
-        {/* Progress bar for generating */}
-        {isCurrentGenerating && angleStartTimes[currentItem.angle] && (
-          <GeneratingProgressBar startTime={angleStartTimes[currentItem.angle]} />
-        )}
-
-        {/* Hover action buttons */}
-        {currentImage && hovered && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 transition-opacity duration-150" style={{ animation: 'fade-in 0.15s ease-out' }}>
-            <button onClick={() => setPreviewOpen(true)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-[10px] transition-colors backdrop-blur-sm">
-              <Eye className="w-3.5 h-3.5" /> Ver
+              return (
+                <div
+                  key={`thumb-${angle}-${i}`}
+                  className={`relative shrink-0 cursor-pointer rounded-md overflow-hidden transition-all duration-150
+                    ${isActive ? 'border-2 border-primary opacity-100' : 'border-2 border-transparent opacity-60 hover:opacity-100 hover:border-primary/40'}
+                    ${dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-primary' : ''}
+                    ${dragIdx === i ? 'opacity-30' : ''}
+                  `}
+                  style={{ width: '56px', aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
+                  onClick={() => setSelectedIdx(i)}
+                  draggable={!!img}
+                  onDragStart={e => handleThumbDragStart(e, i)}
+                  onDragOver={e => handleThumbDragOver(e, i)}
+                  onDrop={e => handleThumbDrop(e, i)}
+                  onDragEnd={handleThumbDragEnd}
+                >
+                  {img && (
+                    <img src={img.url} alt={label} className="w-full h-full object-cover" />
+                  )}
+                  {!img && isGen && (
+                    <div className="w-full h-full bg-card flex items-center justify-center" style={{ animation: 'pulse-border 1.5s infinite' }}>
+                      <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                    </div>
+                  )}
+                  {!img && !isGen && (
+                    <div className="w-full h-full bg-card border border-dashed border-border flex flex-col items-center justify-center gap-0.5 rounded-md">
+                      <Plus className="w-3 h-3 text-muted-foreground/40" />
+                      <span className="text-[7px] text-muted-foreground/40 leading-tight">{label}</span>
+                    </div>
+                  )}
+                  {isFirst && img && (
+                    <span className="absolute bottom-0.5 left-0.5 text-[7px] font-semibold px-1 py-0.5 rounded bg-black/70 text-white/90">
+                      Capa
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+            {/* Add button at bottom of thumbs */}
+            <button
+              onClick={onAddUpload}
+              className="shrink-0 flex items-center justify-center rounded-md border border-dashed border-border hover:border-primary/40 transition-colors"
+              style={{ width: '56px', aspectRatio: '1/1' }}
+            >
+              <Plus className="w-3.5 h-3.5 text-muted-foreground/50" />
             </button>
-            <button onClick={() => onRegenerate(currentImage.angle)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-[10px] transition-colors backdrop-blur-sm">
-              <RefreshCw className="w-3.5 h-3.5" /> Regenerar
-            </button>
-            <button onClick={() => onRemove(currentImage.angle)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-[10px] transition-colors backdrop-blur-sm">
-              <Trash2 className="w-3.5 h-3.5" /> Remover
-            </button>
-            {!currentImage.isCover && (
-              <button onClick={() => onSetCover(currentImage.angle)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-[10px] transition-colors backdrop-blur-sm">
-                <Star className="w-3.5 h-3.5" /> Capa
-              </button>
-            )}
           </div>
         )}
 
-        {/* Navigation arrows (visible on hover) */}
-        {showArrows && hovered && (
-          <>
-            <button
-              onClick={() => goTo(clampedIdx - 1)}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 border border-[#E5E7EB] flex items-center justify-center hover:bg-white hover:shadow-md transition-all"
-              style={{ animation: 'fade-in 0.15s ease-out' }}
-            >
-              <ChevronLeft className="w-4 h-4 text-[#374151]" />
-            </button>
-            <button
-              onClick={() => goTo(clampedIdx + 1)}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 border border-[#E5E7EB] flex items-center justify-center hover:bg-white hover:shadow-md transition-all"
-              style={{ animation: 'fade-in 0.15s ease-out' }}
-            >
-              <ChevronRight className="w-4 h-4 text-[#374151]" />
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* Dot indicators */}
-      {displayList.length > 1 && (
-        <div className="flex items-center justify-center gap-[5px] mt-2">
-          {displayList.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setSelectedIdx(i)}
-              className={`w-1.5 h-1.5 rounded-full transition-all duration-150 ${i === clampedIdx ? 'bg-foreground' : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'}`}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Summary + Add button */}
-      {displayList.length > 0 && (
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-[10px] text-muted-foreground">
-            {images.length} {images.length === 1 ? 'imagem' : 'imagens'}{images.length > 1 ? ' · arraste para reorganizar' : ''}
-          </span>
-          <button
-            onClick={onAddUpload}
-            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+        {/* Main image viewer */}
+        <div className="flex-1 flex flex-col items-center justify-center min-h-0">
+          <div
+            className="relative rounded-[10px] overflow-hidden bg-card w-full"
+            style={{ aspectRatio: mainAspect, maxHeight: mainMaxH, maxWidth: mainMaxW }}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
           >
-            <Plus className="w-3 h-3" /> Adicionar
-          </button>
-        </div>
-      )}
+            {/* Empty state */}
+            {displayList.length === 0 && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-[10px]">
+                <Camera className="w-8 h-8 text-muted-foreground/40" />
+                <span className="text-[12px] text-muted-foreground">Gere ou faça upload das imagens</span>
+                <span className="text-[10px] text-muted-foreground/60">As imagens aparecerão aqui</span>
+              </div>
+            )}
 
-      {/* Thumbnail strip */}
-      {displayList.length > 0 && (
-        <div className="flex items-center justify-center gap-2 mt-2 overflow-x-auto scrollbar-thin pb-1" style={{ scrollbarWidth: 'thin' }}>
-          {displayList.map((item, i) => {
-            const isImg = !('empty' in item);
-            const img = isImg ? (item as GeneratedImage) : null;
-            const angle = item.angle;
-            const isActive = i === clampedIdx;
-            const isGen = generatingAngles.has(angle);
-            const label = ANGLE_OPTIONS.find(a => a.id === angle)?.label || angle;
-            const isFirst = i === 0;
-
-            return (
-              <div
-                key={`thumb-${angle}-${i}`}
-                className={`relative shrink-0 cursor-pointer rounded-md overflow-hidden transition-all duration-150
-                  ${isActive ? 'border-2 border-primary opacity-100' : 'border-2 border-transparent opacity-60 hover:opacity-100 hover:border-primary/40'}
-                  ${dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-primary' : ''}
-                  ${dragIdx === i ? 'opacity-30' : ''}
-                `}
-                style={{ width: '72px', aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
-                onClick={() => setSelectedIdx(i)}
-                draggable={!!img}
-                onDragStart={e => handleThumbDragStart(e, i)}
-                onDragOver={e => handleThumbDragOver(e, i)}
-                onDrop={e => handleThumbDrop(e, i)}
-                onDragEnd={handleThumbDragEnd}
-              >
-                {/* Image thumbnail */}
-                {img && (
-                  <img src={img.url} alt={label} className="w-full h-full object-cover" />
-                )}
-
-                {/* Generating thumbnail */}
-                {!img && isGen && (
-                  <div className="w-full h-full bg-card flex items-center justify-center" style={{ animation: 'pulse-border 1.5s infinite' }}>
-                    <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                  </div>
-                )}
-
-                {/* Empty thumbnail */}
-                {!img && !isGen && (
-                  <div className="w-full h-full bg-card border border-dashed border-border flex flex-col items-center justify-center gap-0.5 rounded-md">
-                    <Plus className="w-3 h-3 text-muted-foreground/40" />
-                    <span className="text-[8px] text-muted-foreground/40 leading-tight">{label}</span>
-                  </div>
-                )}
-
-                {/* "Capa" badge on first thumbnail */}
-                {isFirst && img && (
-                  <span className="absolute bottom-1 left-1 text-[8px] font-semibold px-1.5 py-0.5 rounded bg-black/70 text-white/90">
-                    Capa
-                  </span>
+            {/* Generating state (no image yet) */}
+            {displayList.length > 0 && !currentImage && isCurrentGenerating && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 skeleton-shimmer" style={{ animation: 'pulse-border 1.5s infinite' }}>
+                {angleStartTimes[currentItem.angle] ? <SlotTimer startTime={angleStartTimes[currentItem.angle]} /> : (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    <span className="text-[11px] text-muted-foreground">Gerando…</span>
+                  </>
                 )}
               </div>
-            );
-          })}
+            )}
+
+            {/* Image */}
+            {currentImage && (
+              <img
+                src={currentImage.url}
+                alt={currentLabel}
+                className={`w-full h-full object-cover cursor-pointer transition-all duration-300 ${currentImage.justCompleted ? 'animate-fade-in' : ''}`}
+                onClick={() => setPreviewOpen(true)}
+              />
+            )}
+
+            {/* Hover overlay */}
+            {currentImage && hovered && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3 transition-opacity">
+                <button onClick={() => onRegenerate(currentImage.angle)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Regenerar">
+                  <RefreshCw className="w-4 h-4" />
+                </button>
+                <button onClick={() => onSetCover(currentImage.angle)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Definir como capa">
+                  <Star className="w-4 h-4" />
+                </button>
+                <button onClick={() => onRemove(currentImage.angle)} className="p-2 rounded-full bg-black/60 text-white hover:bg-destructive transition-colors" title="Remover">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <button onClick={() => setPreviewOpen(true)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Ampliar">
+                  <Eye className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Navigation arrows */}
+            {showArrows && (
+              <>
+                <button onClick={() => setSelectedIdx(i => Math.max(0, i - 1))} className="absolute left-1 top-1/2 -translate-y-1/2 p-1 rounded-full bg-black/50 text-white/80 hover:bg-black/70 transition-colors" style={{ display: clampedIdx === 0 ? 'none' : 'flex' }}>
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button onClick={() => setSelectedIdx(i => Math.min(displayList.length - 1, i + 1))} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-full bg-black/50 text-white/80 hover:bg-black/70 transition-colors" style={{ display: clampedIdx === displayList.length - 1 ? 'none' : 'flex' }}>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </>
+            )}
+
+            {/* Angle label */}
+            {currentLabel && displayList.length > 0 && (
+              <span className="absolute top-2 left-2 text-[10px] font-medium px-2 py-0.5 rounded-full bg-black/60 text-white/80 backdrop-blur-sm">
+                {currentLabel}
+              </span>
+            )}
+          </div>
+
+          {/* Dots */}
+          {displayList.length > 1 && (
+            <div className="flex items-center justify-center gap-[5px] mt-2">
+              {displayList.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedIdx(i)}
+                  className={`w-1.5 h-1.5 rounded-full transition-all duration-150 ${i === clampedIdx ? 'bg-foreground' : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'}`}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Summary */}
+          {displayList.length > 0 && (
+            <div className="flex items-center justify-center mt-1">
+              <span className="text-[10px] text-muted-foreground">
+                {images.length} {images.length === 1 ? 'imagem' : 'imagens'}{images.length > 1 ? ' · arraste para reorganizar' : ''}
+              </span>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Fullscreen preview dialog */}
       {currentImage && (
