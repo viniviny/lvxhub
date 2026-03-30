@@ -64,6 +64,7 @@ const initialForm: ProductFormData = {
 };
 
 const PUBLISH_STEPS = [
+  'Otimizando imagens...',
   'Criando produto...',
   'Buscando localizações...',
   'Configurando estoque...',
