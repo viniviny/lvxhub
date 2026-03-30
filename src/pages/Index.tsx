@@ -194,12 +194,34 @@ const Index = () => {
     setPublishStep(0);
 
     try {
-      const imageBase64 = await fileToBase64(imageFile);
+      let imageBase64 = await fileToBase64(imageFile);
+      let imageName = imageFile.name;
       const mc = activeStore?.marketConfig;
+
+      // --- Image optimization step (client-side WebP conversion) ---
+      if (optimizeImages) {
+        setPublishStep(0); // "Otimizando imagens..."
+        try {
+          const quality = getQualityValue(imageQualityPreset);
+          const mimeType = imageFile.type || 'image/png';
+          const result = await convertBase64ToWebP(imageBase64, mimeType, quality);
+          if (result.converted) {
+            imageBase64 = result.base64;
+            imageName = result.fileName;
+            console.log(`[ImageOptimization] Converted to WebP: ${result.originalSize}→${result.optimizedSize} bytes`);
+          }
+        } catch (err) {
+          // Safe fallback: continue with original image
+          console.warn('[ImageOptimization] Optimization failed, using original:', err);
+        }
+      }
 
       const stepInterval = setInterval(() => {
         setPublishStep(prev => Math.min(prev + 1, PUBLISH_STEPS.length - 1));
       }, 1500);
+
+      // Start from step 1 (past optimization) if optimization was done
+      if (optimizeImages) setPublishStep(1);
 
       const { data, error } = await supabase.functions.invoke('shopify-publish', {
         body: {
@@ -212,7 +234,7 @@ const Index = () => {
           collection: form.collection,
           tags: form.tags,
           imageBase64,
-          imageName: imageFile.name,
+          imageName,
           variants: form.variants,
           inventoryPolicy: form.inventoryPolicy,
           requiresShipping: form.requiresShipping,
