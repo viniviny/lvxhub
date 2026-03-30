@@ -652,6 +652,14 @@ const Index = () => {
                           </div>
                         </Collapsible>
 
+                        {/* Image Optimization card — between Publicação and Publish button */}
+                        <ImageOptimizationCard
+                          enabled={optimizeImages}
+                          onEnabledChange={setOptimizeImages}
+                          qualityPreset={imageQualityPreset}
+                          onQualityPresetChange={setImageQualityPreset}
+                        />
+
                         {canPublish ? (
                           <Button className="w-full" onClick={handlePublish}>
                             <Zap className="w-4 h-4 mr-1.5" />Publicar agora
