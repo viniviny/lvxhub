@@ -110,6 +110,10 @@ const Index = () => {
   const [pubOpen, setPubOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Image optimization state
+  const [optimizeImages, setOptimizeImages] = useState(false);
+  const [imageQualityPreset, setImageQualityPreset] = useState<ImageQualityPreset>('balanced');
+
   const currencySymbol = activeStore?.marketConfig?.currencySymbol || 'R$';
 
   const markStepComplete = (step: number) => {
