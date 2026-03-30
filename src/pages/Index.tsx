@@ -20,6 +20,8 @@ import { VariantsTable } from '@/components/VariantsTable';
 import { ShippingCard } from '@/components/ShippingCard';
 import { SalesChannels } from '@/components/SalesChannels';
 import { ReviewChecklist, getCanPublish } from '@/components/ReviewChecklist';
+import { ImageOptimizationCard, ImageQualityPreset, getQualityValue } from '@/components/ImageOptimizationCard';
+import { convertBase64ToWebP } from '@/lib/imageOptimization';
 import { ShopifyProductPreview } from '@/components/ShopifyProductPreview';
 import { SEOCard } from '@/components/SEOCard';
 import { ColorManager, ProductColor } from '@/components/ColorManager';
@@ -62,6 +64,7 @@ const initialForm: ProductFormData = {
 };
 
 const PUBLISH_STEPS = [
+  'Otimizando imagens...',
   'Criando produto...',
   'Buscando localizações...',
   'Configurando estoque...',
@@ -107,6 +110,10 @@ const Index = () => {
   const [publishStatus, setPublishStatus] = useState<'draft' | 'active' | 'scheduled'>('active');
   const [pubOpen, setPubOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Image optimization state
+  const [optimizeImages, setOptimizeImages] = useState(false);
+  const [imageQualityPreset, setImageQualityPreset] = useState<ImageQualityPreset>('balanced');
 
   const currencySymbol = activeStore?.marketConfig?.currencySymbol || 'R$';
 
@@ -187,12 +194,34 @@ const Index = () => {
     setPublishStep(0);
 
     try {
-      const imageBase64 = await fileToBase64(imageFile);
+      let imageBase64 = await fileToBase64(imageFile);
+      let imageName = imageFile.name;
       const mc = activeStore?.marketConfig;
+
+      // --- Image optimization step (client-side WebP conversion) ---
+      if (optimizeImages) {
+        setPublishStep(0); // "Otimizando imagens..."
+        try {
+          const quality = getQualityValue(imageQualityPreset);
+          const mimeType = imageFile.type || 'image/png';
+          const result = await convertBase64ToWebP(imageBase64, mimeType, quality);
+          if (result.converted) {
+            imageBase64 = result.base64;
+            imageName = result.fileName;
+            console.log(`[ImageOptimization] Converted to WebP: ${result.originalSize}→${result.optimizedSize} bytes`);
+          }
+        } catch (err) {
+          // Safe fallback: continue with original image
+          console.warn('[ImageOptimization] Optimization failed, using original:', err);
+        }
+      }
 
       const stepInterval = setInterval(() => {
         setPublishStep(prev => Math.min(prev + 1, PUBLISH_STEPS.length - 1));
       }, 1500);
+
+      // Start from step 1 (past optimization) if optimization was done
+      if (optimizeImages) setPublishStep(1);
 
       const { data, error } = await supabase.functions.invoke('shopify-publish', {
         body: {
@@ -205,7 +234,7 @@ const Index = () => {
           collection: form.collection,
           tags: form.tags,
           imageBase64,
-          imageName: imageFile.name,
+          imageName,
           variants: form.variants,
           inventoryPolicy: form.inventoryPolicy,
           requiresShipping: form.requiresShipping,
@@ -256,7 +285,7 @@ const Index = () => {
   };
 
   const handleNewProduct = () => {
-    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription('');
+    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -622,6 +651,14 @@ const Index = () => {
                             </CollapsibleContent>
                           </div>
                         </Collapsible>
+
+                        {/* Image Optimization card — between Publicação and Publish button */}
+                        <ImageOptimizationCard
+                          enabled={optimizeImages}
+                          onEnabledChange={setOptimizeImages}
+                          qualityPreset={imageQualityPreset}
+                          onQualityPresetChange={setImageQualityPreset}
+                        />
 
                         {canPublish ? (
                           <Button className="w-full" onClick={handlePublish}>
