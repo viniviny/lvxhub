@@ -20,6 +20,8 @@ import { VariantsTable } from '@/components/VariantsTable';
 import { ShippingCard } from '@/components/ShippingCard';
 import { SalesChannels } from '@/components/SalesChannels';
 import { ReviewChecklist, getCanPublish } from '@/components/ReviewChecklist';
+import { ImageOptimizationCard, ImageQualityPreset, getQualityValue } from '@/components/ImageOptimizationCard';
+import { convertBase64ToWebP } from '@/lib/imageOptimization';
 import { ShopifyProductPreview } from '@/components/ShopifyProductPreview';
 import { SEOCard } from '@/components/SEOCard';
 import { ColorManager, ProductColor } from '@/components/ColorManager';
