@@ -184,7 +184,10 @@ const Index = () => {
     });
 
   const handlePublish = async () => {
-    if (!imageFile || !activeStore) return;
+    if (!activeStore) return;
+    // Support both uploaded file and AI-generated images
+    const coverImage = generatedImages.find(i => i.url);
+    if (!imageFile && !coverImage) { toast.error('Adicione pelo menos 1 imagem.'); return; }
     if (!form.title.trim()) { toast.error('Informe o título do produto.'); return; }
 
     if (stores.filter(s => s.connected).length > 1) { setShowGlobalPublish(true); return; }
@@ -194,8 +197,25 @@ const Index = () => {
     setPublishStep(0);
 
     try {
-      let imageBase64 = await fileToBase64(imageFile);
-      let imageName = imageFile.name;
+      let imageBase64: string;
+      let imageName: string;
+
+      if (imageFile) {
+        imageBase64 = await fileToBase64(imageFile);
+        imageName = imageFile.name;
+      } else {
+        // Fetch generated image and convert to base64
+        const response = await fetch(coverImage!.url);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        imageBase64 = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve((reader.result as string).split(',')[1] || (reader.result as string));
+          reader.readAsDataURL(blob);
+        });
+        // Remove data:image/...;base64, prefix if present
+        if (imageBase64.includes(',')) imageBase64 = imageBase64.split(',')[1];
+        imageName = `product-image-${Date.now()}.png`;
+      }
       const mc = activeStore?.marketConfig;
 
       // --- Image optimization step (client-side WebP conversion) ---
