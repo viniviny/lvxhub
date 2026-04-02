@@ -106,11 +106,17 @@ serve(async (req) => {
       });
     }
 
+    // Build angle-specific instruction
+    const angleName = angle ? (ANGLE_SUFFIXES[angle] ? angle : 'custom') : 'general';
+    const angleInstruction = angle && ANGLE_SUFFIXES[angle] 
+      ? `MANDATORY CAMERA ANGLE: ${ANGLE_SUFFIXES[angle]}. You MUST shoot from this exact angle/perspective.`
+      : (angle === 'personalizado' && customAngleText ? `MANDATORY CAMERA ANGLE: ${customAngleText}. You MUST shoot from this exact angle/perspective.` : '');
+
     // Use different prompt when reference image exists
     if (hasReference) {
-      parts.push({ text: `This is the exact product to photograph. Use it as your only reference. Keep all details: colors, patterns, cuts, buttons, zippers, fabric texture exactly as shown in the reference. Generate a professional studio e-commerce photo. ${fullPrompt}. White seamless background. Soft diffused studio lighting. Sharp detail throughout. Premium fashion catalog quality. Do not change any product details. No text, no logos, no watermarks.` });
+      parts.push({ text: `${angleInstruction ? angleInstruction + '\n\n' : ''}This is the exact product to photograph. Use it as your only reference. Keep all details: colors, patterns, cuts, buttons, zippers, fabric texture exactly as shown in the reference. Generate a professional studio e-commerce photo of this product. ${angleInstruction ? 'Remember: strictly follow the camera angle specified above.' : ''} Product description: ${prompt}. ${ratioInstruction} White seamless background. Soft diffused studio lighting. Sharp detail throughout. Premium fashion catalog quality. Do not change any product details. No text, no logos, no watermarks.` });
     } else {
-      parts.push({ text: `Generate a professional e-commerce product photo: ${fullPrompt}` });
+      parts.push({ text: `${angleInstruction ? angleInstruction + '\n\n' : ''}Generate a professional e-commerce product photo: ${fullPrompt}. ${angleInstruction ? 'Remember: strictly follow the camera angle specified above.' : ''}` });
     }
 
     const result = await model.generateContent(parts);
