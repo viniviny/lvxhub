@@ -116,6 +116,12 @@ const Index = () => {
   const [usedTitleNames, setUsedTitleNames] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Product understanding engine
+  const {
+    understanding, isAnalyzing, setManualProductType,
+    analyzeImage, updateFinalFromTitle, reset: resetUnderstanding,
+  } = useProductUnderstanding();
+
   // Image optimization state
   const [optimizeImages, setOptimizeImages] = useState(false);
   const [imageQualityPreset, setImageQualityPreset] = useState<ImageQualityPreset>('balanced');
