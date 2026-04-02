@@ -80,7 +80,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Session error:', error.message);
+        // Clear invalid session and redirect to login
+        supabase.auth.signOut().then(() => {
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          if (window.location.pathname !== '/login' && window.location.pathname !== '/forgot-password') {
+            window.location.href = '/login';
+          }
+        });
+        return;
+      }
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
