@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import {
   ProductUnderstanding, ImageInsights, EMPTY_UNDERSTANDING,
-  EMPTY_IMAGE_INSIGHTS, resolveFinalProductType,
+  resolveFinalProductType,
 } from '@/types/productUnderstanding';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -19,6 +19,17 @@ export function useProductUnderstanding() {
         finalProductType: resolveFinalProductType(manual, prev.aiDetectedProductType),
       };
     });
+  }, []);
+
+  const setManualField = useCallback((field: 'manualMaterial' | 'manualStyle' | 'manualColor' | 'manualFit' | 'useCase', value: string) => {
+    setUnderstanding(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const setSelectedPrompt = useCallback((type: 'title' | 'description', promptId: string | null) => {
+    setUnderstanding(prev => ({
+      ...prev,
+      [type === 'title' ? 'selectedTitlePromptId' : 'selectedDescriptionPromptId']: promptId,
+    }));
   }, []);
 
   const analyzeImage = useCallback(async (imageUrl: string) => {
@@ -73,6 +84,8 @@ export function useProductUnderstanding() {
     understanding,
     isAnalyzing,
     setManualProductType,
+    setManualField,
+    setSelectedPrompt,
     analyzeImage,
     updateFinalFromTitle,
     reset,
