@@ -1,3 +1,5 @@
+export type ProductGender = 'masculino' | 'feminino' | 'unissex' | 'infantil' | '';
+
 export type ProductSize = 'PP' | 'P' | 'M' | 'G' | 'GG';
 
 export type ProductStatus = 'rascunho' | 'publicado';
