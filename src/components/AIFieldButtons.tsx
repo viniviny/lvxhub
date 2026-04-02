@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUserPrompts } from '@/hooks/useUserPrompts';
-import type { ImageInsights } from '@/types/productUnderstanding';
+import type { ProductAIContext } from '@/types/productUnderstanding';
 
 interface AIFieldButtonsProps {
   type: 'title' | 'description';
@@ -18,7 +18,7 @@ interface AIFieldButtonsProps {
   onGenerated: (content: string) => void;
   tone?: 'minimal' | 'bold' | 'casual' | 'editorial';
   usedNames?: string[];
-  imageInsights?: ImageInsights | null;
+  productContext?: ProductAIContext;
   gender?: string;
 }
 
@@ -27,7 +27,7 @@ const CATEGORY_MAP: Record<string, string> = {
   description: 'descricao',
 };
 
-export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated, tone, usedNames, imageInsights, gender }: AIFieldButtonsProps) {
+export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated, tone, usedNames, productContext, gender }: AIFieldButtonsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [generatedLang, setGeneratedLang] = useState('');
@@ -84,8 +84,8 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
       if (type === 'title' && usedNames && usedNames.length > 0) {
         body.usedNames = usedNames;
       }
-      if (imageInsights) {
-        body.imageInsights = imageInsights;
+      if (productContext) {
+        body.productContext = productContext;
       }
       const { data, error } = await supabase.functions.invoke('generate-text', { body });
       if (error) throw error;
@@ -107,9 +107,18 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
     setSelectedPromptId(promptId);
     try {
       incrementUsage.mutate(promptId);
-      const { data, error } = await supabase.functions.invoke('generate-text', {
-        body: { type, customPrompt: prompt.prompt_text, language, languageCode, countryName, tone },
-      });
+      const body: Record<string, any> = {
+        type,
+        customPrompt: prompt.prompt_text,
+        language,
+        languageCode,
+        countryName,
+        tone,
+      };
+      if (productContext) {
+        body.productContext = productContext;
+      }
+      const { data, error } = await supabase.functions.invoke('generate-text', { body });
       if (error) throw error;
       if (data?.content) {
         setGeneratedLang(data.language || language);
@@ -128,7 +137,6 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
 
   return (
     <div className="relative flex items-center gap-1">
-      {/* Confirm replace dialog */}
       {showConfirm && (
         <div className="absolute right-0 top-6 z-50 bg-card border border-border rounded-lg p-3 shadow-[0_8px_24px_rgba(0,0,0,0.4)] w-[220px]">
           <p className="text-[11px] text-foreground mb-2">Substituir conteúdo atual?</p>
@@ -154,14 +162,12 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
         </div>
       )}
 
-      {/* Generated language badge */}
       {showSuccess && generatedLang && (
         <span className="text-[9px] text-muted-foreground mr-0.5">
           {countryFlag || '🌐'} {generatedLang}
         </span>
       )}
 
-      {/* Generate button with tooltip */}
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -195,7 +201,6 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
         </Tooltip>
       </TooltipProvider>
 
-      {/* Prompt selector button */}
       <button
         onClick={() => setShowPopover(!showPopover)}
         className="flex items-center gap-1 h-[22px] px-2 rounded text-[10px] font-medium transition-all border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30"
@@ -205,7 +210,6 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
         <ChevronDown className="w-2.5 h-2.5" />
       </button>
 
-      {/* Prompts dropdown */}
       {showPopover && (
         <div
           ref={popoverRef}
@@ -227,7 +231,7 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
                 Nenhum prompt de {type === 'title' ? 'título' : 'descrição'} salvo
               </p>
               <p className="text-[9px] text-muted-foreground/60 mt-0.5">
-                Crie prompts com a categoria "{type === 'title' ? 'Título' : 'Descrição'}" na página Meus Prompts
+                Crie prompts na página Meus Prompts. Use variáveis como {'{{product_type}}'}, {'{{style}}'}, {'{{main_color}}'}.
               </p>
             </div>
           ) : (
