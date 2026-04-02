@@ -44,6 +44,86 @@ export type Database = {
         }
         Relationships: []
       }
+      project_images: {
+        Row: {
+          created_at: string
+          id: string
+          is_cover: boolean
+          project_id: string
+          sort_order: number
+          storage_path: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_cover?: boolean
+          project_id: string
+          sort_order?: number
+          storage_path?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_cover?: boolean
+          project_id?: string
+          sort_order?: number
+          storage_path?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_images_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          ai_data: Json
+          created_at: string
+          id: string
+          name: string
+          product_data: Json
+          published_at: string | null
+          seo_data: Json
+          status: string
+          step: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_data?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          product_data?: Json
+          published_at?: string | null
+          seo_data?: Json
+          status?: string
+          step?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_data?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          product_data?: Json
+          published_at?: string | null
+          seo_data?: Json
+          status?: string
+          step?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       published_products: {
         Row: {
           base_currency: string | null
