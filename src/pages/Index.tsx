@@ -1,9 +1,9 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ImageGenerationStep, GeneratedImage } from '@/components/ImageGenerationStep';
+import { ImageGenerationStep, GeneratedImage, ImageAngle } from '@/components/ImageGenerationStep';
 import { useProject } from '@/hooks/useProject';
 import { SaveStatusIndicator } from '@/components/SaveStatusIndicator';
-import { ProductFormData, ProductSize, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
+import { ProductFormData, ProductSize, ProductGender, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
 import { useProductUnderstanding } from '@/hooks/useProductUnderstanding';
 import { ProductHistory } from '@/components/ProductHistory';
 import { useStoreContext } from '@/hooks/useStoreContext';
