@@ -38,7 +38,7 @@ serve(async (req) => {
   }
 
   try {
-    const { type, brief, title, language, languageCode, countryName, customPrompt, tone, usedNames } = await req.json();
+    const { type, brief, title, language, languageCode, countryName, customPrompt, tone, usedNames, imageInsights } = await req.json();
 
     const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
     if (!GOOGLE_API_KEY) {
@@ -65,6 +65,23 @@ BRAND STYLE: ${toneDirective}
 RULES: Avoid hype, exaggeration, aggressive sales language, generic phrasing, cliché wording, emojis. Sound like a curated fashion label, not a marketplace listing. Every sentence must feel intentional and clean.
 SEO: Naturally include relevant keywords (product type, material, use case). Do NOT keyword stuff. Keep flow natural and readable.`;
 
+    // Build visual context from image insights if available
+    let visualContext = '';
+    if (imageInsights && typeof imageInsights === 'object') {
+      const parts: string[] = [];
+      if (imageInsights.style) parts.push(`Style: ${imageInsights.style}`);
+      if (imageInsights.mainColor) parts.push(`Main color: ${imageInsights.mainColor}`);
+      if (imageInsights.secondaryColor) parts.push(`Secondary color: ${imageInsights.secondaryColor}`);
+      if (imageInsights.materialLook) parts.push(`Material look: ${imageInsights.materialLook}`);
+      if (imageInsights.silhouette) parts.push(`Silhouette: ${imageInsights.silhouette}`);
+      if (Array.isArray(imageInsights.visualDetails) && imageInsights.visualDetails.length > 0) {
+        parts.push(`Visual details: ${imageInsights.visualDetails.join(', ')}`);
+      }
+      if (parts.length > 0) {
+        visualContext = `\n\nVISUAL CONTEXT FROM PRODUCT IMAGE:\n${parts.join('\n')}`;
+      }
+    }
+
     let systemPrompt = '';
     let userPrompt = '';
 
@@ -75,21 +92,21 @@ SEO: Naturally include relevant keywords (product type, material, use case). Do 
       const usedList = Array.isArray(usedNames) && usedNames.length > 0
         ? `\n\nPREVIOUSLY USED NAMES (DO NOT REPEAT OR USE SIMILAR):\n${usedNames.join(', ')}`
         : '';
-      systemPrompt = `${brandContext}\n\n${langDirective}\n\nYou are a global luxury fashion brand naming expert working with high-end Shopify brands.\n\nYour task is to generate a UNIQUE, PREMIUM, and BRAND-LEVEL product name.\n\nSTEP 1 — TRANSLATION:\n- Translate the product type into ${config.name} if needed\n- Keep it natural and commonly used\n\nSTEP 2 — NAME CREATION:\nGenerate a UNIQUE abstract/conceptual/emotional name (1 word, max 2 if necessary).\n\nNAMING STRUCTURE (STRICT):\n[Translated Product Type] [Generated Name]\nExample: Men's T-Shirt Obsidian\n\nNAMING RULES:\n- Must NOT describe the product literally\n- Must NOT include product attributes (fit, material, usage)\n- Must NOT include generic fashion words\n- Must feel like a luxury brand collection name\n- Must be short, strong, memorable, easy to read globally\n- Max 60 characters total\n- No emojis, no quotes\n\nFORBIDDEN WORDS: Basic, Casual, Fashion, Premium, Comfort, Classic, Style, Modern, Trend, Essential, Fit, Soft, Slim, Cotton, Best, Cheap, Sale, Hot, Trending\n\nPreferred style examples: Obsidian, Velora, Elaris, Nexor, Kaelis, Vireon, Zorath${usedList}\n\nUNIQUENESS RULE: The generated name MUST NOT match or be phonetically/visually similar to any previously used name. If similar, generate a completely different one.\n\nOUTPUT: Return ONLY one single line: [Translated Product Type] [Generated Name]\nDo not explain. Do not add extra text.`;
+      systemPrompt = `${brandContext}\n\n${langDirective}\n\nYou are a global luxury fashion brand naming expert working with high-end Shopify brands.\n\nYour task is to generate a UNIQUE, PREMIUM, and BRAND-LEVEL product name.\n\nSTEP 1 — TRANSLATION:\n- Translate the product type into ${config.name} if needed\n- Keep it natural and commonly used\n\nSTEP 2 — NAME CREATION:\nGenerate a UNIQUE abstract/conceptual/emotional name (1 word, max 2 if necessary).\n\nNAMING STRUCTURE (STRICT):\n[Translated Product Type] [Generated Name]\nExample: Men's T-Shirt Obsidian\n\nNAMING RULES:\n- Must NOT describe the product literally\n- Must NOT include product attributes (fit, material, usage)\n- Must NOT include generic fashion words\n- Must feel like a luxury brand collection name\n- Must be short, strong, memorable, easy to read globally\n- Max 60 characters total\n- No emojis, no quotes\n\nFORBIDDEN WORDS: Basic, Casual, Fashion, Premium, Comfort, Classic, Style, Modern, Trend, Essential, Fit, Soft, Slim, Cotton, Best, Cheap, Sale, Hot, Trending\n\nPreferred style examples: Obsidian, Velora, Elaris, Nexor, Kaelis, Vireon, Zorath${usedList}${visualContext}\n\nUNIQUENESS RULE: The generated name MUST NOT match or be phonetically/visually similar to any previously used name. If similar, generate a completely different one.\n\nOUTPUT: Return ONLY one single line: [Translated Product Type] [Generated Name]\nDo not explain. Do not add extra text.`;
       userPrompt = brief || 'Generate a premium product title';
     } else if (type === 'description') {
       systemPrompt = `${brandContext}\n\n${langDirective}\n\nWrite a premium product description in HTML format. MANDATORY STRUCTURE:
 1. HOOK (1-2 lines): Emotional, clean, subtle. Introduce feeling or lifestyle.
 2. BODY PARAGRAPH: Describe the product in context (lifestyle + function). Highlight comfort, fit, and versatility.
 3. BULLET POINTS (4-6 max using <ul><li>): Clear and concise. Features + benefits combined. No repetition.
-4. CLOSING LINE: Positioning statement. Reinforce brand identity and timelessness.
+4. CLOSING LINE: Positioning statement. Reinforce brand identity and timelessness.${visualContext ? `\n\nUSE THESE VISUAL DETAILS to enrich the description naturally. Frame inferred details carefully — prefer language like "textured finish", "structured look", "soft knit appearance" instead of making specific fabric claims:${visualContext}` : ''}
 RULES: Premium, calm, confident tone. No exaggeration. No emojis. No filler text. Max 150 words. Do not wrap in code blocks or markdown.`;
       userPrompt = `Product: ${title || 'Product'}. Details: ${brief || 'Generate a compelling premium product description'}`;
     } else if (type === 'seo-title') {
-      systemPrompt = `${brandContext}\n\n${langDirective}\n\nWrite an SEO-optimized product title. Max 60 characters. Use keywords that customers in ${countryName || 'this market'} actually search for. Keep it brandable and elegant. Only return the title, nothing else. No quotes.`;
+      systemPrompt = `${brandContext}\n\n${langDirective}\n\nWrite an SEO-optimized product title. Max 60 characters. Use keywords that customers in ${countryName || 'this market'} actually search for. Keep it brandable and elegant.${visualContext} Only return the title, nothing else. No quotes.`;
       userPrompt = brief || title || 'Generate an SEO title';
     } else if (type === 'seo-description') {
-      systemPrompt = `${brandContext}\n\n${langDirective}\n\nWrite an SEO meta description. Max 155 characters. Compelling, with relevant keywords for ${countryName || 'this market'}. Premium tone. Only return the description, nothing else. No quotes.`;
+      systemPrompt = `${brandContext}\n\n${langDirective}\n\nWrite an SEO meta description. Max 155 characters. Compelling, with relevant keywords for ${countryName || 'this market'}. Premium tone.${visualContext} Only return the description, nothing else. No quotes.`;
       userPrompt = `Product: ${title || brief || 'Product'}`;
     } else {
       return new Response(

@@ -2,6 +2,7 @@ import { useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ImageGenerationStep, GeneratedImage } from '@/components/ImageGenerationStep';
 import { ProductFormData, ProductSize, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
+import { useProductUnderstanding } from '@/hooks/useProductUnderstanding';
 import { ProductHistory } from '@/components/ProductHistory';
 import { useStoreContext } from '@/hooks/useStoreContext';
 import type { MarketConfig, ShopifyStore } from '@/hooks/useStoreManager';
@@ -114,6 +115,12 @@ const Index = () => {
   const [copyTone, setCopyTone] = useState<'minimal' | 'bold' | 'casual' | 'editorial'>('minimal');
   const [usedTitleNames, setUsedTitleNames] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Product understanding engine
+  const {
+    understanding, isAnalyzing, setManualProductType,
+    analyzeImage, updateFinalFromTitle, reset: resetUnderstanding,
+  } = useProductUnderstanding();
 
   // Image optimization state
   const [optimizeImages, setOptimizeImages] = useState(false);
@@ -309,7 +316,7 @@ const Index = () => {
   };
 
   const handleNewProduct = () => {
-    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced');
+    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced'); resetUnderstanding(); setUsedTitleNames([]);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -449,6 +456,10 @@ const Index = () => {
                         const cover = imgs.find(i => i.isCover) || imgs[0];
                         if (cover) {
                           setImagePreview(cover.url);
+                          // Trigger image analysis for product understanding
+                          if (cover.url && !cover.url.startsWith('data:')) {
+                            analyzeImage(cover.url);
+                          }
                           if (cover.url.startsWith('data:')) {
                             fetch(cover.url).then(r => r.blob()).then(blob => {
                               const file = new File([blob], 'product-image.png', { type: 'image/png' });
@@ -477,6 +488,7 @@ const Index = () => {
                         language={activeStoreLang?.label || 'English'}
                         languageCode={activeStore?.marketConfig?.language || 'en-US'}
                         countryName={activeStore?.marketConfig?.marketName || ''}
+                        imageInsights={understanding.imageInsights}
                       />
 
                       {/* RIGHT — Product Details (main) */}
@@ -490,7 +502,7 @@ const Index = () => {
                             <Label className="text-xs font-medium text-muted-foreground">Título *</Label>
                             <AIFieldButtons
                               type="title"
-                              brief={form.productType || form.description || form.title || ''}
+                              brief={understanding.finalProductType || form.productType || form.description || form.title || ''}
                               language={activeStoreLang?.label || 'English'}
                               languageCode={activeStore?.marketConfig?.language || 'en-US'}
                               countryName={activeStore?.marketConfig?.marketName || ''}
@@ -500,11 +512,17 @@ const Index = () => {
                                 const clean = content.slice(0, 255);
                                 setForm(prev => ({ ...prev, title: clean }));
                                 setUsedTitleNames(prev => [...prev, clean]);
+                                updateFinalFromTitle(clean);
                               }}
                               usedNames={usedTitleNames}
+                              imageInsights={understanding.imageInsights}
                             />
                           </div>
-                          <Input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value.slice(0, 255) }))} placeholder="Ex: Camiseta Urban Flow" className="bg-secondary border-border text-[13px] h-10" maxLength={255} />
+                          <Input value={form.title} onChange={e => {
+                            const val = e.target.value.slice(0, 255);
+                            setForm(prev => ({ ...prev, title: val }));
+                            updateFinalFromTitle(val);
+                          }} placeholder="Ex: Camiseta Urban Flow" className="bg-secondary border-border text-[13px] h-10" maxLength={255} />
                         </div>
 
                         <div>
@@ -512,7 +530,7 @@ const Index = () => {
                             <Label className="text-xs font-medium text-muted-foreground">Descrição</Label>
                             <AIFieldButtons
                               type="description"
-                              brief={form.productType || form.title || ''}
+                              brief={understanding.finalProductType || form.productType || form.title || ''}
                               title={form.title}
                               language={activeStoreLang?.label || 'English'}
                               languageCode={activeStore?.marketConfig?.language || 'en-US'}
@@ -521,6 +539,7 @@ const Index = () => {
                               currentValue={form.description}
                               onGenerated={html => setForm(prev => ({ ...prev, description: html }))}
                               tone={copyTone}
+                              imageInsights={understanding.imageInsights}
                             />
                           </div>
                           <div className="[&_.ProseMirror]:min-h-[160px]">
@@ -540,7 +559,22 @@ const Index = () => {
                             <Label className="text-xs font-medium text-muted-foreground">Tipo de produto</Label>
                             <ProductTypeCombobox
                               value={form.productType}
-                              onChange={v => setForm(prev => ({ ...prev, productType: v }))}
+                              onChange={v => {
+                                setForm(prev => ({ ...prev, productType: v }));
+                                setManualProductType(v);
+                              }}
+                              aiSuggestion={understanding.aiDetectedProductType ? {
+                                productType: understanding.aiDetectedProductType,
+                                mainColor: understanding.imageInsights.mainColor,
+                                style: understanding.imageInsights.style,
+                              } : null}
+                              isAnalyzing={isAnalyzing}
+                              onAcceptAI={() => {
+                                if (understanding.aiDetectedProductType) {
+                                  setForm(prev => ({ ...prev, productType: understanding.aiDetectedProductType! }));
+                                  setManualProductType(understanding.aiDetectedProductType!);
+                                }
+                              }}
                             />
                           </div>
                           <div>

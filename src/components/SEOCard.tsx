@@ -7,6 +7,7 @@ import { Sparkles, Loader2, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { ImageInsights } from '@/types/productUnderstanding';
 
 interface SEOCardProps {
   title: string;
@@ -19,9 +20,10 @@ interface SEOCardProps {
   language?: string;
   languageCode?: string;
   countryName?: string;
+  imageInsights?: ImageInsights | null;
 }
 
-export function SEOCard({ title, description, storeDomain, productTitle, onTitleChange, onDescriptionChange, compact, language, languageCode, countryName }: SEOCardProps) {
+export function SEOCard({ title, description, storeDomain, productTitle, onTitleChange, onDescriptionChange, compact, language, languageCode, countryName, imageInsights }: SEOCardProps) {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
 
@@ -42,26 +44,20 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
     if (!productTitle) return;
     setIsOptimizing(true);
     try {
+      const seoBody = {
+        brief: productTitle,
+        title: productTitle,
+        language: language || 'English',
+        languageCode: languageCode || 'en-US',
+        countryName: countryName || '',
+        ...(imageInsights ? { imageInsights } : {}),
+      };
       const [titleRes, descRes] = await Promise.all([
         supabase.functions.invoke('generate-text', {
-          body: {
-            type: 'seo-title',
-            brief: productTitle,
-            title: productTitle,
-            language: language || 'English',
-            languageCode: languageCode || 'en-US',
-            countryName: countryName || '',
-          },
+          body: { ...seoBody, type: 'seo-title' },
         }),
         supabase.functions.invoke('generate-text', {
-          body: {
-            type: 'seo-description',
-            brief: productTitle,
-            title: productTitle,
-            language: language || 'English',
-            languageCode: languageCode || 'en-US',
-            countryName: countryName || '',
-          },
+          body: { ...seoBody, type: 'seo-description' },
         }),
       ]);
       if (titleRes.data?.content) onTitleChange(titleRes.data.content.replace(/^["']|["']$/g, '').slice(0, 70));
@@ -72,7 +68,7 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
     } finally {
       setIsOptimizing(false);
     }
-  }, [productTitle, onTitleChange, onDescriptionChange]);
+  }, [productTitle, onTitleChange, onDescriptionChange, language, languageCode, countryName, imageInsights]);
 
   if (compact) {
     return (
