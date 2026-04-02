@@ -478,7 +478,30 @@ const Index = () => {
 
                       {/* RIGHT — Product Details (main) */}
                       <div className="glass-card p-5 space-y-4">
-                        <h3 className="font-display font-semibold text-[13px] text-foreground">Detalhes do produto</h3>
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-display font-semibold text-[13px] text-foreground">Detalhes do produto</h3>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] text-muted-foreground mr-1">Tom:</span>
+                            {([
+                              { value: 'minimal', label: 'Minimal' },
+                              { value: 'bold', label: 'Bold' },
+                              { value: 'casual', label: 'Casual' },
+                              { value: 'editorial', label: 'Editorial' },
+                            ] as const).map(t => (
+                              <button
+                                key={t.value}
+                                onClick={() => setCopyTone(t.value)}
+                                className={`px-2 py-0.5 rounded text-[10px] font-medium transition-all border ${
+                                  copyTone === t.value
+                                    ? 'border-primary bg-primary/20 text-primary'
+                                    : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30'
+                                }`}
+                              >
+                                {t.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
 
                         <div>
                           <div className="flex items-center justify-between mb-1">
@@ -492,6 +515,7 @@ const Index = () => {
                               countryFlag={activeStore?.marketConfig?.countryFlag || ''}
                               currentValue={form.title}
                               onGenerated={content => setForm(prev => ({ ...prev, title: content.slice(0, 255) }))}
+                              tone={copyTone}
                             />
                           </div>
                           <Input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value.slice(0, 255) }))} placeholder="Ex: Camiseta Urban Flow" className="bg-secondary border-border text-[13px] h-10" maxLength={255} />
