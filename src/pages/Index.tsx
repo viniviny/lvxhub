@@ -96,6 +96,14 @@ const Index = () => {
   const baseCurrency = activeStore?.marketConfig?.currency || 'USD';
   const { convert } = useExchangeRates(baseCurrency);
 
+  // ─── Project persistence ─────────────────────────────────
+  const {
+    project, isLoading: isProjectLoading, saveStatus,
+    updateProductData, updateAIData, updateSEOData, updateStep,
+    updateProject, addImage, removeImage: removeProjectImage,
+    publishProject, createNewProject,
+  } = useProject();
+
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showConnect, setShowConnect] = useState(false);
@@ -120,12 +128,103 @@ const Index = () => {
   const [copyTone, setCopyTone] = useState<'minimal' | 'bold' | 'casual' | 'editorial'>('minimal');
   const [usedTitleNames, setUsedTitleNames] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const projectRestoredRef = useRef(false);
 
   // Product understanding engine
   const {
     understanding, isAnalyzing, setManualProductType, setManualField,
     analyzeImage, updateFinalFromTitle, reset: resetUnderstanding,
   } = useProductUnderstanding();
+
+  // ─── Restore project state on load ────────────────────────
+  useEffect(() => {
+    if (!project || projectRestoredRef.current) return;
+    projectRestoredRef.current = true;
+
+    const pd = project.productData;
+    setForm({
+      title: pd.title || '',
+      description: pd.description || '',
+      price: pd.price || 0,
+      compareAtPrice: pd.compareAtPrice ?? null,
+      cost: pd.cost ?? null,
+      sizes: (pd.sizes || []) as ProductSize[],
+      collection: pd.collection || '',
+      imagePrompt: pd.imagePrompt || '',
+      variants: pd.variants || [],
+      inventoryPolicy: (pd.inventoryPolicy || 'continue') as any,
+      requiresShipping: pd.requiresShipping ?? true,
+      weight: pd.weight || 0,
+      weightUnit: (pd.weightUnit || 'kg') as any,
+      countryOfOrigin: pd.countryOfOrigin || '',
+      selectedChannels: pd.selectedChannels || ['online'],
+      tags: pd.tags || '',
+      productType: pd.productType || '',
+      gender: pd.gender || '',
+    });
+
+    setSeoTitle(project.seoData?.seoTitle || '');
+    setSeoDescription(project.seoData?.seoDescription || '');
+    setWizardStep(project.step || 1);
+
+    // Restore images
+    if (project.images && project.images.length > 0) {
+      const restored: GeneratedImage[] = project.images.map(img => ({
+        id: img.id,
+        url: img.url,
+        prompt: '',
+        isCover: img.isCover,
+        angle: '',
+      }));
+      setGeneratedImages(restored);
+      const cover = restored.find(i => i.isCover) || restored[0];
+      if (cover) setImagePreview(cover.url);
+    }
+  }, [project]);
+
+  // ─── Sync form changes to project (autosave) ─────────────
+  const syncFormToProject = useCallback((updatedForm: ProductFormData) => {
+    updateProductData({
+      title: updatedForm.title,
+      description: updatedForm.description,
+      price: updatedForm.price,
+      compareAtPrice: updatedForm.compareAtPrice,
+      cost: updatedForm.cost,
+      sizes: updatedForm.sizes,
+      collection: updatedForm.collection,
+      imagePrompt: updatedForm.imagePrompt,
+      variants: updatedForm.variants,
+      inventoryPolicy: updatedForm.inventoryPolicy,
+      requiresShipping: updatedForm.requiresShipping,
+      weight: updatedForm.weight,
+      weightUnit: updatedForm.weightUnit,
+      countryOfOrigin: updatedForm.countryOfOrigin,
+      selectedChannels: updatedForm.selectedChannels,
+      tags: updatedForm.tags,
+      productType: updatedForm.productType,
+      gender: updatedForm.gender,
+    });
+  }, [updateProductData]);
+
+  // Wrap setForm to also trigger autosave
+  const setFormWithSave = useCallback((updater: ProductFormData | ((prev: ProductFormData) => ProductFormData)) => {
+    setForm(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      syncFormToProject(next);
+      return next;
+    });
+  }, [syncFormToProject]);
+
+  // Wrap SEO setters
+  const setSeoTitleWithSave = useCallback((v: string) => {
+    setSeoTitle(v);
+    updateSEOData({ seoTitle: v });
+  }, [updateSEOData]);
+
+  const setSeoDescriptionWithSave = useCallback((v: string) => {
+    setSeoDescription(v);
+    updateSEOData({ seoDescription: v });
+  }, [updateSEOData]);
 
   // Image optimization state
   const [optimizeImages, setOptimizeImages] = useState(false);
