@@ -13,12 +13,9 @@ import { UserMenu } from '@/components/UserMenu';
 type SortMode = 'recent' | 'most_used' | 'az';
 
 const CATEGORIES = [
-  { value: 'produto', label: 'Produto' },
-  { value: 'lifestyle', label: 'Lifestyle' },
-  { value: 'campanha', label: 'Campanha' },
-  { value: 'editorial', label: 'Editorial' },
-  { value: 'redes-sociais', label: 'Redes Sociais' },
-  { value: 'outro', label: 'Outro' },
+  { value: 'imagem', label: 'Imagem' },
+  { value: 'titulo', label: 'Título' },
+  { value: 'descricao', label: 'Descrição' },
 ];
 
 export default function PromptsPage() {
