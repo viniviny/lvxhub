@@ -517,6 +517,7 @@ const Index = () => {
                               }}
                               usedNames={usedTitleNames}
                               imageInsights={understanding.imageInsights}
+                              gender={form.gender}
                             />
                           </div>
                           <Input value={form.title} onChange={e => {
