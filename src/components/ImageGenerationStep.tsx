@@ -287,18 +287,32 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
             <h3 className="font-display font-semibold text-foreground text-[13px]">Gerar imagens com IA</h3>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => refImageInputRef.current?.click()}
-                  className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-transparent border border-border text-muted-foreground hover:border-primary/60 hover:text-primary transition-colors"
-                >
-                  <Upload className="w-3 h-3" />
-                  Subir referência
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom"><p>Envie uma foto real do produto para guiar a geração da IA</p></TooltipContent>
-            </Tooltip>
+            <div className="flex items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => refImageInputRef.current?.click()}
+                    className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-transparent border border-border text-muted-foreground hover:border-primary/60 hover:text-primary transition-colors"
+                  >
+                    <Upload className="w-3 h-3" />
+                    Subir
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom"><p>Envie uma foto real do produto para guiar a geração da IA</p></TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handlePasteFromButton}
+                    className="shrink-0 flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-transparent border border-border text-muted-foreground hover:border-primary/60 hover:text-primary transition-colors"
+                  >
+                    <ClipboardPaste className="w-3 h-3" />
+                    Colar
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom"><p>Cole uma imagem da área de transferência (Ctrl+V)</p></TooltipContent>
+              </Tooltip>
+            </div>
             <input ref={refImageInputRef} type="file" accept=".png,.jpg,.jpeg,.webp" onChange={handleReferenceUpload} className="hidden" />
           </div>
           {/* 2. Reference image */}
