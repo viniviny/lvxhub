@@ -223,7 +223,7 @@ const Index = () => {
         setPublishStep(0); // "Otimizando imagens..."
         try {
           const quality = getQualityValue(imageQualityPreset);
-          const mimeType = imageFile.type || 'image/png';
+          const mimeType = imageFile?.type || 'image/png';
           const result = await convertBase64ToWebP(imageBase64, mimeType, quality);
           if (result.converted) {
             imageBase64 = result.base64;
