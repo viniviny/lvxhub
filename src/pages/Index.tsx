@@ -109,6 +109,7 @@ const Index = () => {
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [publishStatus, setPublishStatus] = useState<'draft' | 'active' | 'scheduled'>('active');
   const [pubOpen, setPubOpen] = useState(false);
+  const [copyTone, setCopyTone] = useState<'minimal' | 'bold' | 'casual' | 'editorial'>('minimal');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Image optimization state
