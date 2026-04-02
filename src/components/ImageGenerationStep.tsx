@@ -483,8 +483,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
       </div>
 
       {/* RIGHT COLUMN — Image gallery */}
-      <div className="glass-card p-3 flex flex-col items-center">
-        <div className="flex items-center justify-between mb-2">
+      <div className="glass-card p-3 flex flex-col">
+        <div className="flex items-center justify-between mb-2 w-full">
           <h3 className="font-display font-semibold text-foreground text-[13px]">Imagens do produto</h3>
           <span className="text-[10px] text-muted-foreground">
             {images.length > 0 ? `${images.length} ${images.length === 1 ? 'imagem' : 'imagens'}` : 'Nenhuma imagem'}
