@@ -29,6 +29,7 @@ export default function PromptsPage() {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortMode>('recent');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [filterCategory, setFilterCategory] = useState<string>('all');
 
   const handleSidebarNav = (view: DashboardView) => {
     if (view === 'prompts') return;
