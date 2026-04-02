@@ -78,6 +78,57 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const [completedAngles, setCompletedAngles] = useState<Set<ImageAngle>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
   const refImageInputRef = useRef<HTMLInputElement>(null);
+  const refDropZoneRef = useRef<HTMLDivElement>(null);
+
+  // Handle paste from clipboard (Ctrl+V anywhere or on the drop zone)
+  const handlePasteReference = useCallback((e: ClipboardEvent | globalThis.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (!file) continue;
+        if (file.size > 10 * 1024 * 1024) { toast.error('Arquivo muito grande. Máx. 10MB.'); return; }
+        const reader = new FileReader();
+        reader.onload = () => setReferenceImage(reader.result as string);
+        reader.readAsDataURL(file);
+        return;
+      }
+    }
+  }, []);
+
+  // Global paste listener when no reference image is set
+  useEffect(() => {
+    const handler = (e: globalThis.ClipboardEvent) => {
+      // Don't intercept paste if user is typing in an input/textarea
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      handlePasteReference(e);
+    };
+    document.addEventListener('paste', handler);
+    return () => document.removeEventListener('paste', handler);
+  }, [handlePasteReference]);
+
+  const handlePasteFromButton = useCallback(async () => {
+    try {
+      const clipboardItems = await navigator.clipboard.read();
+      for (const item of clipboardItems) {
+        const imageType = item.types.find(t => t.startsWith('image/'));
+        if (imageType) {
+          const blob = await item.getType(imageType);
+          if (blob.size > 10 * 1024 * 1024) { toast.error('Arquivo muito grande. Máx. 10MB.'); return; }
+          const reader = new FileReader();
+          reader.onload = () => setReferenceImage(reader.result as string);
+          reader.readAsDataURL(blob);
+          return;
+        }
+      }
+      toast.error('Nenhuma imagem encontrada na área de transferência.');
+    } catch {
+      toast.error('Não foi possível acessar a área de transferência.');
+    }
+  }, []);
 
   // Close prompt dropdown on outside click / Escape
   useEffect(() => {
