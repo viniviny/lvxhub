@@ -16,6 +16,7 @@ interface AIFieldButtonsProps {
   currentValue: string;
   onGenerated: (content: string) => void;
   tone?: 'minimal' | 'bold' | 'casual' | 'editorial';
+  usedNames?: string[];
 }
 
 export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated, tone }: AIFieldButtonsProps) {
