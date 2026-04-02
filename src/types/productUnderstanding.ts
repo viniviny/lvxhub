@@ -116,14 +116,37 @@ export function injectPromptVariables(promptText: string, context: ProductAICont
 }
 
 const TYPE_KEYWORDS = [
-  'blazer', 'jacket', 'hoodie', 'sweater', 'shirt', 't-shirt', 'tee',
-  'tank top', 'polo', 'pants', 'shorts', 'dress', 'skirt', 'handbag',
-  'bag', 'shoes', 'sneakers', 'hat', 'belt', 'scarf', 'swimwear',
-  'coat', 'vest', 'jeans', 'cardigan', 'blouse',
-  'camiseta', 'camisa', 'calça', 'bermuda', 'vestido', 'saia', 'bolsa',
-  'sapato', 'tênis', 'boné', 'chapéu', 'cinto', 'cachecol', 'jaqueta',
-  'moletom', 'casaco', 'colete', 'regata',
+  'cardigan', 'sweater', 'blazer', 'knit jacket', 'jacket', 'hoodie',
+  't-shirt', 'tee', 'tank top', 'shirt', 'pants', 'shorts',
+  'camiseta', 'camisa', 'calça', 'bermuda', 'jaqueta', 'moletom', 'casaco', 'colete', 'regata',
 ];
+
+const FORBIDDEN_WORDS = [
+  'wool', 'cotton', 'polyester', 'denim', 'leather', 'knit',
+  'slim', 'casual', 'premium', 'lã', 'algodão', 'poliéster', 'couro',
+];
+
+/** Clean AI-detected product type by stripping material/style words */
+export function cleanProductType(rawType: string | null): string | null {
+  if (!rawType) return null;
+  let type = rawType.toLowerCase();
+  for (const word of FORBIDDEN_WORDS) {
+    type = type.replace(new RegExp(`\\b${word}\\b`, 'g'), '');
+  }
+  type = type.replace(/\s+/g, ' ').trim();
+  if (type.includes('cardigan')) return 'Cardigan';
+  if (type.includes('sweater')) return 'Sweater';
+  if (type.includes('knit jacket')) return 'Knit Jacket';
+  if (type.includes('jacket')) return 'Jacket';
+  if (type.includes('blazer')) return 'Blazer';
+  if (type.includes('hoodie')) return 'Hoodie';
+  if (type.includes('t-shirt') || type.includes('tee')) return 'T-Shirt';
+  if (type.includes('tank top')) return 'Tank Top';
+  if (type.includes('shirt')) return 'Shirt';
+  if (type.includes('pants')) return 'Pants';
+  if (type.includes('shorts')) return 'Shorts';
+  return type ? type.charAt(0).toUpperCase() + type.slice(1) : null;
+}
 
 function inferProductTypeFromText(text: string): string | null {
   const lower = text.toLowerCase();
