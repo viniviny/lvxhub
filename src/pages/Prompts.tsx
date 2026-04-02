@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserPrompts, UserPrompt, UserPromptInsert } from '@/hooks/useUserPrompts';
-import { BookOpen, Plus, Search, Pencil, Trash2, ArrowLeft, SortAsc } from 'lucide-react';
+import { BookOpen, Plus, Search, Pencil, Trash2, ArrowLeft, SortAsc, Image, Type, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
