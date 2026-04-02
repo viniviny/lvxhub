@@ -171,25 +171,49 @@ export default function PromptsPage() {
           {/* Search + Sort */}
           {prompts.length > 0 && (
             <>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="relative flex-1 max-w-sm">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                  <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nome..." className="pl-9 bg-card border-border h-9 text-[12px]" />
+              {/* Category pipeline */}
+              <div className="flex items-center gap-1.5 mb-4">
+                <button
+                  onClick={() => setFilterCategory('all')}
+                  className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-[11px] font-medium transition-all border ${
+                    filterCategory === 'all'
+                      ? 'border-primary bg-primary/15 text-primary'
+                      : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30'
+                  }`}
+                >
+                  Todos
+                  <span className="text-[9px] opacity-60">{prompts.length}</span>
+                </button>
+                {CATEGORIES.map(c => {
+                  const CatIcon = c.icon;
+                  const count = prompts.filter(p => p.category === c.value).length;
+                  return (
+                    <button
+                      key={c.value}
+                      onClick={() => setFilterCategory(filterCategory === c.value ? 'all' : c.value)}
+                      className={`flex items-center gap-1.5 h-8 px-3 rounded-full text-[11px] font-medium transition-all border ${
+                        filterCategory === c.value
+                          ? 'border-primary bg-primary/15 text-primary'
+                          : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30'
+                      }`}
+                    >
+                      <CatIcon className="w-3 h-3" />
+                      {c.label}
+                      <span className="text-[9px] opacity-60">{count}</span>
+                    </button>
+                  );
+                })}
+
+                <div className="flex-1" />
+
+                <div className="relative max-w-[200px]">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                  <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." className="pl-8 bg-card border-border h-8 text-[11px]" />
                 </div>
-                <Select value={filterCategory} onValueChange={setFilterCategory}>
-                  <SelectTrigger className="w-[160px] h-9 bg-card border-border text-[12px]">
-                    <SelectValue placeholder="Categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas categorias</SelectItem>
-                    {CATEGORIES.map(c => (
-                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+
                 <Select value={sort} onValueChange={v => setSort(v as SortMode)}>
-                  <SelectTrigger className="w-[160px] h-9 bg-card border-border text-[12px]">
-                    <SortAsc className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                  <SelectTrigger className="w-[140px] h-8 bg-card border-border text-[11px]">
+                    <SortAsc className="w-3 h-3 mr-1 text-muted-foreground" />
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
