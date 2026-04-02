@@ -237,9 +237,11 @@ const Index = () => {
   const goToStep = (step: number) => {
     if (step < wizardStep) {
       setWizardStep(step);
+      updateStep(step);
     } else if (step === wizardStep + 1 || completedSteps.has(step - 1)) {
       markStepComplete(wizardStep);
       setWizardStep(step);
+      updateStep(step);
     }
   };
 
