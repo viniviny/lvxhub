@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check } from 'lucide-react';
+import { ChevronDown, Check, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const PRODUCT_TYPES = [
@@ -25,13 +25,22 @@ const PRODUCT_TYPES = [
   'Swimwear',
 ];
 
+interface AISuggestion {
+  productType: string | null;
+  mainColor: string | null;
+  style: string | null;
+}
+
 interface ProductTypeComboboxProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  aiSuggestion?: AISuggestion | null;
+  isAnalyzing?: boolean;
+  onAcceptAI?: () => void;
 }
 
-export function ProductTypeCombobox({ value, onChange, className }: ProductTypeComboboxProps) {
+export function ProductTypeCombobox({ value, onChange, className, aiSuggestion, isAnalyzing, onAcceptAI }: ProductTypeComboboxProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -74,6 +83,15 @@ export function ProductTypeCombobox({ value, onChange, className }: ProductTypeC
       handleSelect(filtered[0]);
     }
   };
+
+  const showAISuggestion = !value && aiSuggestion?.productType && !isAnalyzing;
+  const showAnalyzing = isAnalyzing && !value;
+
+  // Build the AI insight badge text
+  const aiInsightParts: string[] = [];
+  if (aiSuggestion?.productType) aiInsightParts.push(aiSuggestion.productType);
+  if (aiSuggestion?.mainColor) aiInsightParts.push(aiSuggestion.mainColor);
+  if (aiSuggestion?.style) aiInsightParts.push(aiSuggestion.style);
 
   return (
     <div ref={containerRef} className={cn('relative', className)}>
@@ -118,9 +136,39 @@ export function ProductTypeCombobox({ value, onChange, className }: ProductTypeC
         </div>
       )}
 
-      <p className="text-[10px] text-muted-foreground mt-1">
-        Ajuda a IA a gerar títulos, descrições e SEO mais precisos.
-      </p>
+      {/* AI analyzing indicator */}
+      {showAnalyzing && (
+        <div className="flex items-center gap-1.5 mt-1.5">
+          <Loader2 className="w-3 h-3 text-primary animate-spin" />
+          <span className="text-[10px] text-muted-foreground">Analisando imagem...</span>
+        </div>
+      )}
+
+      {/* AI suggestion badge */}
+      {showAISuggestion && (
+        <div className="flex items-center gap-1.5 mt-1.5">
+          <Sparkles className="w-3 h-3 text-primary flex-shrink-0" />
+          <span className="text-[10px] text-muted-foreground truncate">
+            IA detectou: {aiInsightParts.join(' · ')}
+          </span>
+          {onAcceptAI && (
+            <button
+              type="button"
+              onClick={onAcceptAI}
+              className="text-[10px] font-medium text-primary hover:text-primary/80 transition-colors whitespace-nowrap"
+            >
+              Usar
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Helper text (only when no AI info shown) */}
+      {!showAISuggestion && !showAnalyzing && (
+        <p className="text-[10px] text-muted-foreground mt-1">
+          Ajuda a IA a gerar títulos, descrições e SEO mais precisos.
+        </p>
+      )}
     </div>
   );
 }
