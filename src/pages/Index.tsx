@@ -206,7 +206,7 @@ const Index = () => {
 
   // Wrap setForm to also trigger autosave
   const setFormWithSave = useCallback((updater: ProductFormData | ((prev: ProductFormData) => ProductFormData)) => {
-    setFormWithSave(prev => {
+    setForm(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
       syncFormToProject(next);
       return next;
