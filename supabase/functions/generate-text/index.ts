@@ -38,7 +38,7 @@ serve(async (req) => {
   }
 
   try {
-    const { type, brief, title, language, languageCode, countryName, customPrompt } = await req.json();
+    const { type, brief, title, language, languageCode, countryName, customPrompt, tone } = await req.json();
 
     const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
     if (!GOOGLE_API_KEY) {
@@ -52,8 +52,16 @@ serve(async (req) => {
     const config = getLangConfig(code, language || 'English');
     const langDirective = `Write ONLY in ${config.name}${countryName ? ` as spoken by native speakers in ${countryName}` : ''}. Tone: ${config.tone}. NEVER respond in Portuguese or any other language.`;
 
+    const TONE_MAP: Record<string, string> = {
+      minimal: 'Minimal, refined, modern, premium. Inspired by Zara, COS, ZEGNA. Clean sentences, understated elegance.',
+      bold: 'Bold, confident, statement-making. Inspired by Off-White, Balenciaga, Fear of God. Strong language, impactful phrasing.',
+      casual: 'Casual, approachable, warm. Inspired by Uniqlo, Everlane, H&M. Conversational tone, friendly and relatable.',
+      editorial: 'Editorial, storytelling, atmospheric. Inspired by Vogue, SSENSE, Mr Porter. Evocative prose, rich imagery, cultural references.',
+    };
+    const toneDirective = TONE_MAP[tone || 'minimal'] || TONE_MAP.minimal;
+
     const brandContext = `You are a senior-level e-commerce copywriter, brand strategist, and SEO specialist working with premium global fashion brands.
-BRAND STYLE: Minimal, refined, modern, premium. Inspired by Zara, COS, ZEGNA, AllSaints.
+BRAND STYLE: ${toneDirective}
 RULES: Avoid hype, exaggeration, aggressive sales language, generic phrasing, cliché wording, emojis. Sound like a curated fashion label, not a marketplace listing. Every sentence must feel intentional and clean.
 SEO: Naturally include relevant keywords (product type, material, use case). Do NOT keyword stuff. Keep flow natural and readable.`;
 
