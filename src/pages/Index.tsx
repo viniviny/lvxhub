@@ -61,6 +61,7 @@ const initialForm: ProductFormData = {
   countryOfOrigin: '',
   selectedChannels: ['online'],
   tags: '',
+  productType: '',
 };
 
 const PUBLISH_STEPS = [
