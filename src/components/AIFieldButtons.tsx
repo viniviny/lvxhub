@@ -4,6 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import type { ImageInsights } from '@/types/productUnderstanding';
 
 interface AIFieldButtonsProps {
   type: 'title' | 'description';
@@ -17,6 +18,7 @@ interface AIFieldButtonsProps {
   onGenerated: (content: string) => void;
   tone?: 'minimal' | 'bold' | 'casual' | 'editorial';
   usedNames?: string[];
+  imageInsights?: ImageInsights | null;
 }
 
 export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated, tone, usedNames }: AIFieldButtonsProps) {
