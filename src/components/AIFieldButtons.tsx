@@ -74,6 +74,9 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
       if (type === 'title' && usedNames && usedNames.length > 0) {
         body.usedNames = usedNames;
       }
+      if (imageInsights) {
+        body.imageInsights = imageInsights;
+      }
       const { data, error } = await supabase.functions.invoke('generate-text', { body });
       if (error) throw error;
       if (data?.content) {
