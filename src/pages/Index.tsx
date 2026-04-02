@@ -26,6 +26,7 @@ import { ShopifyProductPreview } from '@/components/ShopifyProductPreview';
 import { SEOCard } from '@/components/SEOCard';
 import { ColorManager, ProductColor } from '@/components/ColorManager';
 import { AIFieldButtons } from '@/components/AIFieldButtons';
+import { ProductTypeCombobox } from '@/components/ProductTypeCombobox';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
