@@ -522,7 +522,6 @@ const Index = () => {
                                 setForm(prev => ({ ...prev, title: clean }));
                                 setUsedTitleNames(prev => [...prev, clean]);
                               }}
-                              tone={copyTone}
                               usedNames={usedTitleNames}
                             />
                           </div>
