@@ -6,6 +6,8 @@ export interface ImageInsights {
   silhouette: string | null;
   visualDetails: string[];
   tagsFromImage: string[];
+  confidence: number | null;
+  reason: string | null;
 }
 
 export interface ProductUnderstanding {
@@ -30,6 +32,8 @@ export const EMPTY_IMAGE_INSIGHTS: ImageInsights = {
   silhouette: null,
   visualDetails: [],
   tagsFromImage: [],
+  confidence: null,
+  reason: null,
 };
 
 export const EMPTY_UNDERSTANDING: ProductUnderstanding = {
