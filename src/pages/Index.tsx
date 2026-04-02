@@ -523,7 +523,6 @@ const Index = () => {
                                 setUsedTitleNames(prev => [...prev, clean]);
                               }}
                               usedNames={usedTitleNames}
-                              usedNames={usedTitleNames}
                             />
                           </div>
                           <Input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value.slice(0, 255) }))} placeholder="Ex: Camiseta Urban Flow" className="bg-secondary border-border text-[13px] h-10" maxLength={255} />
