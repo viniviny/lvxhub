@@ -206,7 +206,7 @@ const Index = () => {
 
   // Wrap setForm to also trigger autosave
   const setFormWithSave = useCallback((updater: ProductFormData | ((prev: ProductFormData) => ProductFormData)) => {
-    setForm(prev => {
+    setFormWithSave(prev => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
       syncFormToProject(next);
       return next;
@@ -269,7 +269,7 @@ const Index = () => {
       ? form.sizes.filter(s => s !== size)
       : [...form.sizes, size];
     const newVariants = syncVariantsFromSizes(newSizes);
-    setForm(prev => ({ ...prev, sizes: newSizes, variants: newVariants }));
+    setFormWithSave(prev => ({ ...prev, sizes: newSizes, variants: newVariants }));
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -418,7 +418,7 @@ const Index = () => {
   };
 
   const handleNewProduct = () => {
-    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced'); resetUnderstanding(); setUsedTitleNames([]);
+    setFormWithSave(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced'); resetUnderstanding(); setUsedTitleNames([]);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -613,7 +613,7 @@ const Index = () => {
                               currentValue={form.title}
                               onGenerated={content => {
                                 const clean = content.slice(0, 255);
-                                setForm(prev => ({ ...prev, title: clean }));
+                                setFormWithSave(prev => ({ ...prev, title: clean }));
                                 setUsedTitleNames(prev => [...prev, clean]);
                                 updateFinalFromTitle(clean);
                               }}
@@ -624,7 +624,7 @@ const Index = () => {
                           </div>
                           <Input value={form.title} onChange={e => {
                             const val = e.target.value.slice(0, 255);
-                            setForm(prev => ({ ...prev, title: val }));
+                            setFormWithSave(prev => ({ ...prev, title: val }));
                             updateFinalFromTitle(val);
                           }} placeholder="Ex: Camiseta Urban Flow" className="bg-secondary border-border text-[13px] h-10" maxLength={255} />
                         </div>
@@ -641,21 +641,21 @@ const Index = () => {
                               countryName={activeStore?.marketConfig?.marketName || ''}
                               countryFlag={activeStore?.marketConfig?.countryFlag || ''}
                               currentValue={form.description}
-                              onGenerated={html => setForm(prev => ({ ...prev, description: html }))}
+                              onGenerated={html => setFormWithSave(prev => ({ ...prev, description: html }))}
                               tone={copyTone}
                               productContext={aiContext}
                               gender={form.gender}
                             />
                           </div>
                           <div className="[&_.ProseMirror]:min-h-[160px]">
-                            <RichTextEditor content={form.description} onChange={html => setForm(prev => ({ ...prev, description: html }))} placeholder="Descreva o produto..." />
+                            <RichTextEditor content={form.description} onChange={html => setFormWithSave(prev => ({ ...prev, description: html }))} placeholder="Descreva o produto..." />
                           </div>
                         </div>
 
                         <div className="grid grid-cols-4 gap-2">
                           <div>
                             <Label className="text-xs font-medium text-muted-foreground">Coleção</Label>
-                            <Select value={form.collection} onValueChange={v => setForm(prev => ({ ...prev, collection: v }))}>
+                            <Select value={form.collection} onValueChange={v => setFormWithSave(prev => ({ ...prev, collection: v }))}>
                               <SelectTrigger className="mt-1 bg-secondary border-border text-xs h-8"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                               <SelectContent>{COLLECTIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                             </Select>
@@ -665,7 +665,7 @@ const Index = () => {
                             <ProductTypeCombobox
                               value={form.productType}
                               onChange={v => {
-                                setForm(prev => ({ ...prev, productType: v }));
+                                setFormWithSave(prev => ({ ...prev, productType: v }));
                                 setManualProductType(v);
                               }}
                               aiSuggestion={understanding.aiDetectedProductType ? {
@@ -676,7 +676,7 @@ const Index = () => {
                               isAnalyzing={isAnalyzing}
                               onAcceptAI={() => {
                                 if (understanding.aiDetectedProductType) {
-                                  setForm(prev => ({ ...prev, productType: understanding.aiDetectedProductType! }));
+                                  setFormWithSave(prev => ({ ...prev, productType: understanding.aiDetectedProductType! }));
                                   setManualProductType(understanding.aiDetectedProductType!);
                                 }
                               }}
@@ -684,7 +684,7 @@ const Index = () => {
                           </div>
                           <div>
                             <Label className="text-xs font-medium text-muted-foreground">Gênero</Label>
-                            <Select value={form.gender} onValueChange={v => setForm(prev => ({ ...prev, gender: v as any }))}>
+                            <Select value={form.gender} onValueChange={v => setFormWithSave(prev => ({ ...prev, gender: v as any }))}>
                               <SelectTrigger className="mt-1 bg-secondary border-border text-xs h-8"><SelectValue placeholder="Selecione..." /></SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="masculino">Masculino</SelectItem>
@@ -696,7 +696,7 @@ const Index = () => {
                           </div>
                           <div>
                             <Label className="text-xs font-medium text-muted-foreground">Tags</Label>
-                            <Input value={form.tags} onChange={e => setForm(prev => ({ ...prev, tags: e.target.value }))} placeholder="streetwear, summer" className="mt-1 bg-secondary border-border text-xs h-8" />
+                            <Input value={form.tags} onChange={e => setFormWithSave(prev => ({ ...prev, tags: e.target.value }))} placeholder="streetwear, summer" className="mt-1 bg-secondary border-border text-xs h-8" />
                           </div>
                         </div>
 
@@ -767,9 +767,9 @@ const Index = () => {
                             compareAtPrice={form.compareAtPrice}
                             cost={form.cost}
                             currencySymbol={currencySymbol}
-                            onPriceChange={v => setForm(prev => ({ ...prev, price: v }))}
-                            onCompareAtPriceChange={v => setForm(prev => ({ ...prev, compareAtPrice: v }))}
-                            onCostChange={v => setForm(prev => ({ ...prev, cost: v }))}
+                            onPriceChange={v => setFormWithSave(prev => ({ ...prev, price: v }))}
+                            onCompareAtPriceChange={v => setFormWithSave(prev => ({ ...prev, compareAtPrice: v }))}
+                            onCostChange={v => setFormWithSave(prev => ({ ...prev, cost: v }))}
                           />
                         </div>
 
@@ -785,9 +785,9 @@ const Index = () => {
 
                           <VariantsTable
                             variants={form.variants}
-                            onChange={v => setForm(prev => ({ ...prev, variants: v }))}
+                            onChange={v => setFormWithSave(prev => ({ ...prev, variants: v }))}
                             inventoryPolicy={form.inventoryPolicy}
-                            onInventoryPolicyChange={p => setForm(prev => ({ ...prev, inventoryPolicy: p }))}
+                            onInventoryPolicyChange={p => setFormWithSave(prev => ({ ...prev, inventoryPolicy: p }))}
                             productType={form.collection || form.title}
                             currencySymbol={currencySymbol}
                           />
@@ -800,13 +800,13 @@ const Index = () => {
 
                         <ShippingCard
                           requiresShipping={form.requiresShipping}
-                          onRequiresShippingChange={v => setForm(prev => ({ ...prev, requiresShipping: v }))}
+                          onRequiresShippingChange={v => setFormWithSave(prev => ({ ...prev, requiresShipping: v }))}
                           weight={form.weight}
-                          onWeightChange={v => setForm(prev => ({ ...prev, weight: v }))}
+                          onWeightChange={v => setFormWithSave(prev => ({ ...prev, weight: v }))}
                           weightUnit={form.weightUnit}
-                          onWeightUnitChange={v => setForm(prev => ({ ...prev, weightUnit: v }))}
+                          onWeightUnitChange={v => setFormWithSave(prev => ({ ...prev, weightUnit: v }))}
                           countryOfOrigin={form.countryOfOrigin}
-                          onCountryOfOriginChange={v => setForm(prev => ({ ...prev, countryOfOrigin: v }))}
+                          onCountryOfOriginChange={v => setFormWithSave(prev => ({ ...prev, countryOfOrigin: v }))}
                         />
                       </div>
                     </div>
@@ -870,7 +870,7 @@ const Index = () => {
                                           const next = isOn
                                             ? form.selectedChannels.filter(c => c !== ch.id)
                                             : [...form.selectedChannels, ch.id];
-                                          setForm(prev => ({ ...prev, selectedChannels: next }));
+                                          setFormWithSave(prev => ({ ...prev, selectedChannels: next }));
                                         }}
                                         className={`flex items-center gap-1 px-2.5 h-[26px] rounded-full text-[10px] font-medium transition-all border ${
                                           isOn
