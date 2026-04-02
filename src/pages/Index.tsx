@@ -501,10 +501,6 @@ const Index = () => {
                           <h3 className="font-display font-semibold text-[13px] text-foreground">Detalhes do produto</h3>
                         </div>
 
-                        {(() => {
-                          const aiContext = buildProductAIContext(understanding, form.gender, form.tags, activeStoreLang?.label || 'English');
-                          return (
-                            <>
                         <div>
                           <div className="flex items-center justify-between mb-1">
                             <Label className="text-xs font-medium text-muted-foreground">Título *</Label>
