@@ -488,6 +488,7 @@ const Index = () => {
                         language={activeStoreLang?.label || 'English'}
                         languageCode={activeStore?.marketConfig?.language || 'en-US'}
                         countryName={activeStore?.marketConfig?.marketName || ''}
+                        imageInsights={understanding.imageInsights}
                       />
 
                       {/* RIGHT — Product Details (main) */}
@@ -501,7 +502,7 @@ const Index = () => {
                             <Label className="text-xs font-medium text-muted-foreground">Título *</Label>
                             <AIFieldButtons
                               type="title"
-                              brief={form.productType || form.description || form.title || ''}
+                              brief={understanding.finalProductType || form.productType || form.description || form.title || ''}
                               language={activeStoreLang?.label || 'English'}
                               languageCode={activeStore?.marketConfig?.language || 'en-US'}
                               countryName={activeStore?.marketConfig?.marketName || ''}
@@ -511,11 +512,17 @@ const Index = () => {
                                 const clean = content.slice(0, 255);
                                 setForm(prev => ({ ...prev, title: clean }));
                                 setUsedTitleNames(prev => [...prev, clean]);
+                                updateFinalFromTitle(clean);
                               }}
                               usedNames={usedTitleNames}
+                              imageInsights={understanding.imageInsights}
                             />
                           </div>
-                          <Input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value.slice(0, 255) }))} placeholder="Ex: Camiseta Urban Flow" className="bg-secondary border-border text-[13px] h-10" maxLength={255} />
+                          <Input value={form.title} onChange={e => {
+                            const val = e.target.value.slice(0, 255);
+                            setForm(prev => ({ ...prev, title: val }));
+                            updateFinalFromTitle(val);
+                          }} placeholder="Ex: Camiseta Urban Flow" className="bg-secondary border-border text-[13px] h-10" maxLength={255} />
                         </div>
 
                         <div>
@@ -523,7 +530,7 @@ const Index = () => {
                             <Label className="text-xs font-medium text-muted-foreground">Descrição</Label>
                             <AIFieldButtons
                               type="description"
-                              brief={form.productType || form.title || ''}
+                              brief={understanding.finalProductType || form.productType || form.title || ''}
                               title={form.title}
                               language={activeStoreLang?.label || 'English'}
                               languageCode={activeStore?.marketConfig?.language || 'en-US'}
@@ -532,6 +539,7 @@ const Index = () => {
                               currentValue={form.description}
                               onGenerated={html => setForm(prev => ({ ...prev, description: html }))}
                               tone={copyTone}
+                              imageInsights={understanding.imageInsights}
                             />
                           </div>
                           <div className="[&_.ProseMirror]:min-h-[160px]">
@@ -551,7 +559,22 @@ const Index = () => {
                             <Label className="text-xs font-medium text-muted-foreground">Tipo de produto</Label>
                             <ProductTypeCombobox
                               value={form.productType}
-                              onChange={v => setForm(prev => ({ ...prev, productType: v }))}
+                              onChange={v => {
+                                setForm(prev => ({ ...prev, productType: v }));
+                                setManualProductType(v);
+                              }}
+                              aiSuggestion={understanding.aiDetectedProductType ? {
+                                productType: understanding.aiDetectedProductType,
+                                mainColor: understanding.imageInsights.mainColor,
+                                style: understanding.imageInsights.style,
+                              } : null}
+                              isAnalyzing={isAnalyzing}
+                              onAcceptAI={() => {
+                                if (understanding.aiDetectedProductType) {
+                                  setForm(prev => ({ ...prev, productType: understanding.aiDetectedProductType! }));
+                                  setManualProductType(understanding.aiDetectedProductType!);
+                                }
+                              }}
                             />
                           </div>
                           <div>
