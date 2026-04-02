@@ -119,7 +119,7 @@ const Index = () => {
 
   // Product understanding engine
   const {
-    understanding, isAnalyzing, setManualProductType,
+    understanding, isAnalyzing, setManualProductType, setManualField,
     analyzeImage, updateFinalFromTitle, reset: resetUnderstanding,
   } = useProductUnderstanding();
 
