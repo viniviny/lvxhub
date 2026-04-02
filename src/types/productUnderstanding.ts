@@ -46,18 +46,18 @@ export const EMPTY_UNDERSTANDING: ProductUnderstanding = {
   selectedDescriptionPromptId: null,
 };
 
-/** Resolve finalProductType from priority chain */
+/** Resolve finalProductType from priority chain, cleaning through normalizer */
 export function resolveFinalProductType(
   manual: string | null,
   aiDetected: string | null,
-  titleFallback?: string
+  titleFallback?: string,
+  imageInsights?: ImageInsights | null
 ): string | null {
-  if (manual && manual.trim()) return manual.trim();
-  if (aiDetected && aiDetected.trim()) return aiDetected.trim();
-  if (titleFallback && titleFallback.trim()) {
-    return inferProductTypeFromText(titleFallback);
-  }
-  return null;
+  const raw = (manual && manual.trim()) ? manual.trim()
+    : (aiDetected && aiDetected.trim()) ? aiDetected.trim()
+    : (titleFallback && titleFallback.trim()) ? inferProductTypeFromText(titleFallback)
+    : null;
+  return cleanProductType(raw, imageInsights) ?? raw;
 }
 
 /** Resolve a field with priority: manual > image insight > fallback */
