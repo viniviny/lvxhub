@@ -179,6 +179,17 @@ export default function PromptsPage() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                   <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nome..." className="pl-9 bg-card border-border h-9 text-[12px]" />
                 </div>
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="w-[160px] h-9 bg-card border-border text-[12px]">
+                    <SelectValue placeholder="Categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas categorias</SelectItem>
+                    {CATEGORIES.map(c => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Select value={sort} onValueChange={v => setSort(v as SortMode)}>
                   <SelectTrigger className="w-[160px] h-9 bg-card border-border text-[12px]">
                     <SortAsc className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
