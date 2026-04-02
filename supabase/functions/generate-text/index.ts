@@ -103,10 +103,10 @@ SEO: Naturally include relevant keywords (product type, material, use case). Do 
 RULES: Premium, calm, confident tone. No exaggeration. No emojis. No filler text. Max 150 words. Do not wrap in code blocks or markdown.`;
       userPrompt = `Product: ${title || 'Product'}. Details: ${brief || 'Generate a compelling premium product description'}`;
     } else if (type === 'seo-title') {
-      systemPrompt = `${brandContext}\n\n${langDirective}\n\nWrite an SEO-optimized product title. Max 60 characters. Use keywords that customers in ${countryName || 'this market'} actually search for. Keep it brandable and elegant. Only return the title, nothing else. No quotes.`;
+      systemPrompt = `${brandContext}\n\n${langDirective}\n\nWrite an SEO-optimized product title. Max 60 characters. Use keywords that customers in ${countryName || 'this market'} actually search for. Keep it brandable and elegant.${visualContext} Only return the title, nothing else. No quotes.`;
       userPrompt = brief || title || 'Generate an SEO title';
     } else if (type === 'seo-description') {
-      systemPrompt = `${brandContext}\n\n${langDirective}\n\nWrite an SEO meta description. Max 155 characters. Compelling, with relevant keywords for ${countryName || 'this market'}. Premium tone. Only return the description, nothing else. No quotes.`;
+      systemPrompt = `${brandContext}\n\n${langDirective}\n\nWrite an SEO meta description. Max 155 characters. Compelling, with relevant keywords for ${countryName || 'this market'}. Premium tone.${visualContext} Only return the description, nothing else. No quotes.`;
       userPrompt = `Product: ${title || brief || 'Product'}`;
     } else {
       return new Response(
