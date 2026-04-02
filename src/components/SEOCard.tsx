@@ -7,6 +7,7 @@ import { Sparkles, Loader2, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { ImageInsights } from '@/types/productUnderstanding';
 
 interface SEOCardProps {
   title: string;
@@ -19,9 +20,10 @@ interface SEOCardProps {
   language?: string;
   languageCode?: string;
   countryName?: string;
+  imageInsights?: ImageInsights | null;
 }
 
-export function SEOCard({ title, description, storeDomain, productTitle, onTitleChange, onDescriptionChange, compact, language, languageCode, countryName }: SEOCardProps) {
+export function SEOCard({ title, description, storeDomain, productTitle, onTitleChange, onDescriptionChange, compact, language, languageCode, countryName, imageInsights }: SEOCardProps) {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
 
