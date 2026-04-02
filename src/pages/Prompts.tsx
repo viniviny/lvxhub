@@ -38,6 +38,7 @@ export default function PromptsPage() {
 
   // Form state
   const [name, setName] = useState('');
+  const [category, setCategory] = useState<string | null>(null);
   const [promptText, setPromptText] = useState('');
 
   const filtered = useMemo(() => {
