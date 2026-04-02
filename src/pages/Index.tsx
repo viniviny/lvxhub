@@ -419,9 +419,11 @@ const Index = () => {
     } catch { return false; }
   };
 
-  const handleNewProduct = () => {
-    setFormWithSave(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced'); resetUnderstanding(); setUsedTitleNames([]);
+  const handleNewProduct = async () => {
+    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced'); resetUnderstanding(); setUsedTitleNames([]);
     if (fileInputRef.current) fileInputRef.current.value = '';
+    projectRestoredRef.current = false;
+    await createNewProject();
   };
 
   const handleAddStore = () => { stores.length > 0 ? setShowConnect(true) : setShowOnboarding(true); };
