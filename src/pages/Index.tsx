@@ -596,8 +596,8 @@ const Index = () => {
                         description={seoDescription}
                         storeDomain={activeStore?.domain || ''}
                         productTitle={form.title}
-                        onTitleChange={setSeoTitle}
-                        onDescriptionChange={setSeoDescription}
+                        onTitleChange={setSeoTitleWithSave}
+                        onDescriptionChange={setSeoDescriptionWithSave}
                         compact
                         language={activeStoreLang?.label || 'English'}
                         languageCode={activeStore?.marketConfig?.language || 'en-US'}
