@@ -51,7 +51,7 @@ export function useProductUnderstanding() {
           visualDetails: data.visualDetails || [],
           tagsFromImage: data.tagsFromImage || [],
         };
-        const aiType = cleanProductType(data.productType || null);
+        const aiType = cleanProductType(data.productType || null, insights);
         setUnderstanding(prev => ({
           ...prev,
           aiDetectedProductType: aiType,

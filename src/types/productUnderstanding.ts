@@ -126,8 +126,8 @@ const FORBIDDEN_WORDS = [
   'slim', 'casual', 'premium', 'lã', 'algodão', 'poliéster', 'couro',
 ];
 
-/** Clean AI-detected product type by stripping material/style words */
-export function cleanProductType(rawType: string | null): string | null {
+/** Clean AI-detected product type by stripping material/style words and normalizing */
+export function cleanProductType(rawType: string | null, imageInsights?: ImageInsights | null): string | null {
   if (!rawType) return null;
   let type = rawType.toLowerCase();
   for (const word of FORBIDDEN_WORDS) {
@@ -137,8 +137,14 @@ export function cleanProductType(rawType: string | null): string | null {
   if (type.includes('cardigan')) return 'Cardigan';
   if (type.includes('sweater')) return 'Sweater';
   if (type.includes('knit jacket')) return 'Knit Jacket';
-  if (type.includes('jacket')) return 'Jacket';
   if (type.includes('blazer')) return 'Blazer';
+  // image insights can help disambiguate jacket subtypes
+  if (type.includes('jacket')) {
+    if (imageInsights?.style?.toLowerCase().includes('knit') || imageInsights?.materialLook?.toLowerCase().includes('knit')) {
+      return 'Knit Jacket';
+    }
+    return 'Jacket';
+  }
   if (type.includes('hoodie')) return 'Hoodie';
   if (type.includes('t-shirt') || type.includes('tee')) return 'T-Shirt';
   if (type.includes('tank top')) return 'Tank Top';
