@@ -87,7 +87,7 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
     setIsCustomGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-text', {
-        body: { type, customPrompt, language, languageCode, countryName },
+        body: { type, customPrompt, language, languageCode, countryName, tone },
       });
       if (error) throw error;
       if (data?.content) {

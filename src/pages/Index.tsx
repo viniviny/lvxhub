@@ -534,6 +534,7 @@ const Index = () => {
                               countryFlag={activeStore?.marketConfig?.countryFlag || ''}
                               currentValue={form.description}
                               onGenerated={html => setForm(prev => ({ ...prev, description: html }))}
+                              tone={copyTone}
                             />
                           </div>
                           <div className="[&_.ProseMirror]:min-h-[160px]">
