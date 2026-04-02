@@ -517,6 +517,7 @@ const Index = () => {
                               }}
                               usedNames={usedTitleNames}
                               imageInsights={understanding.imageInsights}
+                              gender={form.gender}
                             />
                           </div>
                           <Input value={form.title} onChange={e => {
@@ -541,6 +542,7 @@ const Index = () => {
                               onGenerated={html => setForm(prev => ({ ...prev, description: html }))}
                               tone={copyTone}
                               imageInsights={understanding.imageInsights}
+                              gender={form.gender}
                             />
                           </div>
                           <div className="[&_.ProseMirror]:min-h-[160px]">

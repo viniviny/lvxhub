@@ -38,7 +38,7 @@ serve(async (req) => {
   }
 
   try {
-    const { type, brief, title, language, languageCode, countryName, customPrompt, tone, usedNames, imageInsights } = await req.json();
+    const { type, brief, title, language, languageCode, countryName, customPrompt, tone, usedNames, imageInsights, gender } = await req.json();
 
     const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
     if (!GOOGLE_API_KEY) {
@@ -61,9 +61,18 @@ serve(async (req) => {
     const toneDirective = TONE_MAP[tone || 'minimal'] || TONE_MAP.minimal;
 
     const brandContext = `You are a senior-level e-commerce copywriter, brand strategist, and SEO specialist working with premium global fashion brands.
-BRAND STYLE: ${toneDirective}
+BRAND STYLE: ${toneDirective}${genderContext}
 RULES: Avoid hype, exaggeration, aggressive sales language, generic phrasing, cliché wording, emojis. Sound like a curated fashion label, not a marketplace listing. Every sentence must feel intentional and clean.
 SEO: Naturally include relevant keywords (product type, material, use case). Do NOT keyword stuff. Keep flow natural and readable.`;
+
+    // Build gender context
+    const GENDER_MAP: Record<string, string> = {
+      masculino: 'menswear / male',
+      feminino: 'womenswear / female',
+      unissex: 'unisex / gender-neutral',
+      infantil: 'kidswear / children',
+    };
+    const genderContext = gender && GENDER_MAP[gender] ? `\nTARGET GENDER: ${GENDER_MAP[gender]}. Adapt language, tone, and product positioning accordingly.` : '';
 
     // Build visual context from image insights if available
     let visualContext = '';

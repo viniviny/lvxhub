@@ -19,6 +19,7 @@ interface AIFieldButtonsProps {
   tone?: 'minimal' | 'bold' | 'casual' | 'editorial';
   usedNames?: string[];
   imageInsights?: ImageInsights | null;
+  gender?: string;
 }
 
 const CATEGORY_MAP: Record<string, string> = {
@@ -26,7 +27,7 @@ const CATEGORY_MAP: Record<string, string> = {
   description: 'descricao',
 };
 
-export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated, tone, usedNames, imageInsights }: AIFieldButtonsProps) {
+export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated, tone, usedNames, imageInsights, gender }: AIFieldButtonsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [generatedLang, setGeneratedLang] = useState('');
@@ -79,7 +80,7 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      const body: Record<string, any> = { type, brief, title, language, languageCode, countryName, tone };
+      const body: Record<string, any> = { type, brief, title, language, languageCode, countryName, tone, gender };
       if (type === 'title' && usedNames && usedNames.length > 0) {
         body.usedNames = usedNames;
       }
