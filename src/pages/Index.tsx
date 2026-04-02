@@ -651,6 +651,7 @@ const Index = () => {
                         </div>
 
                         {/* AI Understanding summary */}
+                        <AIUnderstandingCard understanding={understanding} gender={form.gender} />
                       </div>
                     </div>
                   )}
