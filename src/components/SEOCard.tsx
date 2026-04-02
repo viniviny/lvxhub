@@ -44,26 +44,20 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
     if (!productTitle) return;
     setIsOptimizing(true);
     try {
+      const seoBody = {
+        brief: productTitle,
+        title: productTitle,
+        language: language || 'English',
+        languageCode: languageCode || 'en-US',
+        countryName: countryName || '',
+        ...(imageInsights ? { imageInsights } : {}),
+      };
       const [titleRes, descRes] = await Promise.all([
         supabase.functions.invoke('generate-text', {
-          body: {
-            type: 'seo-title',
-            brief: productTitle,
-            title: productTitle,
-            language: language || 'English',
-            languageCode: languageCode || 'en-US',
-            countryName: countryName || '',
-          },
+          body: { ...seoBody, type: 'seo-title' },
         }),
         supabase.functions.invoke('generate-text', {
-          body: {
-            type: 'seo-description',
-            brief: productTitle,
-            title: productTitle,
-            language: language || 'English',
-            languageCode: languageCode || 'en-US',
-            countryName: countryName || '',
-          },
+          body: { ...seoBody, type: 'seo-description' },
         }),
       ]);
       if (titleRes.data?.content) onTitleChange(titleRes.data.content.replace(/^["']|["']$/g, '').slice(0, 70));
