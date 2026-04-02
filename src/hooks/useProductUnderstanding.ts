@@ -56,7 +56,7 @@ export function useProductUnderstanding() {
           ...prev,
           aiDetectedProductType: aiType,
           imageInsights: insights,
-          finalProductType: resolveFinalProductType(prev.manualProductType, aiType),
+          finalProductType: resolveFinalProductType(prev.manualProductType, aiType, undefined, insights),
         }));
       }
     } catch (e) {
