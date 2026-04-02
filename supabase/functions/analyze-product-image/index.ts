@@ -5,6 +5,47 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const systemPrompt = `You are a fashion product image analyst specializing in garment classification.
+
+CLASSIFICATION RULES — use this exact decision order:
+
+1. BLAZER — if the garment has visible lapels, structured shoulder line, tailored silhouette, or formal/smart-casual construction. Do NOT classify as Blazer if it looks like casual knit outerwear with ribbed collar and zipper.
+
+2. SWEATER — if the garment is a pullover with NO full front opening (no full zipper, no full button line). Examples: crewneck knit, turtleneck knit, pullover knit.
+
+3. KNIT JACKET — if the garment has a full front opening (especially a full front zipper) AND is made of knit/textured soft fabric AND is structured like outerwear. Look for: ribbed collar, ribbed cuffs, ribbed hem, jacket-like silhouette. Prefer Knit Jacket over Cardigan when there is a full front zipper or stronger outerwear structure.
+
+4. CARDIGAN — if the garment has a front opening with knit construction but is softer, lighter, often buttoned or open-front, and not structured like outerwear.
+
+DECISION PRIORITY:
+1. Visible lapels or clear tailoring → Blazer
+2. No full front opening → Sweater
+3. Full front opening + knit outerwear structure with zipper/ribbed shape → Knit Jacket
+4. Knit front opening + softer/lightweight construction → Cardigan
+
+For non-knitwear products, use the most appropriate type: T-Shirt, Tank Top, Shirt, Hoodie, Jacket, Pants, Shorts, Dress, Sneakers, Handbag, etc.
+
+Return a valid JSON object with these exact fields:
+{
+  "productType": "the classified product type",
+  "confidence": 0.0 to 1.0,
+  "reason": "one sentence explaining the classification decision based on visible structural cues",
+  "style": "overall style impression (e.g. Minimalist, tailored, streetwear, casual)",
+  "mainColor": "primary color visible",
+  "secondaryColor": "secondary color if visible, or null",
+  "materialLook": "apparent material/fabric impression (e.g. Matte leather, Soft knit, Ribbed cotton)",
+  "silhouette": "shape/structure (e.g. Structured, Relaxed, Oversized, Slim, Tailored)",
+  "visualDetails": ["array of 3-6 visible design details like 'ribbed collar', 'full front zipper', 'structured shoulders'"],
+  "tagsFromImage": ["array of 3-8 inferred tags"]
+}
+
+RULES:
+- Respond ONLY with the JSON object, nothing else
+- Use descriptive but concise language
+- Do not invent details that are not visible
+- Use null for fields you cannot determine
+- Keep productType to the canonical name only (e.g. "Knit Jacket" not "Men's Casual Knit Jacket")`;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -28,7 +69,6 @@ serve(async (req) => {
       );
     }
 
-    // Fetch image and convert to base64
     const imageResponse = await fetch(imageUrl);
     if (!imageResponse.ok) {
       return new Response(
@@ -36,6 +76,7 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    const imageBuffer = await imageResponse.arrayBuffer();
     const imageBytes = new Uint8Array(imageBuffer);
     let binary = '';
     const chunkSize = 8192;
@@ -44,27 +85,6 @@ serve(async (req) => {
     }
     const base64Image = btoa(binary);
     const mimeType = imageResponse.headers.get('content-type') || 'image/png';
-
-    const systemPrompt = `You are a fashion product image analyst. Analyze this product image and extract structured visual details.
-
-Return a valid JSON object with these exact fields:
-{
-  "productType": "the most likely product type (e.g. T-Shirt, Blazer, Jacket, Hoodie, Pants, Dress, Sneakers, Handbag, etc.)",
-  "style": "overall style impression (e.g. Minimalist, tailored, streetwear, casual, editorial, athleisure)",
-  "mainColor": "primary color visible (e.g. Dark green, Black, Cream, Navy blue)",
-  "secondaryColor": "secondary color if visible, or null",
-  "materialLook": "apparent material or fabric impression (e.g. Matte leather, Soft knit, Ribbed cotton, Smooth wool, Structured twill)",
-  "silhouette": "shape/structure (e.g. Structured, Relaxed, Oversized, Slim, Tailored, Boxy)",
-  "visualDetails": ["array of 3-6 visible design details like 'clean lapel', 'contrast stitching', 'hidden buttons', 'ribbed cuffs'"],
-  "tagsFromImage": ["array of 3-8 inferred tags like 'premium', 'formal', 'winter', 'monochrome', 'textured']
-}
-
-RULES:
-- Respond ONLY with the JSON object, nothing else
-- Use descriptive but concise language
-- Do not invent details that are not visible
-- Use null for fields you cannot determine
-- Keep product type generic (e.g. "Jacket" not "Men's Casual Lightweight Zip-Up Jacket")`;
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_API_KEY}`,
@@ -99,8 +119,6 @@ RULES:
 
     const data = await response.json();
     let content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-    // Clean markdown code fences if present
     content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
 
     try {
