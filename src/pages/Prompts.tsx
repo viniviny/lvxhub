@@ -108,6 +108,19 @@ export default function PromptsPage() {
                 <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Jaqueta Fundo Branco" className="bg-card border-border" />
               </div>
               <div>
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Categoria</label>
+                <Select value={category || ''} onValueChange={v => setCategory(v || null)}>
+                  <SelectTrigger className="bg-card border-border">
+                    <SelectValue placeholder="Selecione uma categoria (opcional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map(c => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Prompt *</label>
                 <Textarea value={promptText} onChange={e => setPromptText(e.target.value.slice(0, 2000))} placeholder="Escreva o prompt em inglês para melhores resultados com a IA..." rows={8} className="bg-card border-border resize-none" />
                 <span className="text-[10px] text-muted-foreground mt-1 block text-right">{promptText.length}/2000</span>
