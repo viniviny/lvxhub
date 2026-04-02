@@ -15,6 +15,7 @@ interface AIFieldButtonsProps {
   countryFlag?: string;
   currentValue: string;
   onGenerated: (content: string) => void;
+  tone?: 'minimal' | 'bold' | 'casual' | 'editorial';
 }
 
 export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated }: AIFieldButtonsProps) {
