@@ -55,7 +55,7 @@ export default function PromptsPage() {
 
   const openCreate = () => {
     setEditing('new');
-    setName(''); setPromptText('');
+    setName(''); setCategory(null); setPromptText('');
   };
 
   const openEdit = (p: UserPrompt) => {
