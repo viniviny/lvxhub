@@ -69,7 +69,7 @@ export function useProductUnderstanding() {
   const updateFinalFromTitle = useCallback((title: string) => {
     setUnderstanding(prev => {
       if (prev.manualProductType || prev.aiDetectedProductType) return prev;
-      const fallback = resolveFinalProductType(null, null, title);
+      const fallback = resolveFinalProductType(null, null, title, prev.imageInsights);
       if (fallback === prev.finalProductType) return prev;
       return { ...prev, finalProductType: fallback };
     });
