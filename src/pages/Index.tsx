@@ -500,6 +500,10 @@ const Index = () => {
                           <h3 className="font-display font-semibold text-[13px] text-foreground">Detalhes do produto</h3>
                         </div>
 
+                        {(() => {
+                          const aiContext = buildProductAIContext(understanding, form.gender, form.tags, activeStoreLang?.label || 'English');
+                          return (
+                            <>
                         <div>
                           <div className="flex items-center justify-between mb-1">
                             <Label className="text-xs font-medium text-muted-foreground">Título *</Label>
@@ -518,7 +522,7 @@ const Index = () => {
                                 updateFinalFromTitle(clean);
                               }}
                               usedNames={usedTitleNames}
-                              imageInsights={understanding.imageInsights}
+                              productContext={aiContext}
                               gender={form.gender}
                             />
                           </div>
@@ -543,7 +547,7 @@ const Index = () => {
                               currentValue={form.description}
                               onGenerated={html => setForm(prev => ({ ...prev, description: html }))}
                               tone={copyTone}
-                              imageInsights={understanding.imageInsights}
+                              productContext={aiContext}
                               gender={form.gender}
                             />
                           </div>
@@ -599,6 +603,61 @@ const Index = () => {
                             <Input value={form.tags} onChange={e => setForm(prev => ({ ...prev, tags: e.target.value }))} placeholder="streetwear, summer" className="mt-1 bg-secondary border-border text-xs h-8" />
                           </div>
                         </div>
+
+                        {/* AI structured inputs */}
+                        <div className="grid grid-cols-5 gap-2">
+                          <div>
+                            <Label className="text-[10px] font-medium text-muted-foreground">Material</Label>
+                            <Input
+                              value={understanding.manualMaterial}
+                              onChange={e => setManualField('manualMaterial', e.target.value)}
+                              placeholder={understanding.imageInsights.materialLook || 'Ex: Algodão'}
+                              className="mt-0.5 bg-secondary border-border text-xs h-7"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[10px] font-medium text-muted-foreground">Estilo</Label>
+                            <Input
+                              value={understanding.manualStyle}
+                              onChange={e => setManualField('manualStyle', e.target.value)}
+                              placeholder={understanding.imageInsights.style || 'Ex: Minimal'}
+                              className="mt-0.5 bg-secondary border-border text-xs h-7"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[10px] font-medium text-muted-foreground">Fit / Estrutura</Label>
+                            <Input
+                              value={understanding.manualFit}
+                              onChange={e => setManualField('manualFit', e.target.value)}
+                              placeholder={understanding.imageInsights.silhouette || 'Ex: Regular'}
+                              className="mt-0.5 bg-secondary border-border text-xs h-7"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[10px] font-medium text-muted-foreground">Cor principal</Label>
+                            <Input
+                              value={understanding.manualColor}
+                              onChange={e => setManualField('manualColor', e.target.value)}
+                              placeholder={understanding.imageInsights.mainColor || 'Ex: Preto'}
+                              className="mt-0.5 bg-secondary border-border text-xs h-7"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-[10px] font-medium text-muted-foreground">Uso</Label>
+                            <Input
+                              value={understanding.useCase}
+                              onChange={e => setManualField('useCase', e.target.value)}
+                              placeholder="Ex: Trabalho"
+                              className="mt-0.5 bg-secondary border-border text-xs h-7"
+                            />
+                          </div>
+                        </div>
+
+                        {/* AI Understanding summary */}
+                        <AIUnderstandingCard understanding={understanding} gender={form.gender} />
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   )}
