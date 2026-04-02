@@ -32,6 +32,8 @@ export const EMPTY_IMAGE_INSIGHTS: ImageInsights = {
   silhouette: null,
   visualDetails: [],
   tagsFromImage: [],
+  confidence: null,
+  reason: null,
 };
 
 export const EMPTY_UNDERSTANDING: ProductUnderstanding = {

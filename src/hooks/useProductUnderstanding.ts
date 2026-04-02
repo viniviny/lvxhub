@@ -50,6 +50,8 @@ export function useProductUnderstanding() {
           silhouette: data.silhouette || null,
           visualDetails: data.visualDetails || [],
           tagsFromImage: data.tagsFromImage || [],
+          confidence: data.confidence ?? null,
+          reason: data.reason || null,
         };
         const aiType = cleanProductType(data.productType || null, insights);
         setUnderstanding(prev => ({
