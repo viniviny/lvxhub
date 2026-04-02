@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import {
   ProductUnderstanding, ImageInsights, EMPTY_UNDERSTANDING,
-  resolveFinalProductType,
+  resolveFinalProductType, cleanProductType,
 } from '@/types/productUnderstanding';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -51,7 +51,7 @@ export function useProductUnderstanding() {
           visualDetails: data.visualDetails || [],
           tagsFromImage: data.tagsFromImage || [],
         };
-        const aiType = data.productType || null;
+        const aiType = cleanProductType(data.productType || null);
         setUnderstanding(prev => ({
           ...prev,
           aiDetectedProductType: aiType,
