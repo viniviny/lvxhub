@@ -110,6 +110,7 @@ const Index = () => {
   const [publishStatus, setPublishStatus] = useState<'draft' | 'active' | 'scheduled'>('active');
   const [pubOpen, setPubOpen] = useState(false);
   const [copyTone, setCopyTone] = useState<'minimal' | 'bold' | 'casual' | 'editorial'>('minimal');
+  const [usedTitleNames, setUsedTitleNames] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Image optimization state
