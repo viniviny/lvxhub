@@ -12,7 +12,14 @@ export interface ProductUnderstanding {
   manualProductType: string | null;
   aiDetectedProductType: string | null;
   finalProductType: string | null;
+  manualMaterial: string;
+  manualStyle: string;
+  manualColor: string;
+  manualFit: string;
+  useCase: string;
   imageInsights: ImageInsights;
+  selectedTitlePromptId: string | null;
+  selectedDescriptionPromptId: string | null;
 }
 
 export const EMPTY_IMAGE_INSIGHTS: ImageInsights = {
@@ -29,7 +36,14 @@ export const EMPTY_UNDERSTANDING: ProductUnderstanding = {
   manualProductType: null,
   aiDetectedProductType: null,
   finalProductType: null,
+  manualMaterial: '',
+  manualStyle: '',
+  manualColor: '',
+  manualFit: '',
+  useCase: '',
   imageInsights: { ...EMPTY_IMAGE_INSIGHTS },
+  selectedTitlePromptId: null,
+  selectedDescriptionPromptId: null,
 };
 
 /** Resolve finalProductType from priority chain */
@@ -40,11 +54,64 @@ export function resolveFinalProductType(
 ): string | null {
   if (manual && manual.trim()) return manual.trim();
   if (aiDetected && aiDetected.trim()) return aiDetected.trim();
-  // Lightweight text-based fallback from title
   if (titleFallback && titleFallback.trim()) {
     return inferProductTypeFromText(titleFallback);
   }
   return null;
+}
+
+/** Resolve a field with priority: manual > image insight > fallback */
+function resolveField(manual: string, imageValue: string | null): string {
+  if (manual && manual.trim()) return manual.trim();
+  if (imageValue && imageValue.trim()) return imageValue.trim();
+  return '';
+}
+
+export interface ProductAIContext {
+  product_type: string;
+  gender: string;
+  style: string;
+  main_color: string;
+  material_look: string;
+  fit: string;
+  use_case: string;
+  visual_details: string;
+  tags: string;
+  language: string;
+}
+
+/** Build the resolved AI context from understanding + form data */
+export function buildProductAIContext(
+  understanding: ProductUnderstanding,
+  gender: string,
+  tags: string,
+  language: string
+): ProductAIContext {
+  const ins = understanding.imageInsights;
+  return {
+    product_type: understanding.finalProductType || '',
+    gender: gender || '',
+    style: resolveField(understanding.manualStyle, ins.style),
+    main_color: resolveField(understanding.manualColor, ins.mainColor),
+    material_look: resolveField(understanding.manualMaterial, ins.materialLook),
+    fit: resolveField(understanding.manualFit, ins.silhouette),
+    use_case: understanding.useCase || '',
+    visual_details: ins.visualDetails.length > 0 ? ins.visualDetails.join(', ') : '',
+    tags: [tags, ...(ins.tagsFromImage || [])].filter(Boolean).join(', '),
+    language,
+  };
+}
+
+/** Inject context variables into a prompt template */
+export function injectPromptVariables(promptText: string, context: ProductAIContext): string {
+  let result = promptText;
+  const entries = Object.entries(context) as [string, string][];
+  for (const [key, value] of entries) {
+    result = result.replaceAll(`{{${key}}}`, value || '');
+  }
+  // Clean up any remaining unreplaced variables
+  result = result.replace(/\{\{[a-z_]+\}\}/g, '');
+  return result.trim();
 }
 
 const TYPE_KEYWORDS = [
@@ -52,7 +119,6 @@ const TYPE_KEYWORDS = [
   'tank top', 'polo', 'pants', 'shorts', 'dress', 'skirt', 'handbag',
   'bag', 'shoes', 'sneakers', 'hat', 'belt', 'scarf', 'swimwear',
   'coat', 'vest', 'jeans', 'cardigan', 'blouse',
-  // Portuguese equivalents
   'camiseta', 'camisa', 'calça', 'bermuda', 'vestido', 'saia', 'bolsa',
   'sapato', 'tênis', 'boné', 'chapéu', 'cinto', 'cachecol', 'jaqueta',
   'moletom', 'casaco', 'colete', 'regata',
