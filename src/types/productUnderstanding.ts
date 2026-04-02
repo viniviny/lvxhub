@@ -136,7 +136,7 @@ export function cleanGeneratedTitle(title: string): string {
 }
 
 
-  'cardigan', 'sweater', 'blazer', 'knit jacket', 'jacket', 'hoodie',
+  const TYPE_KEYWORDS = [
   't-shirt', 'tee', 'tank top', 'shirt', 'pants', 'shorts',
   'camiseta', 'camisa', 'calça', 'bermuda', 'jaqueta', 'moletom', 'casaco', 'colete', 'regata',
 ];
