@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, DragEvent, useEffect } from 'react';
+import { useState, useRef, useCallback, DragEvent, useEffect, ClipboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
