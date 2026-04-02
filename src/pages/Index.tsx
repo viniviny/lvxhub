@@ -396,6 +396,8 @@ const Index = () => {
       incrementPublished();
       setPublishResult({ title: data.title, shopifyUrl: data.shopifyUrl, imageUrl: data.imageUrl });
       toast.success(`Produto publicado em ${activeStore.domain}!`);
+      // Mark project as published
+      publishProject();
     } catch (err: any) {
       console.error('Publish error:', err);
       toast.error(err.message || 'Erro ao publicar produto.');
