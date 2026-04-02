@@ -80,7 +80,7 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      const body: Record<string, any> = { type, brief, title, language, languageCode, countryName, tone };
+      const body: Record<string, any> = { type, brief, title, language, languageCode, countryName, tone, gender };
       if (type === 'title' && usedNames && usedNames.length > 0) {
         body.usedNames = usedNames;
       }
