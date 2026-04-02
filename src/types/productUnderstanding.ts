@@ -115,7 +115,27 @@ export function injectPromptVariables(promptText: string, context: ProductAICont
   return result.trim();
 }
 
-const TYPE_KEYWORDS = [
+const TITLE_FORBIDDEN_WORDS = [
+  'wool', 'cotton', 'polyester', 'denim', 'leather', 'nylon', 'silk',
+  'lã', 'algodão', 'poliéster', 'couro', 'seda',
+];
+
+/** Validate generated title — returns true if clean */
+export function validateGeneratedTitle(title: string): boolean {
+  const lower = title.toLowerCase();
+  return !TITLE_FORBIDDEN_WORDS.some(word => lower.includes(word));
+}
+
+/** Strip forbidden material words from a generated title */
+export function cleanGeneratedTitle(title: string): string {
+  let result = title;
+  for (const word of TITLE_FORBIDDEN_WORDS) {
+    result = result.replace(new RegExp(`\\b${word}\\b`, 'gi'), '');
+  }
+  return result.replace(/\s+/g, ' ').replace(/\s([,.])/g, '$1').trim();
+}
+
+
   'cardigan', 'sweater', 'blazer', 'knit jacket', 'jacket', 'hoodie',
   't-shirt', 'tee', 'tank top', 'shirt', 'pants', 'shorts',
   'camiseta', 'camisa', 'calça', 'bermuda', 'jaqueta', 'moletom', 'casaco', 'colete', 'regata',
