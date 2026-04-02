@@ -12,6 +12,15 @@ import { UserMenu } from '@/components/UserMenu';
 
 type SortMode = 'recent' | 'most_used' | 'az';
 
+const CATEGORIES = [
+  { value: 'produto', label: 'Produto' },
+  { value: 'lifestyle', label: 'Lifestyle' },
+  { value: 'campanha', label: 'Campanha' },
+  { value: 'editorial', label: 'Editorial' },
+  { value: 'redes-sociais', label: 'Redes Sociais' },
+  { value: 'outro', label: 'Outro' },
+];
+
 export default function PromptsPage() {
   const navigate = useNavigate();
   const { prompts, isLoading, createPrompt, updatePrompt, deletePrompt } = useUserPrompts();
@@ -20,6 +29,7 @@ export default function PromptsPage() {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortMode>('recent');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [filterCategory, setFilterCategory] = useState<string>('all');
 
   const handleSidebarNav = (view: DashboardView) => {
     if (view === 'prompts') return;
@@ -28,6 +38,7 @@ export default function PromptsPage() {
 
   // Form state
   const [name, setName] = useState('');
+  const [category, setCategory] = useState<string | null>(null);
   const [promptText, setPromptText] = useState('');
 
   const filtered = useMemo(() => {
@@ -35,25 +46,26 @@ export default function PromptsPage() {
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.prompt_text.toLowerCase().includes(search.toLowerCase())
     );
+    if (filterCategory !== 'all') list = list.filter(p => p.category === filterCategory);
     if (sort === 'recent') list.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
     else if (sort === 'most_used') list.sort((a, b) => b.usage_count - a.usage_count);
     else list.sort((a, b) => a.name.localeCompare(b.name));
     return list;
-  }, [prompts, search, sort]);
+  }, [prompts, search, sort, filterCategory]);
 
   const openCreate = () => {
     setEditing('new');
-    setName(''); setPromptText('');
+    setName(''); setCategory(null); setPromptText('');
   };
 
   const openEdit = (p: UserPrompt) => {
     setEditing(p);
-    setName(p.name); setPromptText(p.prompt_text);
+    setName(p.name); setCategory(p.category); setPromptText(p.prompt_text);
   };
 
   const handleSave = async () => {
     const input: UserPromptInsert = {
-      name, category: null, prompt_text: promptText,
+      name, category: category || null, prompt_text: promptText,
       default_angles: [], default_ratio: '4:5', personal_notes: null,
     };
     if (editing === 'new') {
@@ -94,6 +106,19 @@ export default function PromptsPage() {
               <div>
                 <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Nome do prompt *</label>
                 <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Jaqueta Fundo Branco" className="bg-card border-border" />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Categoria</label>
+                <Select value={category || ''} onValueChange={v => setCategory(v || null)}>
+                  <SelectTrigger className="bg-card border-border">
+                    <SelectValue placeholder="Selecione uma categoria (opcional)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map(c => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Prompt *</label>
@@ -154,6 +179,17 @@ export default function PromptsPage() {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                   <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nome..." className="pl-9 bg-card border-border h-9 text-[12px]" />
                 </div>
+                <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="w-[160px] h-9 bg-card border-border text-[12px]">
+                    <SelectValue placeholder="Categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas categorias</SelectItem>
+                    {CATEGORIES.map(c => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Select value={sort} onValueChange={v => setSort(v as SortMode)}>
                   <SelectTrigger className="w-[160px] h-9 bg-card border-border text-[12px]">
                     <SortAsc className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
@@ -171,7 +207,14 @@ export default function PromptsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {filtered.map(p => (
                   <div key={p.id} className="bg-card border border-border rounded-lg p-4 transition-all hover:border-primary/20">
-                    <h3 className="text-[13px] font-semibold text-foreground mb-1.5 truncate">{p.name}</h3>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <h3 className="text-[13px] font-semibold text-foreground truncate">{p.name}</h3>
+                      {p.category && (
+                        <span className="text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent text-accent-foreground shrink-0">
+                          {CATEGORIES.find(c => c.value === p.category)?.label || p.category}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[11px] text-muted-foreground line-clamp-2 mb-3">{p.prompt_text}</p>
 
                     {/* Confirm delete inline */}
