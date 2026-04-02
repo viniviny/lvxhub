@@ -16,7 +16,7 @@ export function useProductUnderstanding() {
       return {
         ...prev,
         manualProductType: manual,
-        finalProductType: resolveFinalProductType(manual, prev.aiDetectedProductType),
+        finalProductType: resolveFinalProductType(manual, prev.aiDetectedProductType, undefined, prev.imageInsights),
       };
     });
   }, []);
@@ -56,7 +56,7 @@ export function useProductUnderstanding() {
           ...prev,
           aiDetectedProductType: aiType,
           imageInsights: insights,
-          finalProductType: resolveFinalProductType(prev.manualProductType, aiType),
+          finalProductType: resolveFinalProductType(prev.manualProductType, aiType, undefined, insights),
         }));
       }
     } catch (e) {
@@ -69,7 +69,7 @@ export function useProductUnderstanding() {
   const updateFinalFromTitle = useCallback((title: string) => {
     setUnderstanding(prev => {
       if (prev.manualProductType || prev.aiDetectedProductType) return prev;
-      const fallback = resolveFinalProductType(null, null, title);
+      const fallback = resolveFinalProductType(null, null, title, prev.imageInsights);
       if (fallback === prev.finalProductType) return prev;
       return { ...prev, finalProductType: fallback };
     });
