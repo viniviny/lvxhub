@@ -68,7 +68,7 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
     } finally {
       setIsOptimizing(false);
     }
-  }, [productTitle, onTitleChange, onDescriptionChange]);
+  }, [productTitle, onTitleChange, onDescriptionChange, language, languageCode, countryName, imageInsights]);
 
   if (compact) {
     return (
