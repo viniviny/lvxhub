@@ -206,11 +206,16 @@ export default function PromptsPage() {
                   <div key={p.id} className="bg-card border border-border rounded-lg p-4 transition-all hover:border-primary/20">
                     <div className="flex items-center gap-2 mb-1.5">
                       <h3 className="text-[13px] font-semibold text-foreground truncate">{p.name}</h3>
-                      {p.category && (
-                        <span className="text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent text-accent-foreground shrink-0">
-                          {CATEGORIES.find(c => c.value === p.category)?.label || p.category}
-                        </span>
-                      )}
+                      {p.category && (() => {
+                        const cat = CATEGORIES.find(c => c.value === p.category);
+                        const CatIcon = cat?.icon;
+                        return (
+                          <span className="flex items-center gap-1 text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent text-accent-foreground shrink-0">
+                            {CatIcon && <CatIcon className="w-2.5 h-2.5" />}
+                            {cat?.label || p.category}
+                          </span>
+                        );
+                      })()}
                     </div>
                     <p className="text-[11px] text-muted-foreground line-clamp-2 mb-3">{p.prompt_text}</p>
 
