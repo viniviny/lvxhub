@@ -97,8 +97,8 @@ export default function PromptsPage() {
               </div>
               <div>
                 <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Prompt *</label>
-                <Textarea value={promptText} onChange={e => setPromptText(e.target.value.slice(0, 1000))} placeholder="Escreva o prompt em inglês para melhores resultados com a IA..." rows={6} className="bg-card border-border resize-none" />
-                <span className="text-[10px] text-muted-foreground mt-1 block text-right">{promptText.length}/1000</span>
+                <Textarea value={promptText} onChange={e => setPromptText(e.target.value.slice(0, 2000))} placeholder="Escreva o prompt em inglês para melhores resultados com a IA..." rows={8} className="bg-card border-border resize-none" />
+                <span className="text-[10px] text-muted-foreground mt-1 block text-right">{promptText.length}/2000</span>
               </div>
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
                 <Button variant="ghost" onClick={() => setEditing(null)} className="text-muted-foreground">Cancelar</Button>
