@@ -456,6 +456,10 @@ const Index = () => {
                         const cover = imgs.find(i => i.isCover) || imgs[0];
                         if (cover) {
                           setImagePreview(cover.url);
+                          // Trigger image analysis for product understanding
+                          if (cover.url && !cover.url.startsWith('data:')) {
+                            analyzeImage(cover.url);
+                          }
                           if (cover.url.startsWith('data:')) {
                             fetch(cover.url).then(r => r.blob()).then(blob => {
                               const file = new File([blob], 'product-image.png', { type: 'image/png' });
