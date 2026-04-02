@@ -170,11 +170,9 @@ const Index = () => {
     // Restore images
     if (project.images && project.images.length > 0) {
       const restored: GeneratedImage[] = project.images.map(img => ({
-        id: img.id,
         url: img.url,
-        prompt: '',
         isCover: img.isCover,
-        angle: '',
+        angle: 'frente' as ImageAngle,
       }));
       setGeneratedImages(restored);
       const cover = restored.find(i => i.isCover) || restored[0];
