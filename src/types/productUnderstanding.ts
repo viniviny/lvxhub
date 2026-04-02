@@ -6,6 +6,8 @@ export interface ImageInsights {
   silhouette: string | null;
   visualDetails: string[];
   tagsFromImage: string[];
+  confidence: number | null;
+  reason: string | null;
 }
 
 export interface ProductUnderstanding {
