@@ -48,6 +48,7 @@ export interface ProductFormData {
   countryOfOrigin: string;
   selectedChannels: string[];
   tags: string;
+  productType: string;
 }
 
 export const AVAILABLE_SIZES: ProductSize[] = ['PP', 'P', 'M', 'G', 'GG'];

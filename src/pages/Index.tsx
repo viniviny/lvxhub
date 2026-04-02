@@ -26,6 +26,7 @@ import { ShopifyProductPreview } from '@/components/ShopifyProductPreview';
 import { SEOCard } from '@/components/SEOCard';
 import { ColorManager, ProductColor } from '@/components/ColorManager';
 import { AIFieldButtons } from '@/components/AIFieldButtons';
+import { ProductTypeCombobox } from '@/components/ProductTypeCombobox';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -61,6 +62,7 @@ const initialForm: ProductFormData = {
   countryOfOrigin: '',
   selectedChannels: ['online'],
   tags: '',
+  productType: '',
 };
 
 const PUBLISH_STEPS = [
@@ -509,7 +511,7 @@ const Index = () => {
                             <Label className="text-xs font-medium text-muted-foreground">Título *</Label>
                             <AIFieldButtons
                               type="title"
-                              brief={form.description || form.title || ''}
+                              brief={form.productType || form.description || form.title || ''}
                               language={activeStoreLang?.label || 'English'}
                               languageCode={activeStore?.marketConfig?.language || 'en-US'}
                               countryName={activeStore?.marketConfig?.marketName || ''}
@@ -532,7 +534,7 @@ const Index = () => {
                             <Label className="text-xs font-medium text-muted-foreground">Descrição</Label>
                             <AIFieldButtons
                               type="description"
-                              brief={form.title || ''}
+                              brief={form.productType || form.title || ''}
                               title={form.title}
                               language={activeStoreLang?.label || 'English'}
                               languageCode={activeStore?.marketConfig?.language || 'en-US'}
@@ -558,7 +560,10 @@ const Index = () => {
                           </div>
                           <div>
                             <Label className="text-xs font-medium text-muted-foreground">Tipo de produto</Label>
-                            <Input value={form.tags?.split(',')[0] || ''} onChange={e => setForm(prev => ({ ...prev, tags: e.target.value }))} placeholder="Ex: Jaqueta" className="mt-1 bg-secondary border-border text-xs h-8" />
+                            <ProductTypeCombobox
+                              value={form.productType}
+                              onChange={v => setForm(prev => ({ ...prev, productType: v }))}
+                            />
                           </div>
                           <div>
                             <Label className="text-xs font-medium text-muted-foreground">Tags</Label>
