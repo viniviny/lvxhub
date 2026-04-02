@@ -569,6 +569,10 @@ const Index = () => {
                           // Trigger image analysis for product understanding
                           if (cover.url && !cover.url.startsWith('data:')) {
                             analyzeImage(cover.url);
+                            // Save image to project
+                            if (project) {
+                              addImage(cover.url, null, true);
+                            }
                           }
                           if (cover.url.startsWith('data:')) {
                             fetch(cover.url).then(r => r.blob()).then(blob => {
