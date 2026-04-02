@@ -65,6 +65,15 @@ BRAND STYLE: ${toneDirective}
 RULES: Avoid hype, exaggeration, aggressive sales language, generic phrasing, cliché wording, emojis. Sound like a curated fashion label, not a marketplace listing. Every sentence must feel intentional and clean.
 SEO: Naturally include relevant keywords (product type, material, use case). Do NOT keyword stuff. Keep flow natural and readable.`;
 
+    // Build gender context
+    const GENDER_MAP: Record<string, string> = {
+      masculino: 'menswear / male',
+      feminino: 'womenswear / female',
+      unissex: 'unisex / gender-neutral',
+      infantil: 'kidswear / children',
+    };
+    const genderContext = gender && GENDER_MAP[gender] ? `\nTARGET GENDER: ${GENDER_MAP[gender]}. Adapt language, tone, and product positioning accordingly.` : '';
+
     // Build visual context from image insights if available
     let visualContext = '';
     if (imageInsights && typeof imageInsights === 'object') {
