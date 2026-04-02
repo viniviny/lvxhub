@@ -65,7 +65,7 @@ export default function PromptsPage() {
 
   const handleSave = async () => {
     const input: UserPromptInsert = {
-      name, category: null, prompt_text: promptText,
+      name, category: category || null, prompt_text: promptText,
       default_angles: [], default_ratio: '4:5', personal_notes: null,
     };
     if (editing === 'new') {
