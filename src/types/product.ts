@@ -51,6 +51,7 @@ export interface ProductFormData {
   selectedChannels: string[];
   tags: string;
   productType: string;
+  gender: ProductGender;
 }
 
 export const AVAILABLE_SIZES: ProductSize[] = ['PP', 'P', 'M', 'G', 'GG'];
