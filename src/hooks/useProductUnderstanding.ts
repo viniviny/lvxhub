@@ -16,7 +16,7 @@ export function useProductUnderstanding() {
       return {
         ...prev,
         manualProductType: manual,
-        finalProductType: resolveFinalProductType(manual, prev.aiDetectedProductType),
+        finalProductType: resolveFinalProductType(manual, prev.aiDetectedProductType, undefined, prev.imageInsights),
       };
     });
   }, []);
