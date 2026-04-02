@@ -60,7 +60,7 @@ export default function PromptsPage() {
 
   const openEdit = (p: UserPrompt) => {
     setEditing(p);
-    setName(p.name); setPromptText(p.prompt_text);
+    setName(p.name); setCategory(p.category); setPromptText(p.prompt_text);
   };
 
   const handleSave = async () => {
