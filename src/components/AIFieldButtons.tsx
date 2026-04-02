@@ -68,7 +68,7 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-text', {
-        body: { type, brief, title, language, languageCode, countryName },
+        body: { type, brief, title, language, languageCode, countryName, tone },
       });
       if (error) throw error;
       if (data?.content) {
