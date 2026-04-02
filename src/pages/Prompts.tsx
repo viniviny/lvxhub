@@ -207,7 +207,14 @@ export default function PromptsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {filtered.map(p => (
                   <div key={p.id} className="bg-card border border-border rounded-lg p-4 transition-all hover:border-primary/20">
-                    <h3 className="text-[13px] font-semibold text-foreground mb-1.5 truncate">{p.name}</h3>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <h3 className="text-[13px] font-semibold text-foreground truncate">{p.name}</h3>
+                      {p.category && (
+                        <span className="text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent text-accent-foreground shrink-0">
+                          {CATEGORIES.find(c => c.value === p.category)?.label || p.category}
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[11px] text-muted-foreground line-clamp-2 mb-3">{p.prompt_text}</p>
 
                     {/* Confirm delete inline */}
