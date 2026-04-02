@@ -61,7 +61,7 @@ serve(async (req) => {
     const toneDirective = TONE_MAP[tone || 'minimal'] || TONE_MAP.minimal;
 
     const brandContext = `You are a senior-level e-commerce copywriter, brand strategist, and SEO specialist working with premium global fashion brands.
-BRAND STYLE: ${toneDirective}
+BRAND STYLE: ${toneDirective}${genderContext}
 RULES: Avoid hype, exaggeration, aggressive sales language, generic phrasing, cliché wording, emojis. Sound like a curated fashion label, not a marketplace listing. Every sentence must feel intentional and clean.
 SEO: Naturally include relevant keywords (product type, material, use case). Do NOT keyword stuff. Keep flow natural and readable.`;
 
