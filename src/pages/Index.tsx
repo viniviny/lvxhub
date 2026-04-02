@@ -560,7 +560,10 @@ const Index = () => {
                           </div>
                           <div>
                             <Label className="text-xs font-medium text-muted-foreground">Tipo de produto</Label>
-                            <Input value={form.tags?.split(',')[0] || ''} onChange={e => setForm(prev => ({ ...prev, tags: e.target.value }))} placeholder="Ex: Jaqueta" className="mt-1 bg-secondary border-border text-xs h-8" />
+                            <ProductTypeCombobox
+                              value={form.productType}
+                              onChange={v => setForm(prev => ({ ...prev, productType: v }))}
+                            />
                           </div>
                           <div>
                             <Label className="text-xs font-medium text-muted-foreground">Tags</Label>
