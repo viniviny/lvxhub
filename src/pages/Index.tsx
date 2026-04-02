@@ -64,6 +64,7 @@ const initialForm: ProductFormData = {
   selectedChannels: ['online'],
   tags: '',
   productType: '',
+  gender: '',
 };
 
 const PUBLISH_STEPS = [
