@@ -19,6 +19,7 @@ interface AIFieldButtonsProps {
   tone?: 'minimal' | 'bold' | 'casual' | 'editorial';
   usedNames?: string[];
   imageInsights?: ImageInsights | null;
+  gender?: string;
 }
 
 const CATEGORY_MAP: Record<string, string> = {
