@@ -36,8 +36,13 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    const imageBuffer = await imageResponse.arrayBuffer();
-    const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+    const imageBytes = new Uint8Array(imageBuffer);
+    let binary = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < imageBytes.length; i += chunkSize) {
+      binary += String.fromCharCode(...imageBytes.subarray(i, i + chunkSize));
+    }
+    const base64Image = btoa(binary);
     const mimeType = imageResponse.headers.get('content-type') || 'image/png';
 
     const systemPrompt = `You are a fashion product image analyst. Analyze this product image and extract structured visual details.
