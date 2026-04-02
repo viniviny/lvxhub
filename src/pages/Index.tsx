@@ -511,7 +511,7 @@ const Index = () => {
                             <Label className="text-xs font-medium text-muted-foreground">Título *</Label>
                             <AIFieldButtons
                               type="title"
-                              brief={form.description || form.title || ''}
+                              brief={form.productType || form.description || form.title || ''}
                               language={activeStoreLang?.label || 'English'}
                               languageCode={activeStore?.marketConfig?.language || 'en-US'}
                               countryName={activeStore?.marketConfig?.marketName || ''}
