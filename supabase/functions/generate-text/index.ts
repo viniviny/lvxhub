@@ -38,7 +38,7 @@ serve(async (req) => {
   }
 
   try {
-    const { type, brief, title, language, languageCode, countryName, customPrompt } = await req.json();
+    const { type, brief, title, language, languageCode, countryName, customPrompt, tone } = await req.json();
 
     const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
     if (!GOOGLE_API_KEY) {
