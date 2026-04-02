@@ -346,6 +346,7 @@ const Index = () => {
   };
 
   const activeStoreLang = activeStore?.marketConfig?.language ? getAILanguageByCode(activeStore.marketConfig.language) : null;
+  const aiContext = useMemo(() => buildProductAIContext(understanding, form.gender, form.tags, activeStoreLang?.label || 'English'), [understanding, form.gender, form.tags, activeStoreLang]);
   const canPublish = getCanPublish(form, !!imageFile || generatedImages.some(i => i.url));
 
   return (
