@@ -160,7 +160,7 @@ const Index = () => {
       selectedChannels: pd.selectedChannels || ['online'],
       tags: pd.tags || '',
       productType: pd.productType || '',
-      gender: pd.gender || '',
+      gender: (pd.gender || '') as ProductGender,
     });
 
     setSeoTitle(project.seoData?.seoTitle || '');
