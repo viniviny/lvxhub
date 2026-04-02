@@ -582,8 +582,8 @@ const Index = () => {
                           }
                         }
                       }}
-                      onNext={() => { markStepComplete(1); setWizardStep(2); }}
-                      onSkip={() => { markStepComplete(1); setWizardStep(2); }}
+                      onNext={() => { markStepComplete(1); setWizardStep(2); updateStep(2); }}
+                      onSkip={() => { markStepComplete(1); setWizardStep(2); updateStep(2); }}
                     />
                   )}
 
