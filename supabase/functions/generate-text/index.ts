@@ -65,6 +65,23 @@ BRAND STYLE: ${toneDirective}
 RULES: Avoid hype, exaggeration, aggressive sales language, generic phrasing, cliché wording, emojis. Sound like a curated fashion label, not a marketplace listing. Every sentence must feel intentional and clean.
 SEO: Naturally include relevant keywords (product type, material, use case). Do NOT keyword stuff. Keep flow natural and readable.`;
 
+    // Build visual context from image insights if available
+    let visualContext = '';
+    if (imageInsights && typeof imageInsights === 'object') {
+      const parts: string[] = [];
+      if (imageInsights.style) parts.push(`Style: ${imageInsights.style}`);
+      if (imageInsights.mainColor) parts.push(`Main color: ${imageInsights.mainColor}`);
+      if (imageInsights.secondaryColor) parts.push(`Secondary color: ${imageInsights.secondaryColor}`);
+      if (imageInsights.materialLook) parts.push(`Material look: ${imageInsights.materialLook}`);
+      if (imageInsights.silhouette) parts.push(`Silhouette: ${imageInsights.silhouette}`);
+      if (Array.isArray(imageInsights.visualDetails) && imageInsights.visualDetails.length > 0) {
+        parts.push(`Visual details: ${imageInsights.visualDetails.join(', ')}`);
+      }
+      if (parts.length > 0) {
+        visualContext = `\n\nVISUAL CONTEXT FROM PRODUCT IMAGE:\n${parts.join('\n')}`;
+      }
+    }
+
     let systemPrompt = '';
     let userPrompt = '';
 
