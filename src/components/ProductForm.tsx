@@ -31,6 +31,7 @@ const initialForm: ProductFormData = {
   selectedChannels: [],
   tags: '',
   productType: '',
+  gender: '',
 };
 
 export function ProductForm({ onGenerateImage, isGenerating, hasImage }: ProductFormProps) {

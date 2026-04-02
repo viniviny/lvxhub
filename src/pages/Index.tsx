@@ -64,6 +64,7 @@ const initialForm: ProductFormData = {
   selectedChannels: ['online'],
   tags: '',
   productType: '',
+  gender: '',
 };
 
 const PUBLISH_STEPS = [
@@ -547,7 +548,7 @@ const Index = () => {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-4 gap-2">
                           <div>
                             <Label className="text-xs font-medium text-muted-foreground">Coleção</Label>
                             <Select value={form.collection} onValueChange={v => setForm(prev => ({ ...prev, collection: v }))}>
@@ -576,6 +577,18 @@ const Index = () => {
                                 }
                               }}
                             />
+                          </div>
+                          <div>
+                            <Label className="text-xs font-medium text-muted-foreground">Gênero</Label>
+                            <Select value={form.gender} onValueChange={v => setForm(prev => ({ ...prev, gender: v as any }))}>
+                              <SelectTrigger className="mt-1 bg-secondary border-border text-xs h-8"><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="masculino">Masculino</SelectItem>
+                                <SelectItem value="feminino">Feminino</SelectItem>
+                                <SelectItem value="unissex">Unissex</SelectItem>
+                                <SelectItem value="infantil">Infantil</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                           <div>
                             <Label className="text-xs font-medium text-muted-foreground">Tags</Label>
