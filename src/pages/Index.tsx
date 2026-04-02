@@ -515,8 +515,13 @@ const Index = () => {
                               countryName={activeStore?.marketConfig?.marketName || ''}
                               countryFlag={activeStore?.marketConfig?.countryFlag || ''}
                               currentValue={form.title}
-                              onGenerated={content => setForm(prev => ({ ...prev, title: content.slice(0, 255) }))}
+                              onGenerated={content => {
+                                const clean = content.slice(0, 255);
+                                setForm(prev => ({ ...prev, title: clean }));
+                                setUsedTitleNames(prev => [...prev, clean]);
+                              }}
                               tone={copyTone}
+                              usedNames={usedTitleNames}
                             />
                           </div>
                           <Input value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value.slice(0, 255) }))} placeholder="Ex: Camiseta Urban Flow" className="bg-secondary border-border text-[13px] h-10" maxLength={255} />
