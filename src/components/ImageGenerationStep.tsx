@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import {
   Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
   ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical,
-  Clock, Check, ChevronLeft, ChevronRight, Camera, BookOpen, Search
+  Clock, Check, ChevronLeft, ChevronRight, Camera, BookOpen, Search, ClipboardPaste
 } from 'lucide-react';
 
 export type AspectRatio = '1:1' | '4:5';
