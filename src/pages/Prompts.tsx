@@ -12,6 +12,15 @@ import { UserMenu } from '@/components/UserMenu';
 
 type SortMode = 'recent' | 'most_used' | 'az';
 
+const CATEGORIES = [
+  { value: 'produto', label: 'Produto' },
+  { value: 'lifestyle', label: 'Lifestyle' },
+  { value: 'campanha', label: 'Campanha' },
+  { value: 'editorial', label: 'Editorial' },
+  { value: 'redes-sociais', label: 'Redes Sociais' },
+  { value: 'outro', label: 'Outro' },
+];
+
 export default function PromptsPage() {
   const navigate = useNavigate();
   const { prompts, isLoading, createPrompt, updatePrompt, deletePrompt } = useUserPrompts();
