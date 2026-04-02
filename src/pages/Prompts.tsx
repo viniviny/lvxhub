@@ -46,11 +46,12 @@ export default function PromptsPage() {
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.prompt_text.toLowerCase().includes(search.toLowerCase())
     );
+    if (filterCategory !== 'all') list = list.filter(p => p.category === filterCategory);
     if (sort === 'recent') list.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
     else if (sort === 'most_used') list.sort((a, b) => b.usage_count - a.usage_count);
     else list.sort((a, b) => a.name.localeCompare(b.name));
     return list;
-  }, [prompts, search, sort]);
+  }, [prompts, search, sort, filterCategory]);
 
   const openCreate = () => {
     setEditing('new');
