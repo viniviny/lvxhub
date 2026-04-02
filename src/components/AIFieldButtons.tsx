@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Sparkles, Keyboard, Loader2, Check, X } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
+import { Sparkles, Loader2, Check, X, BookOpen, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useUserPrompts } from '@/hooks/useUserPrompts';
 import type { ImageInsights } from '@/types/productUnderstanding';
 
 interface AIFieldButtonsProps {
@@ -21,16 +21,25 @@ interface AIFieldButtonsProps {
   imageInsights?: ImageInsights | null;
 }
 
+const CATEGORY_MAP: Record<string, string> = {
+  title: 'titulo',
+  description: 'descricao',
+};
+
 export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated, tone, usedNames, imageInsights }: AIFieldButtonsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [generatedLang, setGeneratedLang] = useState('');
   const [showPopover, setShowPopover] = useState(false);
-  const [customPrompt, setCustomPrompt] = useState('');
   const [isCustomGenerating, setIsCustomGenerating] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingContent, setPendingContent] = useState('');
+  const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+
+  const { prompts, incrementUsage } = useUserPrompts();
+  const categoryKey = CATEGORY_MAP[type] || type;
+  const filteredPrompts = prompts.filter(p => p.category === categoryKey);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -90,24 +99,27 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
     }
   };
 
-  const handleCustomGenerate = async () => {
-    if (!customPrompt.trim()) return;
+  const handlePromptGenerate = async (promptId: string) => {
+    const prompt = filteredPrompts.find(p => p.id === promptId);
+    if (!prompt) return;
     setIsCustomGenerating(true);
+    setSelectedPromptId(promptId);
     try {
+      incrementUsage.mutate(promptId);
       const { data, error } = await supabase.functions.invoke('generate-text', {
-        body: { type, customPrompt, language, languageCode, countryName, tone },
+        body: { type, customPrompt: prompt.prompt_text, language, languageCode, countryName, tone },
       });
       if (error) throw error;
       if (data?.content) {
         setGeneratedLang(data.language || language);
         applyContent(data.content);
         setShowPopover(false);
-        setCustomPrompt('');
       }
     } catch (e: any) {
       toast.error(e.message || 'Erro ao gerar conteúdo');
     } finally {
       setIsCustomGenerating(false);
+      setSelectedPromptId(null);
     }
   };
 
@@ -182,66 +194,63 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
         </Tooltip>
       </TooltipProvider>
 
-      {/* Custom prompt button */}
+      {/* Prompt selector button */}
       <button
         onClick={() => setShowPopover(!showPopover)}
         className="flex items-center gap-1 h-[22px] px-2 rounded text-[10px] font-medium transition-all border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30"
       >
-        <Keyboard className="w-3 h-3" />
-        Personalizado
+        <BookOpen className="w-3 h-3" />
+        Prompts
+        <ChevronDown className="w-2.5 h-2.5" />
       </button>
 
-      {/* Custom prompt popover */}
+      {/* Prompts dropdown */}
       {showPopover && (
         <div
           ref={popoverRef}
-          className="absolute right-0 top-7 z-50 w-[280px] bg-card border border-primary/50 rounded-lg p-3 shadow-[0_8px_24px_rgba(0,0,0,0.4)] animate-in fade-in slide-in-from-top-2 duration-150"
+          className="absolute right-0 top-7 z-50 w-[260px] bg-card border border-border rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.4)] animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden"
         >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] text-muted-foreground">Prompt personalizado</span>
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+            <span className="text-[11px] text-muted-foreground">
+              Meus prompts de {type === 'title' ? 'título' : 'descrição'}
+            </span>
             <button onClick={() => setShowPopover(false)} className="text-muted-foreground hover:text-foreground transition-colors">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
-          <Textarea
-            value={customPrompt}
-            onChange={e => setCustomPrompt(e.target.value)}
-            placeholder={
-              type === 'title'
-                ? 'Ex: Create a catchy SEO-optimized title for a dark green oversized puffer jacket targeting US market, max 60 characters'
-                : 'Ex: Write a compelling product description for a puffer jacket. Include: material details, sizing info, style tips. Use bullet points. Max 150 words. Tone: modern and casual.'
-            }
-            className="bg-secondary border-border text-xs min-h-[80px] resize-none"
-            rows={4}
-          />
-          <p className="text-[9px] text-muted-foreground mt-1.5 mb-2">
-            ℹ Escreva em qualquer idioma — a resposta será em {language || 'Inglês'}
-          </p>
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => { setShowPopover(false); setCustomPrompt(''); }}
-              className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleCustomGenerate}
-              disabled={isCustomGenerating || !customPrompt.trim()}
-              className="flex items-center gap-1 h-[24px] px-3 rounded text-[11px] font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all"
-            >
-              {isCustomGenerating ? (
-                <>
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  Gerando...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-3 h-3" />
-                  Gerar {type === 'title' ? 'título' : 'descrição'}
-                </>
-              )}
-            </button>
-          </div>
+
+          {filteredPrompts.length === 0 ? (
+            <div className="px-3 py-4 text-center">
+              <BookOpen className="w-5 h-5 text-muted-foreground/30 mx-auto mb-1.5" />
+              <p className="text-[10px] text-muted-foreground">
+                Nenhum prompt de {type === 'title' ? 'título' : 'descrição'} salvo
+              </p>
+              <p className="text-[9px] text-muted-foreground/60 mt-0.5">
+                Crie prompts com a categoria "{type === 'title' ? 'Título' : 'Descrição'}" na página Meus Prompts
+              </p>
+            </div>
+          ) : (
+            <div className="max-h-[200px] overflow-y-auto">
+              {filteredPrompts.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => handlePromptGenerate(p.id)}
+                  disabled={isCustomGenerating}
+                  className="w-full text-left px-3 py-2.5 hover:bg-accent/50 transition-colors border-b border-border/50 last:border-0 disabled:opacity-50"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-medium text-foreground truncate">{p.name}</span>
+                    {isCustomGenerating && selectedPromptId === p.id ? (
+                      <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />
+                    ) : (
+                      <Sparkles className="w-3 h-3 text-muted-foreground/40 shrink-0" />
+                    )}
+                  </div>
+                  <p className="text-[9px] text-muted-foreground line-clamp-1 mt-0.5">{p.prompt_text}</p>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
