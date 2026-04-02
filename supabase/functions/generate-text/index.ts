@@ -99,7 +99,7 @@ SEO: Naturally include relevant keywords (product type, material, use case). Do 
 1. HOOK (1-2 lines): Emotional, clean, subtle. Introduce feeling or lifestyle.
 2. BODY PARAGRAPH: Describe the product in context (lifestyle + function). Highlight comfort, fit, and versatility.
 3. BULLET POINTS (4-6 max using <ul><li>): Clear and concise. Features + benefits combined. No repetition.
-4. CLOSING LINE: Positioning statement. Reinforce brand identity and timelessness.
+4. CLOSING LINE: Positioning statement. Reinforce brand identity and timelessness.${visualContext ? `\n\nUSE THESE VISUAL DETAILS to enrich the description naturally. Frame inferred details carefully — prefer language like "textured finish", "structured look", "soft knit appearance" instead of making specific fabric claims:${visualContext}` : ''}
 RULES: Premium, calm, confident tone. No exaggeration. No emojis. No filler text. Max 150 words. Do not wrap in code blocks or markdown.`;
       userPrompt = `Product: ${title || 'Product'}. Details: ${brief || 'Generate a compelling premium product description'}`;
     } else if (type === 'seo-title') {
