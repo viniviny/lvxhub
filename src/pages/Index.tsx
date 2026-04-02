@@ -492,7 +492,7 @@ const Index = () => {
                         language={activeStoreLang?.label || 'English'}
                         languageCode={activeStore?.marketConfig?.language || 'en-US'}
                         countryName={activeStore?.marketConfig?.marketName || ''}
-                        imageInsights={understanding.imageInsights}
+                        productContext={aiContext}
                       />
 
                       {/* RIGHT — Product Details (main) */}
