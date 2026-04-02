@@ -52,23 +52,33 @@ serve(async (req) => {
     const config = getLangConfig(code, language || 'English');
     const langDirective = `Write ONLY in ${config.name}${countryName ? ` as spoken by native speakers in ${countryName}` : ''}. Tone: ${config.tone}. NEVER respond in Portuguese or any other language.`;
 
+    const brandContext = `You are a senior-level e-commerce copywriter, brand strategist, and SEO specialist working with premium global fashion brands.
+BRAND STYLE: Minimal, refined, modern, premium. Inspired by Zara, COS, ZEGNA, AllSaints.
+RULES: Avoid hype, exaggeration, aggressive sales language, generic phrasing, cliché wording, emojis. Sound like a curated fashion label, not a marketplace listing. Every sentence must feel intentional and clean.
+SEO: Naturally include relevant keywords (product type, material, use case). Do NOT keyword stuff. Keep flow natural and readable.`;
+
     let systemPrompt = '';
     let userPrompt = '';
 
     if (customPrompt) {
-      systemPrompt = `You are an expert e-commerce copywriter. ${langDirective}\n\nThe user may write instructions in Portuguese (Brazilian). Understand their intent and execute it, BUT write your response ONLY in ${config.name}. Never respond in Portuguese. Return only the requested content, nothing else.`;
+      systemPrompt = `${brandContext}\n\n${langDirective}\n\nThe user may write instructions in Portuguese (Brazilian). Understand their intent and execute it, BUT write your response ONLY in ${config.name}. Never respond in Portuguese. Return only the requested content, nothing else.`;
       userPrompt = customPrompt;
     } else if (type === 'title') {
-      systemPrompt = `You are an expert e-commerce copywriter. ${langDirective}\n\nWrite only the product title, nothing else. Max 60 characters. SEO optimized. Do not include quotes around the title.`;
-      userPrompt = brief || 'Generate a product title';
+      systemPrompt = `${brandContext}\n\n${langDirective}\n\nGenerate ONLY a single product title. STRICT RULES: 6-10 words max. Must be brandable and elegant. Must NOT sound generic or mass-market. NO words like "Best", "Cheap", "Sale", "Hot", "Trending". No emojis. No quotes. Use natural naming patterns like real fashion brands. Focus on clarity, texture, and identity. Max 60 characters.`;
+      userPrompt = brief || 'Generate a premium product title';
     } else if (type === 'description') {
-      systemPrompt = `You are an expert e-commerce copywriter. ${langDirective}\n\nWrite only the product description in HTML format. Use <ul><li> for feature bullet points. 2-3 short paragraphs. Max 150 words. Do not wrap in code blocks or markdown.`;
-      userPrompt = `Product: ${title || 'Product'}. Details: ${brief || 'Generate a compelling product description'}`;
+      systemPrompt = `${brandContext}\n\n${langDirective}\n\nWrite a premium product description in HTML format. MANDATORY STRUCTURE:
+1. HOOK (1-2 lines): Emotional, clean, subtle. Introduce feeling or lifestyle.
+2. BODY PARAGRAPH: Describe the product in context (lifestyle + function). Highlight comfort, fit, and versatility.
+3. BULLET POINTS (4-6 max using <ul><li>): Clear and concise. Features + benefits combined. No repetition.
+4. CLOSING LINE: Positioning statement. Reinforce brand identity and timelessness.
+RULES: Premium, calm, confident tone. No exaggeration. No emojis. No filler text. Max 150 words. Do not wrap in code blocks or markdown.`;
+      userPrompt = `Product: ${title || 'Product'}. Details: ${brief || 'Generate a compelling premium product description'}`;
     } else if (type === 'seo-title') {
-      systemPrompt = `You are an SEO specialist for e-commerce. ${langDirective}\n\nWrite an SEO-optimized product title. Max 60 characters. Use keywords that customers in ${countryName || 'this market'} actually search for. Only return the title, nothing else. No quotes.`;
+      systemPrompt = `${brandContext}\n\n${langDirective}\n\nWrite an SEO-optimized product title. Max 60 characters. Use keywords that customers in ${countryName || 'this market'} actually search for. Keep it brandable and elegant. Only return the title, nothing else. No quotes.`;
       userPrompt = brief || title || 'Generate an SEO title';
     } else if (type === 'seo-description') {
-      systemPrompt = `You are an SEO specialist for e-commerce. ${langDirective}\n\nWrite an SEO meta description. Max 155 characters. Compelling, with relevant keywords for ${countryName || 'this market'}. Only return the description, nothing else. No quotes.`;
+      systemPrompt = `${brandContext}\n\n${langDirective}\n\nWrite an SEO meta description. Max 155 characters. Compelling, with relevant keywords for ${countryName || 'this market'}. Premium tone. Only return the description, nothing else. No quotes.`;
       userPrompt = `Product: ${title || brief || 'Product'}`;
     } else {
       return new Response(
