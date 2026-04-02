@@ -107,7 +107,8 @@ export function injectPromptVariables(promptText: string, context: ProductAICont
   let result = promptText;
   const entries = Object.entries(context) as [string, string][];
   for (const [key, value] of entries) {
-    result = result.replaceAll(`{{${key}}}`, value || '');
+    const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+    result = result.replace(regex, value || '');
   }
   // Clean up any remaining unreplaced variables
   result = result.replace(/\{\{[a-z_]+\}\}/g, '');
