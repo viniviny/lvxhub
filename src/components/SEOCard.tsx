@@ -50,7 +50,7 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
         language: language || 'English',
         languageCode: languageCode || 'en-US',
         countryName: countryName || '',
-        ...(imageInsights ? { imageInsights } : {}),
+        ...(productContext ? { productContext } : {}),
       };
       const [titleRes, descRes] = await Promise.all([
         supabase.functions.invoke('generate-text', {
