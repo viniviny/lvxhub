@@ -30,6 +30,7 @@ const initialForm: ProductFormData = {
   countryOfOrigin: '',
   selectedChannels: [],
   tags: '',
+  productType: '',
 };
 
 export function ProductForm({ onGenerateImage, isGenerating, hasImage }: ProductFormProps) {
