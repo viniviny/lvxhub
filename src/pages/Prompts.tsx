@@ -13,9 +13,9 @@ import { UserMenu } from '@/components/UserMenu';
 type SortMode = 'recent' | 'most_used' | 'az';
 
 const CATEGORIES = [
-  { value: 'imagem', label: 'Imagem' },
-  { value: 'titulo', label: 'Título' },
-  { value: 'descricao', label: 'Descrição' },
+  { value: 'imagem', label: 'Imagem', icon: Image },
+  { value: 'titulo', label: 'Título', icon: Type },
+  { value: 'descricao', label: 'Descrição', icon: FileText },
 ];
 
 export default function PromptsPage() {
