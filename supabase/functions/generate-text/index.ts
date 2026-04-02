@@ -38,7 +38,7 @@ serve(async (req) => {
   }
 
   try {
-    const { type, brief, title, language, languageCode, countryName, customPrompt, tone } = await req.json();
+    const { type, brief, title, language, languageCode, countryName, customPrompt, tone, usedNames } = await req.json();
 
     const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
     if (!GOOGLE_API_KEY) {
@@ -72,7 +72,10 @@ SEO: Naturally include relevant keywords (product type, material, use case). Do 
       systemPrompt = `${brandContext}\n\n${langDirective}\n\nThe user may write instructions in Portuguese (Brazilian). Understand their intent and execute it, BUT write your response ONLY in ${config.name}. Never respond in Portuguese. Return only the requested content, nothing else.`;
       userPrompt = customPrompt;
     } else if (type === 'title') {
-      systemPrompt = `${brandContext}\n\n${langDirective}\n\nYou are a global luxury brand naming expert.\n\nGenerate ONLY a single premium product name.\n\nSTRICT RULES:\n- 2-4 words total (including product type)\n- Must sound global and elegant\n- Must NOT describe the product literally\n- Must feel like a high-end brand name\n- Avoid generic terms (casual, basic, fashion, etc.)\n- NO words like "Best", "Cheap", "Sale", "Hot", "Trending"\n- No emojis, no quotes\n- Translate the product type to ${config.name} if needed\n- Then generate a unique name\n- Max 60 characters\n\nOUTPUT: Return ONLY the name in the format: [Translated Product Type] [Generated Name]\nDo not explain anything. Do not add extra text.`;
+      const usedList = Array.isArray(usedNames) && usedNames.length > 0
+        ? `\n\nPREVIOUSLY USED NAMES (DO NOT REPEAT OR USE SIMILAR):\n${usedNames.join(', ')}`
+        : '';
+      systemPrompt = `${brandContext}\n\n${langDirective}\n\nYou are a global luxury fashion brand naming expert working with high-end Shopify brands.\n\nYour task is to generate a UNIQUE, PREMIUM, and BRAND-LEVEL product name.\n\nSTEP 1 — TRANSLATION:\n- Translate the product type into ${config.name} if needed\n- Keep it natural and commonly used\n\nSTEP 2 — NAME CREATION:\nGenerate a UNIQUE abstract/conceptual/emotional name (1 word, max 2 if necessary).\n\nNAMING STRUCTURE (STRICT):\n[Translated Product Type] [Generated Name]\nExample: Men's T-Shirt Obsidian\n\nNAMING RULES:\n- Must NOT describe the product literally\n- Must NOT include product attributes (fit, material, usage)\n- Must NOT include generic fashion words\n- Must feel like a luxury brand collection name\n- Must be short, strong, memorable, easy to read globally\n- Max 60 characters total\n- No emojis, no quotes\n\nFORBIDDEN WORDS: Basic, Casual, Fashion, Premium, Comfort, Classic, Style, Modern, Trend, Essential, Fit, Soft, Slim, Cotton, Best, Cheap, Sale, Hot, Trending\n\nPreferred style examples: Obsidian, Velora, Elaris, Nexor, Kaelis, Vireon, Zorath${usedList}\n\nUNIQUENESS RULE: The generated name MUST NOT match or be phonetically/visually similar to any previously used name. If similar, generate a completely different one.\n\nOUTPUT: Return ONLY one single line: [Translated Product Type] [Generated Name]\nDo not explain. Do not add extra text.`;
       userPrompt = brief || 'Generate a premium product title';
     } else if (type === 'description') {
       systemPrompt = `${brandContext}\n\n${langDirective}\n\nWrite a premium product description in HTML format. MANDATORY STRUCTURE:

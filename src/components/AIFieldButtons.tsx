@@ -16,9 +16,10 @@ interface AIFieldButtonsProps {
   currentValue: string;
   onGenerated: (content: string) => void;
   tone?: 'minimal' | 'bold' | 'casual' | 'editorial';
+  usedNames?: string[];
 }
 
-export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated, tone }: AIFieldButtonsProps) {
+export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated, tone, usedNames }: AIFieldButtonsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [generatedLang, setGeneratedLang] = useState('');
@@ -67,9 +68,11 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-text', {
-        body: { type, brief, title, language, languageCode, countryName, tone },
-      });
+      const body: Record<string, any> = { type, brief, title, language, languageCode, countryName, tone };
+      if (type === 'title' && usedNames && usedNames.length > 0) {
+        body.usedNames = usedNames;
+      }
+      const { data, error } = await supabase.functions.invoke('generate-text', { body });
       if (error) throw error;
       if (data?.content) {
         setGeneratedLang(data.language || language);
