@@ -329,7 +329,3 @@ export function ProductHistory() {
     </div>
   );
 }
-      )}
-    </div>
-  );
-}
