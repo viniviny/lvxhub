@@ -117,8 +117,8 @@ function PreviewContent({ form, images, imagePreview, storeDomain, currencySymbo
       {/* Store header */}
       <div className={`flex items-center justify-between border-b border-[hsl(220,14%,96%)] bg-white ${isMobile ? 'h-11 px-4' : 'h-[52px] px-6'}`}>
         <div className="flex items-center gap-2">
-          {form.storeLogo ? (
-            <img src={form.storeLogo} alt="Store logo" className={`object-contain rounded ${isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
+          {storeLogo ? (
+            <img src={storeLogo} alt="Store logo" className={`object-contain rounded ${isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
           ) : null}
           <span className={`font-semibold text-[hsl(220,13%,13%)] ${isMobile ? 'text-xs' : 'text-sm'}`}>
             {displayDomain.replace('.myshopify.com', '')}
