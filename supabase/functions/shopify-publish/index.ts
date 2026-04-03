@@ -6,6 +6,34 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+async function uploadImageToShopify(baseUrl: string, accessToken: string, base64: string, filename: string): Promise<string | null> {
+  const mimeType = filename.endsWith('.png') ? 'image/png' : filename.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+  const stageRes = await fetch(`${baseUrl}/graphql.json`, {
+    method: 'POST',
+    headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query: `mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
+        stagedUploadsCreate(input: $input) {
+          stagedTargets { url resourceUrl parameters { name value } }
+          userErrors { field message }
+        }
+      }`,
+      variables: {
+        input: [{ resource: "IMAGE", filename, mimeType, httpMethod: "PUT" }]
+      }
+    }),
+  });
+  if (!stageRes.ok) return null;
+  const stageData = await stageRes.json();
+  const target = stageData?.data?.stagedUploadsCreate?.stagedTargets?.[0];
+  if (!target?.url) return null;
+  const binaryStr = atob(base64);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+  await fetch(target.url, { method: 'PUT', headers: { 'Content-Type': mimeType }, body: bytes });
+  return target.resourceUrl;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -33,7 +61,7 @@ serve(async (req) => {
       countryCode, countryFlag, countryName, currency: bodyCurrency, currencySymbol,
       localPrice, baseCurrency, language: bodyLanguage, languageLabel, marketName, regionGroup,
       variants: bodyVariants, inventoryPolicy, requiresShipping, weight, weightUnit, countryOfOrigin,
-      selectedChannels,
+      selectedChannels, colorImages,
     } = body;
 
     if (!title || typeof title !== 'string' || title.length > 255) {
@@ -52,36 +80,10 @@ serve(async (req) => {
     const accessToken = conn.access_token;
     const steps: string[] = [];
 
-    // --- STEP 1: Upload image if provided ---
+    // --- STEP 1: Upload main image if provided ---
     let imageSrc: string | null = null;
     if (imageBase64 && imageName) {
-      const stageRes = await fetch(`${baseUrl}/graphql.json`, {
-        method: 'POST',
-        headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: `mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
-            stagedUploadsCreate(input: $input) {
-              stagedTargets { url resourceUrl parameters { name value } }
-              userErrors { field message }
-            }
-          }`,
-          variables: {
-            input: [{ resource: "IMAGE", filename: imageName, mimeType: imageName.endsWith('.png') ? 'image/png' : imageName.endsWith('.webp') ? 'image/webp' : 'image/jpeg', httpMethod: "PUT" }]
-          }
-        }),
-      });
-      if (stageRes.ok) {
-        const stageData = await stageRes.json();
-        const target = stageData?.data?.stagedUploadsCreate?.stagedTargets?.[0];
-        if (target?.url) {
-          const binaryStr = atob(imageBase64);
-          const bytes = new Uint8Array(binaryStr.length);
-          for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-          const mimeType = imageName.endsWith('.png') ? 'image/png' : imageName.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
-          await fetch(target.url, { method: 'PUT', headers: { 'Content-Type': mimeType }, body: bytes });
-          imageSrc = target.resourceUrl;
-        }
-      }
+      imageSrc = await uploadImageToShopify(baseUrl, accessToken, imageBase64, imageName);
     }
 
     // --- STEP 2: Create product ---
@@ -144,6 +146,36 @@ serve(async (req) => {
     const shopifyProductUrl = `https://${conn.store_domain}/admin/products/${product.id}`;
     steps.push('Produto criado!');
 
+    // --- STEP 2.5: Upload color variant images and assign to variants ---
+    if (colorImages && Array.isArray(colorImages) && colorImages.length > 0 && product.variants?.length > 0) {
+      steps.push('Enviando imagens das variantes...');
+      for (const ci of colorImages) {
+        if (!ci.imageBase64 || !ci.variantName) continue;
+        // Find the matching variant by name (option1)
+        const matchingVariant = product.variants.find((v: any) => v.option1 === ci.variantName);
+        if (!matchingVariant) continue;
+
+        try {
+          // Upload image to the product with variant_ids association
+          const imgPayload = {
+            image: {
+              attachment: ci.imageBase64,
+              filename: ci.imageName || `variant-${ci.variantName}.png`,
+              variant_ids: [matchingVariant.id],
+            },
+          };
+
+          await fetch(`${baseUrl}/products/${product.id}/images.json`, {
+            method: 'POST',
+            headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
+            body: JSON.stringify(imgPayload),
+          });
+        } catch (err) {
+          console.error(`Failed to upload variant image for ${ci.variantName}:`, err);
+        }
+      }
+    }
+
     // --- STEP 3: Get locations ---
     steps.push('Buscando localizações...');
     let primaryLocationId: number | null = null;
@@ -198,7 +230,6 @@ serve(async (req) => {
     // --- STEP 6: Add to collections ---
     if (collection) {
       steps.push('Adicionando à coleção...');
-      // Collections in Shopify require a collect with collection_id - skip if no collection_id
     }
 
     // --- STEP 7: Publish to sales channels ---
