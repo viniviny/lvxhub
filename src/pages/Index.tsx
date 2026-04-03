@@ -337,10 +337,15 @@ const Index = () => {
       // Build additional images array from all generated images (excluding cover if already used)
       const additionalImages: { imageBase64: string; imageName: string }[] = [];
       const coverUrl = coverImage?.url;
-      for (const img of generatedImages) {
-        if (!img.url) continue;
-        // Skip the cover image if it was already used as main
-        if (!imageFile && img.url === coverUrl) continue;
+      const imagesToProcess = generatedImages.filter(img => img.url && !((!imageFile) && img.url === coverUrl));
+      const totalToProcess = imagesToProcess.length + (colors.filter(c => c.imageUrl).length);
+      let processedCount = 0;
+
+      if (totalToProcess > 0) {
+        setImageUploadProgress({ current: 0, total: totalToProcess });
+      }
+
+      for (const img of imagesToProcess) {
         try {
           const resp = await fetch(img.url);
           const blob = await resp.blob();
@@ -354,6 +359,8 @@ const Index = () => {
         } catch (err) {
           console.warn(`[Publish] Failed to fetch generated image:`, err);
         }
+        processedCount++;
+        setImageUploadProgress({ current: processedCount, total: totalToProcess });
       }
       const mc = activeStore?.marketConfig;
 
