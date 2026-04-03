@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ProductFormData, calculateDiscount } from '@/types/product';
 import { GeneratedImage } from '@/components/ImageGenerationStep';
-import { ChevronDown, ChevronRight, ChevronLeft, ShoppingCart, Search, User, Star, Monitor, Tablet, Smartphone, Maximize2, Minimize2, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronLeft, ShoppingCart, Search, Monitor, Tablet, Smartphone, Maximize2, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
@@ -72,7 +72,7 @@ function PreviewContent({ form, images, imagePreview, storeDomain, currencySymbo
   const [mainImage, setMainImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState(form.sizes[0] || form.variants[0]?.name || '');
   const [openAccordion, setOpenAccordion] = useState<string | null>('description');
-  const [qty, setQty] = useState(1);
+  
   const [showArrows, setShowArrows] = useState(false);
 
   const discount = calculateDiscount(form.price, form.compareAtPrice);
@@ -206,48 +206,36 @@ function PreviewContent({ form, images, imagePreview, storeDomain, currencySymbo
         </div>
 
         {/* Product info */}
-        <div className={`space-y-3 ${isMobile ? 'mt-4' : ''}`}>
+        <div className={`space-y-2.5 ${isMobile ? 'mt-3' : ''}`}>
           {form.collection && (
-            <span className="text-[11px] text-[hsl(220,9%,46%)] uppercase tracking-[0.08em] font-medium">{form.collection}</span>
+            <span className="text-[10px] text-[hsl(220,9%,46%)] uppercase tracking-[0.1em] font-medium">{form.collection}</span>
           )}
 
-          <h1 className={`font-semibold text-[hsl(220,13%,13%)] leading-snug ${isMobile ? 'text-lg' : 'text-xl'}`}>
+          <h1 className={`font-semibold text-[hsl(220,13%,13%)] leading-snug ${isMobile ? 'text-base' : 'text-lg'}`}>
             {form.title || <span className="text-[hsl(220,9%,76%)]">Título do produto</span>}
           </h1>
 
-          <div className="flex items-center gap-1.5">
-            {[1,2,3,4,5].map(s => (
-              <Star key={s} className={`w-3.5 h-3.5 ${s <= 4 ? 'fill-[hsl(45,93%,47%)] text-[hsl(45,93%,47%)]' : 'fill-[hsl(220,13%,90%)] text-[hsl(220,13%,90%)]'}`} />
-            ))}
-            <span className="text-xs text-[hsl(220,9%,46%)] ml-1">4.8</span>
-            <span className="text-[11px] text-[hsl(220,9%,66%)]">· 124 reviews</span>
-          </div>
-
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <span className={`font-bold text-[hsl(220,13%,13%)] ${isMobile ? 'text-xl' : 'text-2xl'}`}>{currencySymbol}{form.price.toFixed(2)}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`font-bold text-[hsl(220,13%,13%)] ${isMobile ? 'text-lg' : 'text-xl'}`}>{currencySymbol}{form.price.toFixed(2)}</span>
             {form.compareAtPrice && form.compareAtPrice > form.price && (
               <>
-                <span className="text-sm line-through text-[hsl(220,9%,66%)]">{currencySymbol}{form.compareAtPrice.toFixed(2)}</span>
+                <span className="text-xs line-through text-[hsl(220,9%,66%)]">{currencySymbol}{form.compareAtPrice.toFixed(2)}</span>
                 {discount && (
-                  <span className="text-[11px] font-semibold bg-[hsl(140,60%,95%)] text-[hsl(140,60%,30%)] px-2 py-0.5 rounded-full">{discount}% OFF</span>
+                  <span className="text-[10px] font-semibold bg-[hsl(140,60%,95%)] text-[hsl(140,60%,30%)] px-1.5 py-0.5 rounded-full">{discount}% OFF</span>
                 )}
               </>
             )}
           </div>
-          <span className="text-[10px] text-[hsl(220,9%,66%)]">Tax included</span>
 
           {(form.sizes.length > 0 || form.variants.length > 0) && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-[hsl(220,13%,26%)]">Size</span>
-                <span className="text-[11px] text-[hsl(213,90%,50%)] cursor-default">Size guide →</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
+            <div className="space-y-1.5">
+              <span className="text-xs font-medium text-[hsl(220,13%,26%)]">Size</span>
+              <div className="flex flex-wrap gap-1.5">
                 {(form.variants.length > 0 ? form.variants.map(v => v.name) : form.sizes).map(size => (
                   <button
                     key={size}
                     onClick={() => setSelectedSize(size)}
-                    className={`px-3.5 py-1.5 rounded-md text-xs font-medium border transition-all ${
+                    className={`px-3 py-1 rounded-md text-xs font-medium border transition-all ${
                       selectedSize === size
                         ? 'bg-[hsl(220,13%,13%)] text-white border-[hsl(220,13%,13%)]'
                         : 'bg-white text-[hsl(220,13%,26%)] border-[hsl(220,13%,82%)] hover:border-[hsl(220,13%,50%)]'
@@ -260,53 +248,30 @@ function PreviewContent({ form, images, imagePreview, storeDomain, currencySymbo
             </div>
           )}
 
-          <div className="space-y-1.5">
-            <span className="text-xs font-medium text-[hsl(220,13%,26%)]">Quantity</span>
-            <div className="flex items-center border border-[hsl(220,13%,82%)] rounded-md w-[110px]">
-              <button onClick={() => setQty(q => Math.max(1, q - 1))} className="px-3 py-1.5 text-sm text-[hsl(220,9%,46%)] hover:text-[hsl(220,13%,13%)]">−</button>
-              <span className="flex-1 text-center text-sm text-[hsl(220,13%,13%)]">{qty}</span>
-              <button onClick={() => setQty(q => q + 1)} className="px-3 py-1.5 text-sm text-[hsl(220,9%,46%)] hover:text-[hsl(220,13%,13%)]">+</button>
-            </div>
-          </div>
-
-          <button className={`w-full bg-[hsl(220,13%,13%)] text-white rounded-lg text-sm font-medium hover:bg-[hsl(220,13%,20%)] transition-colors cursor-default ${isMobile ? 'h-[52px]' : 'h-12'}`}>
+          <button className={`w-full bg-[hsl(220,13%,13%)] text-white rounded-lg text-sm font-medium hover:bg-[hsl(220,13%,20%)] transition-colors cursor-default ${isMobile ? 'h-11' : 'h-10'}`}>
             Add to Cart
           </button>
-          <button className={`w-full bg-[hsl(263,70%,58%)] text-white rounded-lg text-sm font-medium hover:bg-[hsl(263,70%,52%)] transition-colors cursor-default ${isMobile ? 'h-[52px]' : 'h-12'}`}>
-            Buy it now
-          </button>
 
-          <div className="border-t border-[hsl(220,14%,93%)] pt-3 space-y-0">
-            {[
-              { id: 'description', label: 'Description', content: form.description || '<span style="color:#9ca3af">Descrição do produto...</span>' },
-              { id: 'shipping', label: 'Shipping & Returns', content: '<p>Free shipping on orders over $50.</p><p>Returns accepted within 30 days.</p>' },
-              { id: 'sizeguide', label: 'Size Guide', content: '<p>Refer to our size chart for the best fit.</p>' },
-            ].map(section => (
-              <div key={section.id} className="border-b border-[hsl(220,14%,93%)]">
-                <button
-                  onClick={() => setOpenAccordion(openAccordion === section.id ? null : section.id)}
-                  className="w-full flex items-center justify-between py-3 text-sm font-medium text-[hsl(220,13%,26%)] hover:text-[hsl(220,13%,13%)]"
-                >
-                  {section.label}
-                  {openAccordion === section.id
-                    ? <ChevronDown className="w-4 h-4 text-[hsl(220,9%,46%)]" />
-                    : <ChevronRight className="w-4 h-4 text-[hsl(220,9%,46%)]" />}
-                </button>
-                {openAccordion === section.id && (
-                  <div
-                    className="pb-3 text-sm text-[hsl(220,9%,46%)] prose prose-sm max-w-none [&_p]:mb-1.5 [&_ul]:pl-4 [&_li]:list-disc"
-                    dangerouslySetInnerHTML={{ __html: section.content }}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
+          {form.description && (
+            <div className="border-t border-[hsl(220,14%,93%)] pt-2.5">
+              <button
+                onClick={() => setOpenAccordion(openAccordion === 'description' ? null : 'description')}
+                className="w-full flex items-center justify-between py-1.5 text-xs font-medium text-[hsl(220,13%,26%)] hover:text-[hsl(220,13%,13%)]"
+              >
+                Description
+                {openAccordion === 'description'
+                  ? <ChevronDown className="w-3.5 h-3.5 text-[hsl(220,9%,46%)]" />
+                  : <ChevronRight className="w-3.5 h-3.5 text-[hsl(220,9%,46%)]" />}
+              </button>
+              {openAccordion === 'description' && (
+                <div
+                  className="pb-2 text-xs text-[hsl(220,9%,46%)] prose prose-sm max-w-none [&_p]:mb-1 [&_ul]:pl-3 [&_li]:list-disc line-clamp-4"
+                  dangerouslySetInnerHTML={{ __html: form.description }}
+                />
+              )}
+            </div>
+          )}
         </div>
-      </div>
-
-      {/* Footer */}
-      <div className="border-t border-[hsl(220,14%,96%)] py-4 text-center bg-white">
-        <span className="text-[10px] text-[hsl(220,9%,66%)]">© 2026 {displayDomain.replace('.myshopify.com', '')}. All rights reserved.</span>
       </div>
     </>
   );
