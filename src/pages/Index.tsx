@@ -444,6 +444,7 @@ const Index = () => {
           marketName: mc?.marketName || null,
           colorImages,
           additionalImages,
+          shopifyProductId: editingShopifyProductId || null,
         },
       });
 
