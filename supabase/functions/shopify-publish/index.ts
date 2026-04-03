@@ -98,7 +98,7 @@ serve(async (req) => {
 
     const optionValues = bodyVariants?.length > 0
       ? bodyVariants.map((v: any) => v.name)
-      : (sizes && sizes.length > 0 ? sizes : ['One Size']);
+      : (sizes && sizes.length > 0 ? sizes : [labels.fallback]);
 
     // Build images array: main image + all additional images inline
     const productImages: { attachment: string; filename: string; position?: number }[] = [];
