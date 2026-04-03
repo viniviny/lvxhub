@@ -46,7 +46,7 @@ import { getAILanguageByCode } from '@/data/languages';
 import {
   Send, Loader2, Upload, CheckCircle2, ExternalLink,
   Package, XCircle, Zap, HelpCircle, Store, Settings, Globe, Layers,
-  ArrowLeft, ArrowRight, Eye, ClipboardList, Check, ChevronDown
+  ArrowLeft, ArrowRight, Eye, ClipboardList, Check, ChevronDown, Pencil
 } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
