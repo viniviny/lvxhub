@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ProductFormData, calculateDiscount } from '@/types/product';
 import { GeneratedImage } from '@/components/ImageGenerationStep';
-import { ChevronDown, ChevronRight, ChevronLeft, ShoppingCart, Search, User, Star, Monitor, Tablet, Smartphone, Maximize2, Minimize2, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronLeft, ShoppingCart, Search, Monitor, Tablet, Smartphone, Maximize2, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type DeviceType = 'desktop' | 'tablet' | 'mobile';
