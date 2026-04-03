@@ -245,6 +245,24 @@ export function ProductHistory() {
               {product.collection && (
                 <Badge variant="secondary" className="text-xs flex-shrink-0">{product.collection}</Badge>
               )}
+              {/* Actions menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="flex-shrink-0 h-8 w-8">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleEdit(product)}>
+                    <Pencil className="w-3.5 h-3.5 mr-2" />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setDeleteProduct(product)} className="text-destructive focus:text-destructive">
+                    <Trash2 className="w-3.5 h-3.5 mr-2" />
+                    Remover
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ))}
         </div>
@@ -258,6 +276,59 @@ export function ProductHistory() {
           <span>{currencies.length} moeda{currencies.length !== 1 ? 's' : ''}</span>
           <span>{languages.length} idioma{languages.length !== 1 ? 's' : ''}</span>
         </div>
+      )}
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar produto</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Título</Label>
+              <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Descrição</Label>
+              <Textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={3} />
+            </div>
+            <div className="space-y-2">
+              <Label>Preço local</Label>
+              <Input type="number" step="0.01" value={editPrice} onChange={e => setEditPrice(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingProduct(null)}>Cancelar</Button>
+            <Button onClick={handleSaveEdit} disabled={saving}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteProduct} onOpenChange={(open) => !open && setDeleteProduct(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover produto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover "{deleteProduct?.title}" do histórico? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
       )}
     </div>
   );
