@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      image_library: {
+        Row: {
+          angle: string | null
+          created_at: string
+          height: number | null
+          id: string
+          name: string
+          product_name: string | null
+          size_bytes: number | null
+          storage_path: string | null
+          tags: string[] | null
+          updated_at: string
+          url: string
+          user_id: string
+          width: number | null
+        }
+        Insert: {
+          angle?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          name?: string
+          product_name?: string | null
+          size_bytes?: number | null
+          storage_path?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          url: string
+          user_id: string
+          width?: number | null
+        }
+        Update: {
+          angle?: string | null
+          created_at?: string
+          height?: number | null
+          id?: string
+          name?: string
+          product_name?: string | null
+          size_bytes?: number | null
+          storage_path?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          url?: string
+          user_id?: string
+          width?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
