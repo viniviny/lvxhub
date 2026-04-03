@@ -607,6 +607,7 @@ interface ImageGalleryProps {
   onRemove: (imageId: string) => void;
   onSetCover: (imageId: string) => void;
   onBulkRemove: (imageIds: string[]) => void;
+  onUseAsReference: (imageUrl: string) => void;
   aspectRatio: AspectRatio;
   onAddUpload: () => void;
 }
