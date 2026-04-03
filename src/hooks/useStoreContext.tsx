@@ -229,6 +229,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const updateStoreLogo = useCallback((storeId: string, logoUrl: string | null) => {
+    setStores(prev => {
+      const updated = prev.map(s => s.id === storeId ? { ...s, logoUrl } : s);
+      persistStores(updated);
+      return updated;
+    });
+  }, []);
+
   const startOAuth = useCallback((store: ShopifyStore) => {
     localStorage.setItem('publify_pending_store', store.id);
     localStorage.setItem('shopify_settings', JSON.stringify({
