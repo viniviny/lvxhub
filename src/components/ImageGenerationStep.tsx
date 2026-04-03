@@ -812,13 +812,13 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
             {/* Hover overlay */}
             {currentImage && hovered && (
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3 transition-opacity">
-                <button onClick={() => onRegenerate(currentImage.angle)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Regenerar">
+                <button onClick={() => onRegenerate(currentImage.id)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Regenerar">
                   <RefreshCw className="w-4 h-4" />
                 </button>
-                <button onClick={() => onSetCover(currentImage.angle)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Definir como capa">
+                <button onClick={() => onSetCover(currentImage.id)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Definir como capa">
                   <Star className="w-4 h-4" />
                 </button>
-                <button onClick={() => onRemove(currentImage.angle)} className="p-2 rounded-full bg-black/60 text-white hover:bg-destructive transition-colors" title="Remover">
+                <button onClick={() => onRemove(currentImage.id)} className="p-2 rounded-full bg-black/60 text-white hover:bg-destructive transition-colors" title="Remover">
                   <Trash2 className="w-4 h-4" />
                 </button>
                 <button onClick={() => setPreviewOpen(true)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Ampliar">
