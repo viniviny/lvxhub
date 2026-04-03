@@ -52,6 +52,23 @@ serve(async (req) => {
     const accessToken = conn.access_token;
     const steps: string[] = [];
 
+    // Language-aware option names
+    const sizeLabels: Record<string, { option: string; fallback: string; untitled: string }> = {
+      pt: { option: 'Tamanho', fallback: 'Único', untitled: 'Produto sem título' },
+      es: { option: 'Talla', fallback: 'Talla única', untitled: 'Producto sin título' },
+      fr: { option: 'Taille', fallback: 'Taille unique', untitled: 'Produit sans titre' },
+      de: { option: 'Größe', fallback: 'Einheitsgröße', untitled: 'Produkt ohne Titel' },
+      it: { option: 'Taglia', fallback: 'Taglia unica', untitled: 'Prodotto senza titolo' },
+      ja: { option: 'サイズ', fallback: 'フリーサイズ', untitled: '無題の商品' },
+      ko: { option: '사이즈', fallback: '프리사이즈', untitled: '제목 없는 상품' },
+      zh: { option: '尺码', fallback: '均码', untitled: '无标题产品' },
+      ar: { option: 'المقاس', fallback: 'مقاس واحد', untitled: 'منتج بدون عنوان' },
+      nl: { option: 'Maat', fallback: 'One Size', untitled: 'Product zonder titel' },
+      en: { option: 'Size', fallback: 'One Size', untitled: 'Untitled Product' },
+    };
+    const lang = bodyLanguage || 'en';
+    const labels = sizeLabels[lang] || sizeLabels['en'];
+
     // --- STEP 1: Create or Update product ---
     const isUpdate = !!shopifyProductId;
     steps.push(isUpdate ? 'Atualizando produto...' : 'Criando produto...');
@@ -68,7 +85,7 @@ serve(async (req) => {
           weight: v.weight || weight || 0,
           weight_unit: v.weightUnit || weightUnit || 'kg',
         }))
-      : (sizes && sizes.length > 0 ? sizes : ['One Size']).map((size: string) => ({
+      : (sizes && sizes.length > 0 ? sizes : [labels.fallback]).map((size: string) => ({
           option1: size,
           price: (price || 0).toString(),
           compare_at_price: compareAtPrice ? compareAtPrice.toString() : null,
@@ -81,7 +98,7 @@ serve(async (req) => {
 
     const optionValues = bodyVariants?.length > 0
       ? bodyVariants.map((v: any) => v.name)
-      : (sizes && sizes.length > 0 ? sizes : ['One Size']);
+      : (sizes && sizes.length > 0 ? sizes : [labels.fallback]);
 
     // Build images array: main image + all additional images inline
     const productImages: { attachment: string; filename: string; position?: number }[] = [];
@@ -129,12 +146,12 @@ serve(async (req) => {
         const updatePayload: Record<string, unknown> = {
           product: {
             id: shopifyProductId,
-            title: title || 'Produto sem título',
+            title: title || labels.untitled,
             body_html: cleanDescription || '',
             product_type: collection || '',
             tags: tags || '',
             variants: variantsPayload,
-            options: [{ name: 'Size', values: optionValues }],
+            options: [{ name: labels.option, values: optionValues }],
           },
         };
 
@@ -207,13 +224,13 @@ serve(async (req) => {
 
       const productPayload: Record<string, unknown> = {
         product: {
-          title: title || 'Produto sem título',
+          title: title || labels.untitled,
           body_html: cleanDescription || '',
           vendor: 'Publify',
           product_type: collection || '',
           tags: tags || '',
           status: 'draft',
-          options: [{ name: 'Size', values: optionValues }],
+          options: [{ name: labels.option, values: optionValues }],
           variants: variantsPayload,
           ...(productImages.length > 0 ? { images: productImages } : {}),
         },
