@@ -627,8 +627,14 @@ const Index = () => {
             {/* PUBLISH VIEW — With store */}
             {currentView === 'publish' && !publishResult && !isPublishing && hasConnectedStore && (
               <div className="animate-fade-in flex flex-col" style={{ minHeight: 'calc(100vh - 120px)' }}>
-                <div className="mb-2">
+                <div className="mb-2 flex items-center gap-3">
                   <h2 className="font-display text-lg font-bold text-foreground leading-tight">Publicar Produto</h2>
+                  {editingShopifyProductId && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.3)]">
+                      <Pencil className="w-3 h-3" />
+                      Editando produto existente
+                    </span>
+                  )}
                 </div>
 
                 {/* Step tabs with completion states */}
