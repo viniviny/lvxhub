@@ -274,7 +274,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     reader.readAsDataURL(file);
   };
 
-  const allSlots = Array.from(new Set([...images.map(i => i.angle), ...Array.from(selectedAngles)]));
+  // No more slot-based: gallery shows all images directly
 
   return (
     <div className="grid grid-cols-[340px_1fr] gap-3">
