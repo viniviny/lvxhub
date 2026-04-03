@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Trash2, HelpCircle, Wand2 } from 'lucide-react';
+import { Trash2, HelpCircle, Wand2, ChevronDown, ChevronUp, Check } from 'lucide-react';
 import { VariantData, generateSKU, calculateMargin } from '@/types/product';
 
 interface VariantsTableProps {
@@ -17,6 +17,12 @@ interface VariantsTableProps {
 }
 
 export function VariantsTable({ variants, onChange, inventoryPolicy, onInventoryPolicyChange, productType, currencySymbol }: VariantsTableProps) {
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkPrice, setBulkPrice] = useState('');
+  const [bulkCompareAt, setBulkCompareAt] = useState('');
+  const [bulkCost, setBulkCost] = useState('');
+  const [bulkStock, setBulkStock] = useState('');
+
   const updateVariant = (id: string, field: keyof VariantData, value: unknown) => {
     onChange(variants.map(v => v.id === id ? { ...v, [field]: value } : v));
   };
@@ -25,15 +31,37 @@ export function VariantsTable({ variants, onChange, inventoryPolicy, onInventory
     onChange(variants.filter(v => v.id !== id));
   };
 
-  const applyToAll = (field: 'price' | 'cost' | 'stock') => {
-    if (variants.length === 0) return;
-    const val = variants[0][field];
-    onChange(variants.map(v => ({ ...v, [field]: val })));
-  };
-
   const generateAllSKUs = () => {
     onChange(variants.map(v => ({ ...v, sku: generateSKU(productType, v.name) })));
   };
+
+  const applyBulk = () => {
+    if (variants.length === 0) return;
+    let updated = [...variants];
+    if (bulkPrice.trim()) {
+      const val = parseFloat(bulkPrice);
+      if (!isNaN(val) && val >= 0) updated = updated.map(v => ({ ...v, price: val }));
+    }
+    if (bulkCompareAt.trim()) {
+      const val = parseFloat(bulkCompareAt);
+      if (!isNaN(val) && val >= 0) updated = updated.map(v => ({ ...v, compareAtPrice: val }));
+    }
+    if (bulkCost.trim()) {
+      const val = parseFloat(bulkCost);
+      if (!isNaN(val) && val >= 0) updated = updated.map(v => ({ ...v, cost: val }));
+    }
+    if (bulkStock.trim()) {
+      const val = parseInt(bulkStock);
+      if (!isNaN(val) && val >= 0) updated = updated.map(v => ({ ...v, stock: val }));
+    }
+    onChange(updated);
+    setBulkPrice('');
+    setBulkCompareAt('');
+    setBulkCost('');
+    setBulkStock('');
+  };
+
+  const hasBulkValue = bulkPrice.trim() || bulkCompareAt.trim() || bulkCost.trim() || bulkStock.trim();
 
   if (variants.length === 0) return null;
 
@@ -60,13 +88,86 @@ export function VariantsTable({ variants, onChange, inventoryPolicy, onInventory
         </TooltipProvider>
       </div>
 
-      <div className="flex flex-wrap gap-2 text-xs">
-        <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => applyToAll('price')}>Aplicar preço a todos</Button>
-        <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => applyToAll('cost')}>Aplicar custo a todos</Button>
-        <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => applyToAll('stock')}>Aplicar estoque a todos</Button>
-        <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={generateAllSKUs}>
-          <Wand2 className="w-3 h-3 mr-1" />Gerar todos os SKUs
-        </Button>
+      {/* Bulk edit bar */}
+      <div className="border border-border rounded-lg overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setBulkOpen(!bulkOpen)}
+          className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+        >
+          <span>Edição em massa · {variants.length} variantes</span>
+          {bulkOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+        </button>
+
+        {bulkOpen && (
+          <div className="px-3 pb-3 pt-1 border-t border-border bg-secondary/20 space-y-2.5">
+            <p className="text-[10px] text-muted-foreground">Preencha os campos desejados e clique em aplicar. Apenas campos preenchidos serão atualizados.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <div>
+                <Label className="text-[10px] text-muted-foreground mb-1 block">Preço ({currencySymbol})</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={bulkPrice}
+                  onChange={e => setBulkPrice(e.target.value)}
+                  placeholder="Ex: 99.90"
+                  className="h-8 bg-secondary border-border text-xs"
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] text-muted-foreground mb-1 block">Preço original ({currencySymbol})</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={bulkCompareAt}
+                  onChange={e => setBulkCompareAt(e.target.value)}
+                  placeholder="Ex: 149.90"
+                  className="h-8 bg-secondary border-border text-xs"
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] text-muted-foreground mb-1 block">Custo ({currencySymbol})</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={bulkCost}
+                  onChange={e => setBulkCost(e.target.value)}
+                  placeholder="Ex: 35.00"
+                  className="h-8 bg-secondary border-border text-xs"
+                />
+              </div>
+              <div>
+                <Label className="text-[10px] text-muted-foreground mb-1 block">Estoque</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={bulkStock}
+                  onChange={e => setBulkStock(e.target.value)}
+                  placeholder="Ex: 100"
+                  className="h-8 bg-secondary border-border text-xs"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                size="sm"
+                className="h-7 text-xs"
+                disabled={!hasBulkValue}
+                onClick={applyBulk}
+              >
+                <Check className="w-3 h-3 mr-1" />
+                Aplicar a todas as variantes
+              </Button>
+              <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={generateAllSKUs}>
+                <Wand2 className="w-3 h-3 mr-1" />Gerar SKUs
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="overflow-x-auto">
