@@ -406,8 +406,11 @@ const Index = () => {
           } catch (err) {
             console.warn(`[Publish] Failed to fetch color image for ${color.name}:`, err);
           }
+          processedCount++;
+          setImageUploadProgress({ current: processedCount, total: totalToProcess });
         }
       }
+      setImageUploadProgress(null);
 
       const { data, error } = await supabase.functions.invoke('shopify-publish', {
         body: {
