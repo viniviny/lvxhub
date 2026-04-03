@@ -230,7 +230,7 @@ serve(async (req) => {
           product_type: collection || '',
           tags: tags || '',
           status: 'draft',
-          options: [{ name: 'Size', values: optionValues }],
+          options: [{ name: labels.option, values: optionValues }],
           variants: variantsPayload,
           ...(productImages.length > 0 ? { images: productImages } : {}),
         },
