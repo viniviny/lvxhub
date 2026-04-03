@@ -66,7 +66,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
         const { data: connections } = await supabase
           .from('shopify_connections')
-          .select('id, shop_name, store_domain, is_active')
+          .select('id, shop_name, store_domain, is_active, market_config, logo_url')
           .eq('is_active', true);
 
         if (connections && connections.length > 0) {
@@ -74,14 +74,26 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           let updated = false;
 
           for (const conn of connections) {
-            const exists = localStores.some(
+            const existing = localStores.find(
               s => s.domain === conn.store_domain && s.connected
             );
-            if (!exists) {
+            if (existing) {
+              // Sync DB config into local store
+              const dbMarket = conn.market_config as unknown as MarketConfig | null;
+              if (dbMarket && JSON.stringify(existing.marketConfig) !== JSON.stringify(dbMarket)) {
+                existing.marketConfig = dbMarket;
+                updated = true;
+              }
+              if (conn.logo_url !== undefined && existing.logoUrl !== conn.logo_url) {
+                existing.logoUrl = conn.logo_url;
+                updated = true;
+              }
+            } else {
               // Add store from DB that's missing locally
               const settingsRaw = localStorage.getItem('shopify_settings');
               const settings = settingsRaw ? JSON.parse(settingsRaw) : {};
-              const marketConfig = settings.marketConfig || undefined;
+              const dbMarket = conn.market_config as unknown as MarketConfig | null;
+              const marketConfig = dbMarket || settings.marketConfig || undefined;
 
               const newStore: ShopifyStore = {
                 id: generateId(),
@@ -90,11 +102,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
                 clientSecret: '',
                 apiVersion: settings.apiVersion || '2026-01',
                 redirectUri: settings.redirectUri || `${window.location.origin}/callback`,
-                accessToken: null, // Never store token client-side
+                accessToken: null,
                 connected: true,
                 connectedAt: new Date().toISOString().split('T')[0],
                 isDefault: localStores.length === 0,
                 ...(marketConfig ? { marketConfig } : {}),
+                logoUrl: conn.logo_url || null,
               };
               localStores.push(newStore);
               updated = true;
@@ -221,21 +234,40 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const persistToDb = useCallback(async (storeDomain: string, fields: { market_config?: MarketConfig; logo_url?: string | null }) => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session) return;
+      await supabase
+        .from('shopify_connections')
+        .update({ ...fields, updated_at: new Date().toISOString() } as any)
+        .eq('store_domain', storeDomain)
+        .eq('user_id', session.session.user.id)
+        .eq('is_active', true);
+    } catch (err) {
+      console.error('Error persisting store config to DB:', err);
+    }
+  }, []);
+
   const updateStoreMarket = useCallback((storeId: string, marketConfig: MarketConfig) => {
     setStores(prev => {
       const updated = prev.map(s => s.id === storeId ? { ...s, marketConfig } : s);
       persistStores(updated);
+      const store = updated.find(s => s.id === storeId);
+      if (store) persistToDb(store.domain, { market_config: marketConfig });
       return updated;
     });
-  }, []);
+  }, [persistToDb]);
 
   const updateStoreLogo = useCallback((storeId: string, logoUrl: string | null) => {
     setStores(prev => {
       const updated = prev.map(s => s.id === storeId ? { ...s, logoUrl } : s);
       persistStores(updated);
+      const store = updated.find(s => s.id === storeId);
+      if (store) persistToDb(store.domain, { logo_url: logoUrl });
       return updated;
     });
-  }, []);
+  }, [persistToDb]);
 
   const startOAuth = useCallback((store: ShopifyStore) => {
     localStorage.setItem('publify_pending_store', store.id);
