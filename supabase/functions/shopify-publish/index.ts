@@ -134,7 +134,7 @@ serve(async (req) => {
             product_type: collection || '',
             tags: tags || '',
             variants: variantsPayload,
-            options: [{ name: 'Tamanho', values: optionValues }],
+            options: [{ name: 'Size', values: optionValues }],
           },
         };
 
