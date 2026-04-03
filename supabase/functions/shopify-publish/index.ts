@@ -52,8 +52,9 @@ serve(async (req) => {
     const accessToken = conn.access_token;
     const steps: string[] = [];
 
-    // --- STEP 1: Create product with main image inline ---
-    steps.push('Criando produto...');
+    // --- STEP 1: Create or Update product ---
+    const isUpdate = !!shopifyProductId;
+    steps.push(isUpdate ? 'Atualizando produto...' : 'Criando produto...');
     const cleanDescription = (description || '').replace(/<script[^>]*>.*?<\/script>/gi, '');
     const variantsPayload = (bodyVariants && bodyVariants.length > 0)
       ? bodyVariants.map((v: any) => ({
@@ -100,39 +101,121 @@ serve(async (req) => {
       }
     }
 
-    console.log(`[shopify-publish] Creating product with ${productImages.length} images`);
+    let product: any;
 
-    const productPayload: Record<string, unknown> = {
-      product: {
-        title: title || 'Produto sem título',
-        body_html: cleanDescription || '',
-        vendor: 'Publify',
-        product_type: collection || '',
-        tags: tags || '',
-        status: 'draft',
-        options: [{ name: 'Tamanho', values: optionValues }],
-        variants: variantsPayload,
-        ...(productImages.length > 0 ? { images: productImages } : {}),
-      },
-    };
+    if (isUpdate) {
+      // UPDATE existing product
+      console.log(`[shopify-publish] Updating product ${shopifyProductId} with ${productImages.length} images`);
 
-    const createRes = await fetch(`${baseUrl}/products.json`, {
-      method: 'POST',
-      headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify(productPayload),
-    });
+      const updatePayload: Record<string, unknown> = {
+        product: {
+          id: shopifyProductId,
+          title: title || 'Produto sem título',
+          body_html: cleanDescription || '',
+          product_type: collection || '',
+          tags: tags || '',
+          variants: variantsPayload,
+          options: [{ name: 'Tamanho', values: optionValues }],
+        },
+      };
 
-    if (!createRes.ok) {
-      const errText = await createRes.text();
-      console.error('[shopify-publish] Create product error:', errText);
-      return new Response(JSON.stringify({ error: 'Erro ao criar produto no Shopify.', step: 'create_product', details: errText }), { status: createRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      const updateRes = await fetch(`${baseUrl}/products/${shopifyProductId}.json`, {
+        method: 'PUT',
+        headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatePayload),
+      });
+
+      if (!updateRes.ok) {
+        const errText = await updateRes.text();
+        console.error('[shopify-publish] Update product error:', errText);
+        return new Response(JSON.stringify({ error: 'Erro ao atualizar produto no Shopify.', step: 'update_product', details: errText }), { status: updateRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const updateData = await updateRes.json();
+      product = updateData.product;
+
+      // If new images provided, delete old images first then upload new ones
+      if (productImages.length > 0) {
+        // Delete existing images
+        try {
+          const existingImgsRes = await fetch(`${baseUrl}/products/${shopifyProductId}/images.json`, {
+            headers: { 'X-Shopify-Access-Token': accessToken },
+          });
+          if (existingImgsRes.ok) {
+            const existingImgs = await existingImgsRes.json();
+            for (const img of (existingImgs.images || [])) {
+              await fetch(`${baseUrl}/products/${shopifyProductId}/images/${img.id}.json`, {
+                method: 'DELETE',
+                headers: { 'X-Shopify-Access-Token': accessToken },
+              });
+            }
+          }
+        } catch (err) {
+          console.warn('[shopify-publish] Failed to delete old images:', err);
+        }
+
+        // Upload new images
+        for (const img of productImages) {
+          try {
+            await fetch(`${baseUrl}/products/${shopifyProductId}/images.json`, {
+              method: 'POST',
+              headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ image: { attachment: img.attachment, filename: img.filename, position: img.position } }),
+            });
+          } catch (err) {
+            console.warn('[shopify-publish] Failed to upload image:', err);
+          }
+        }
+
+        // Refresh product data to get image URLs
+        const refreshRes = await fetch(`${baseUrl}/products/${shopifyProductId}.json`, {
+          headers: { 'X-Shopify-Access-Token': accessToken },
+        });
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          product = refreshData.product;
+        }
+      }
+
+      steps.push(`Produto atualizado com ${product.images?.length || 0} imagens!`);
+      console.log(`[shopify-publish] Product updated: ${product.id}, images: ${product.images?.length || 0}`);
+    } else {
+      // CREATE new product
+      console.log(`[shopify-publish] Creating product with ${productImages.length} images`);
+
+      const productPayload: Record<string, unknown> = {
+        product: {
+          title: title || 'Produto sem título',
+          body_html: cleanDescription || '',
+          vendor: 'Publify',
+          product_type: collection || '',
+          tags: tags || '',
+          status: 'draft',
+          options: [{ name: 'Tamanho', values: optionValues }],
+          variants: variantsPayload,
+          ...(productImages.length > 0 ? { images: productImages } : {}),
+        },
+      };
+
+      const createRes = await fetch(`${baseUrl}/products.json`, {
+        method: 'POST',
+        headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
+        body: JSON.stringify(productPayload),
+      });
+
+      if (!createRes.ok) {
+        const errText = await createRes.text();
+        console.error('[shopify-publish] Create product error:', errText);
+        return new Response(JSON.stringify({ error: 'Erro ao criar produto no Shopify.', step: 'create_product', details: errText }), { status: createRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const productData = await createRes.json();
+      product = productData.product;
+      steps.push(`Produto criado com ${product.images?.length || 0} imagens!`);
+      console.log(`[shopify-publish] Product created: ${product.id}, images: ${product.images?.length || 0}`);
     }
 
-    const productData = await createRes.json();
-    const product = productData.product;
     const shopifyProductUrl = `https://${conn.store_domain}/admin/products/${product.id}`;
-    steps.push(`Produto criado com ${product.images?.length || 0} imagens!`);
-    console.log(`[shopify-publish] Product created: ${product.id}, images: ${product.images?.length || 0}`);
 
     // --- STEP 2: Upload color variant images and assign to variants ---
     if (colorImages && Array.isArray(colorImages) && colorImages.length > 0 && product.variants?.length > 0) {
