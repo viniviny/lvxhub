@@ -716,8 +716,68 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
   const mainMaxW = aspectRatio === '4:5' ? '496px' : '520px';
   const mainAspect = aspectRatio === '4:5' ? '4/5' : '1/1';
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) return;
+    onBulkRemove(Array.from(selectedIds));
+    setSelectedIds(new Set());
+    setSelectMode(false);
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
   return (
     <div className="flex-1 flex flex-col min-h-0" ref={containerRef} tabIndex={0} style={{ outline: 'none' }}>
+      {/* Select mode toolbar */}
+      {images.length > 1 && (
+        <div className="flex items-center justify-between mb-2">
+          {selectMode ? (
+            <div className="flex items-center gap-2 w-full">
+              <button
+                onClick={() => {
+                  if (selectedIds.size === images.length) setSelectedIds(new Set());
+                  else setSelectedIds(new Set(images.map(i => i.id)));
+                }}
+                className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {selectedIds.size === images.length ? 'Desmarcar tudo' : 'Selecionar tudo'}
+              </button>
+              <span className="text-[10px] text-muted-foreground flex-1">
+                {selectedIds.size} {selectedIds.size === 1 ? 'selecionada' : 'selecionadas'}
+              </span>
+              <button
+                onClick={handleBulkDelete}
+                disabled={selectedIds.size === 0}
+                className="flex items-center gap-1 text-[10px] text-destructive hover:text-destructive/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <Trash2 className="w-3 h-3" />
+                Excluir
+              </button>
+              <button onClick={exitSelectMode} className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setSelectMode(true)}
+              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors ml-auto"
+            >
+              <Check className="w-3 h-3" />
+              Selecionar
+            </button>
+          )}
+        </div>
+      )}
       <div className="flex gap-3 flex-1 min-h-0">
         {/* Thumbnail strip — vertical, left side */}
         {displayList.length > 0 && (
