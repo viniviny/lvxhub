@@ -224,7 +224,7 @@ serve(async (req) => {
 
       const productPayload: Record<string, unknown> = {
         product: {
-          title: title || 'Produto sem título',
+          title: title || labels.untitled,
           body_html: cleanDescription || '',
           vendor: 'Publify',
           product_type: collection || '',
