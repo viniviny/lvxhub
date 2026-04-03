@@ -555,12 +555,11 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
 
         <ImageGallery
           images={images}
-          allSlots={allSlots}
           generatingAngles={generatingAngles}
           completedAngles={completedAngles}
           angleStartTimes={angleStartTimes}
           onImagesChange={onImagesChange}
-          onRegenerate={regenerateAngle}
+          onRegenerate={regenerateImage}
           onRemove={removeImage}
           onSetCover={setCover}
           aspectRatio={activeRatio}

@@ -170,6 +170,7 @@ const Index = () => {
     // Restore images
     if (project.images && project.images.length > 0) {
       const restored: GeneratedImage[] = project.images.map(img => ({
+        id: img.id || crypto.randomUUID(),
         url: img.url,
         isCover: img.isCover,
         angle: 'frente' as ImageAngle,
