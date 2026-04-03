@@ -687,13 +687,26 @@ const Index = () => {
                       images={generatedImages}
                       onImagesChange={(imgs) => {
                         setGeneratedImages(imgs);
+                        // Auto-save new images to library
+                        const newImgs = imgs.filter(i => i.url && !i.url.startsWith('data:') && !savedToLibraryRef.current.has(i.id));
+                        if (newImgs.length > 0 && user) {
+                          const rows = newImgs.map(i => ({
+                            user_id: user.id,
+                            name: i.angle || 'imagem',
+                            url: i.url!,
+                            angle: i.angle,
+                            product_name: form.title || null,
+                            tags: [] as string[],
+                          }));
+                          supabase.from('image_library').insert(rows).then(() => {
+                            newImgs.forEach(i => savedToLibraryRef.current.add(i.id));
+                          });
+                        }
                         const cover = imgs.find(i => i.isCover) || imgs[0];
                         if (cover) {
                           setImagePreview(cover.url);
-                          // Trigger image analysis for product understanding
                           if (cover.url && !cover.url.startsWith('data:')) {
                             analyzeImage(cover.url);
-                            // Save image to project
                             if (project) {
                               addImage(cover.url, null, true);
                             }
