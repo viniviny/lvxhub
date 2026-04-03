@@ -1,9 +1,17 @@
-import { usePublishedProducts, type HistoryFilters } from '@/hooks/usePublishedProducts';
+import { usePublishedProducts, type HistoryFilters, type PublishedProduct } from '@/hooks/usePublishedProducts';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ExternalLink, Package, Search, Loader2, Filter } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { ExternalLink, Package, Search, Loader2, Filter, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export function ProductHistory() {
   const { products, loading, filters, setFilters } = usePublishedProducts();
