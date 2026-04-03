@@ -516,7 +516,8 @@ const Index = () => {
     }
 
     setPublishResult(null);
-    setWizardStep(4); // Go to review step
+    setEditingShopifyProductId(product.shopify_product_id || null);
+    setWizardStep(4);
     setCompletedSteps(new Set([1, 2, 3]));
     setCurrentView('publish');
     toast.info('Produto carregado para edição');
