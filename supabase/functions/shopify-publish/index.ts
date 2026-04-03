@@ -213,7 +213,7 @@ serve(async (req) => {
           product_type: collection || '',
           tags: tags || '',
           status: 'draft',
-          options: [{ name: 'Tamanho', values: optionValues }],
+          options: [{ name: 'Size', values: optionValues }],
           variants: variantsPayload,
           ...(productImages.length > 0 ? { images: productImages } : {}),
         },
