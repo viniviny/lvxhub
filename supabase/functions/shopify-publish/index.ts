@@ -33,7 +33,7 @@ serve(async (req) => {
       countryCode, countryFlag, countryName, currency: bodyCurrency, currencySymbol,
       localPrice, baseCurrency, language: bodyLanguage, languageLabel, marketName, regionGroup,
       variants: bodyVariants, inventoryPolicy, requiresShipping, weight, weightUnit, countryOfOrigin,
-      selectedChannels, colorImages, additionalImages,
+      selectedChannels, colorImages, additionalImages, shopifyProductId,
     } = body;
 
     if (!title || typeof title !== 'string' || title.length > 255) {
