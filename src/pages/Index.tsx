@@ -6,6 +6,7 @@ import { SaveStatusIndicator } from '@/components/SaveStatusIndicator';
 import { ProductFormData, ProductSize, ProductGender, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
 import { useProductUnderstanding } from '@/hooks/useProductUnderstanding';
 import { ProductHistory } from '@/components/ProductHistory';
+import { ImageLibrary } from '@/components/ImageLibrary';
 import { StoreSelector } from '@/components/StoreSelector';
 import { useStoreContext } from '@/hooks/useStoreContext';
 import type { MarketConfig, ShopifyStore } from '@/hooks/useStoreManager';
