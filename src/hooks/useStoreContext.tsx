@@ -263,7 +263,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     <StoreContext.Provider value={{
       stores, activeStore, activeStoreId, hasConnectedStore, publishedCount, isLoading,
       setActiveStore: setActiveStoreAction, addStore, connectStore, connectStoreWithMarket,
-      disconnectStore, removeStore, setDefault, updateStoreMarket, startOAuth,
+      disconnectStore, removeStore, setDefault, updateStoreMarket, updateStoreLogo, startOAuth,
       incrementPublished, refreshStores,
     }}>
       {children}
