@@ -6,34 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-async function uploadImageToShopify(baseUrl: string, accessToken: string, base64: string, filename: string): Promise<string | null> {
-  const mimeType = filename.endsWith('.png') ? 'image/png' : filename.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
-  const stageRes = await fetch(`${baseUrl}/graphql.json`, {
-    method: 'POST',
-    headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      query: `mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
-        stagedUploadsCreate(input: $input) {
-          stagedTargets { url resourceUrl parameters { name value } }
-          userErrors { field message }
-        }
-      }`,
-      variables: {
-        input: [{ resource: "IMAGE", filename, mimeType, httpMethod: "PUT" }]
-      }
-    }),
-  });
-  if (!stageRes.ok) return null;
-  const stageData = await stageRes.json();
-  const target = stageData?.data?.stagedUploadsCreate?.stagedTargets?.[0];
-  if (!target?.url) return null;
-  const binaryStr = atob(base64);
-  const bytes = new Uint8Array(binaryStr.length);
-  for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
-  await fetch(target.url, { method: 'PUT', headers: { 'Content-Type': mimeType }, body: bytes });
-  return target.resourceUrl;
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -61,7 +33,7 @@ serve(async (req) => {
       countryCode, countryFlag, countryName, currency: bodyCurrency, currencySymbol,
       localPrice, baseCurrency, language: bodyLanguage, languageLabel, marketName, regionGroup,
       variants: bodyVariants, inventoryPolicy, requiresShipping, weight, weightUnit, countryOfOrigin,
-      selectedChannels, colorImages,
+      selectedChannels, colorImages, additionalImages,
     } = body;
 
     if (!title || typeof title !== 'string' || title.length > 255) {
@@ -80,13 +52,7 @@ serve(async (req) => {
     const accessToken = conn.access_token;
     const steps: string[] = [];
 
-    // --- STEP 1: Upload main image if provided ---
-    let imageSrc: string | null = null;
-    if (imageBase64 && imageName) {
-      imageSrc = await uploadImageToShopify(baseUrl, accessToken, imageBase64, imageName);
-    }
-
-    // --- STEP 2: Create product ---
+    // --- STEP 1: Create product with main image inline ---
     steps.push('Criando produto...');
     const cleanDescription = (description || '').replace(/<script[^>]*>.*?<\/script>/gi, '');
     const variantsPayload = (bodyVariants && bodyVariants.length > 0)
@@ -116,6 +82,26 @@ serve(async (req) => {
       ? bodyVariants.map((v: any) => v.name)
       : (sizes && sizes.length > 0 ? sizes : ['Único']);
 
+    // Build images array: main image + all additional images inline
+    const productImages: { attachment: string; filename: string; position?: number }[] = [];
+    if (imageBase64) {
+      productImages.push({ attachment: imageBase64, filename: imageName || 'product-image.jpg', position: 1 });
+    }
+    if (additionalImages && Array.isArray(additionalImages)) {
+      for (let i = 0; i < additionalImages.length; i++) {
+        const ai = additionalImages[i];
+        if (ai.imageBase64) {
+          productImages.push({
+            attachment: ai.imageBase64,
+            filename: ai.imageName || `product-image-${i + 2}.png`,
+            position: productImages.length + 1,
+          });
+        }
+      }
+    }
+
+    console.log(`[shopify-publish] Creating product with ${productImages.length} images`);
+
     const productPayload: Record<string, unknown> = {
       product: {
         title: title || 'Produto sem título',
@@ -126,7 +112,7 @@ serve(async (req) => {
         status: 'draft',
         options: [{ name: 'Tamanho', values: optionValues }],
         variants: variantsPayload,
-        ...(imageSrc ? { images: [{ src: imageSrc }] } : imageBase64 ? { images: [{ attachment: imageBase64, filename: imageName || 'product-image.jpg' }] } : {}),
+        ...(productImages.length > 0 ? { images: productImages } : {}),
       },
     };
 
@@ -138,40 +124,47 @@ serve(async (req) => {
 
     if (!createRes.ok) {
       const errText = await createRes.text();
+      console.error('[shopify-publish] Create product error:', errText);
       return new Response(JSON.stringify({ error: 'Erro ao criar produto no Shopify.', step: 'create_product', details: errText }), { status: createRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const productData = await createRes.json();
     const product = productData.product;
     const shopifyProductUrl = `https://${conn.store_domain}/admin/products/${product.id}`;
-    steps.push('Produto criado!');
+    steps.push(`Produto criado com ${product.images?.length || 0} imagens!`);
+    console.log(`[shopify-publish] Product created: ${product.id}, images: ${product.images?.length || 0}`);
 
-    // --- STEP 2.5: Upload color variant images and assign to variants ---
+    // --- STEP 2: Upload color variant images and assign to variants ---
     if (colorImages && Array.isArray(colorImages) && colorImages.length > 0 && product.variants?.length > 0) {
       steps.push('Enviando imagens das variantes...');
       for (const ci of colorImages) {
         if (!ci.imageBase64 || !ci.variantName) continue;
-        // Find the matching variant by name (option1)
         const matchingVariant = product.variants.find((v: any) => v.option1 === ci.variantName);
-        if (!matchingVariant) continue;
+        if (!matchingVariant) {
+          console.warn(`[shopify-publish] No matching variant for color: ${ci.variantName}`);
+          continue;
+        }
 
         try {
-          // Upload image to the product with variant_ids association
-          const imgPayload = {
-            image: {
-              attachment: ci.imageBase64,
-              filename: ci.imageName || `variant-${ci.variantName}.png`,
-              variant_ids: [matchingVariant.id],
-            },
-          };
-
-          await fetch(`${baseUrl}/products/${product.id}/images.json`, {
+          const imgRes = await fetch(`${baseUrl}/products/${product.id}/images.json`, {
             method: 'POST',
             headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
-            body: JSON.stringify(imgPayload),
+            body: JSON.stringify({
+              image: {
+                attachment: ci.imageBase64,
+                filename: ci.imageName || `variant-${ci.variantName}.png`,
+                variant_ids: [matchingVariant.id],
+              },
+            }),
           });
+          if (!imgRes.ok) {
+            const errText = await imgRes.text();
+            console.error(`[shopify-publish] Variant image upload failed for ${ci.variantName}:`, errText);
+          } else {
+            console.log(`[shopify-publish] Variant image uploaded for ${ci.variantName}`);
+          }
         } catch (err) {
-          console.error(`Failed to upload variant image for ${ci.variantName}:`, err);
+          console.error(`[shopify-publish] Variant image error for ${ci.variantName}:`, err);
         }
       }
     }
@@ -254,7 +247,7 @@ serve(async (req) => {
       description: (description || '').replace(/<[^>]*>/g, ''),
       collection: collection || null,
       sizes: sizes || [],
-      image_url: bodyImageUrl || imageSrc || null,
+      image_url: product.images?.[0]?.src || bodyImageUrl || null,
       store_domain: conn.store_domain,
       country_code: countryCode || null,
       country_flag: countryFlag || null,
@@ -277,9 +270,11 @@ serve(async (req) => {
       shopifyUrl: shopifyProductUrl,
       status: product.status,
       steps,
-      imageUrl: product.images?.[0]?.src || imageSrc || bodyImageUrl || null,
+      imageUrl: product.images?.[0]?.src || bodyImageUrl || null,
+      totalImages: product.images?.length || 0,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
+    console.error('[shopify-publish] Unexpected error:', e);
     return new Response(JSON.stringify({ error: 'Erro interno. Tente novamente.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 });

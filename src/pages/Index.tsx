@@ -332,6 +332,28 @@ const Index = () => {
         if (imageBase64.includes(',')) imageBase64 = imageBase64.split(',')[1];
         imageName = `product-image-${Date.now()}.png`;
       }
+
+      // Build additional images array from all generated images (excluding cover if already used)
+      const additionalImages: { imageBase64: string; imageName: string }[] = [];
+      const coverUrl = coverImage?.url;
+      for (const img of generatedImages) {
+        if (!img.url) continue;
+        // Skip the cover image if it was already used as main
+        if (!imageFile && img.url === coverUrl) continue;
+        try {
+          const resp = await fetch(img.url);
+          const blob = await resp.blob();
+          const reader = new FileReader();
+          let b64 = await new Promise<string>((resolve) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+          if (b64.includes(',')) b64 = b64.split(',')[1];
+          additionalImages.push({ imageBase64: b64, imageName: `product-${img.angle || 'image'}-${Date.now()}.png` });
+        } catch (err) {
+          console.warn(`[Publish] Failed to fetch generated image:`, err);
+        }
+      }
       const mc = activeStore?.marketConfig;
 
       // --- Image optimization step (client-side WebP conversion) ---
@@ -409,6 +431,7 @@ const Index = () => {
           languageLabel: activeStoreLang?.label || null,
           marketName: mc?.marketName || null,
           colorImages,
+          additionalImages,
         },
       });
 
