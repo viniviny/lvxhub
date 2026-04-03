@@ -38,6 +38,7 @@ const ANGLE_OPTIONS: AngleOption[] = [
 ];
 
 export interface GeneratedImage {
+  id: string;
   angle: ImageAngle;
   url: string;
   isCover: boolean;
@@ -187,11 +188,10 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     setGenStartTime(now);
     setCompletedAngles(new Set());
     setAngleStartTimes(Object.fromEntries(angles.map(a => [a, now])));
-    const results: GeneratedImage[] = [...images];
+    const newImages: GeneratedImage[] = [];
     const isCustomPrompt = promptMode === 'custom';
     const promises = angles.map(async (angle) => {
       try {
-        // Extract base64 and mimeType from data URL if reference image exists
         let refBase64: string | undefined;
         let refMimeType: string | undefined;
         if (referenceImage) {
@@ -203,38 +203,35 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         });
         if (error || data?.error) { toast.error(`Erro ao gerar imagem (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`); return null; }
         const imageUrl = data.imageUrl;
-        const idx = results.findIndex(img => img.angle === angle);
-        const newImage: GeneratedImage = { angle, url: imageUrl, isCover: results.length === 0 && angle === angles[0], justCompleted: true };
-        if (idx >= 0) results[idx] = newImage; else results.push(newImage);
+        const newImage: GeneratedImage = { id: crypto.randomUUID(), angle, url: imageUrl, isCover: false, justCompleted: true };
+        newImages.push(newImage);
         setGeneratedCount(prev => prev + 1);
         setCompletedAngles(prev => new Set(prev).add(angle));
         setGeneratingAngles(prev => { const next = new Set(prev); next.delete(angle); return next; });
-        // Update parent with partial results so slots show images as they arrive
-        const snapshot = [...results];
-        if (snapshot.length > 0 && !snapshot.some(r => r.isCover)) snapshot[0].isCover = true;
-        onImagesChange(snapshot);
+        // Update parent with partial results — append to existing
+        const allImgs = [...images, ...newImages];
+        if (allImgs.length > 0 && !allImgs.some(r => r.isCover)) allImgs[0].isCover = true;
+        onImagesChange(allImgs);
         return newImage;
       } catch { toast.error(`Erro ao gerar imagem (${angle})`); return null; }
     });
     await Promise.all(promises);
-    if (results.length > 0 && !results.some(r => r.isCover)) results[0].isCover = true;
-    onImagesChange(results.map(r => ({ ...r, justCompleted: false })));
+    const allFinal = [...images, ...newImages];
+    if (allFinal.length > 0 && !allFinal.some(r => r.isCover)) allFinal[0].isCover = true;
+    onImagesChange(allFinal.map(r => ({ ...r, justCompleted: false })));
     setIsGenerating(false);
     setGeneratingAngles(new Set());
     setGenStartTime(null);
     setAngleStartTimes({});
     const elapsed = ((Date.now() - now) / 1000).toFixed(0);
-    const successCount = results.filter(r => r.url).length;
-    if (successCount > 0) toast.success(`${successCount} imagens geradas em ${elapsed}s ✓`);
-    // Clear justCompleted flags after animation
-    setTimeout(() => {
-      setCompletedAngles(new Set());
-    }, 2500);
+    if (newImages.length > 0) toast.success(`${newImages.length} imagens geradas em ${elapsed}s ✓`);
+    setTimeout(() => { setCompletedAngles(new Set()); }, 2500);
   }, [prompt, promptMode, selectedAngles, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
 
-  const regenerateAngle = useCallback(async (angle: ImageAngle) => {
-    if (!prompt.trim()) return;
-    setGeneratingAngles(new Set([angle]));
+  const regenerateImage = useCallback(async (imageId: string) => {
+    const target = images.find(i => i.id === imageId);
+    if (!target || !prompt.trim()) return;
+    setGeneratingAngles(new Set([target.angle]));
     try {
       let refBase64: string | undefined;
       let refMimeType: string | undefined;
@@ -243,23 +240,23 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         if (match) { refMimeType = match[1]; refBase64 = match[2]; }
       }
       const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
+        body: { prompt, angle: target.angle, customAngleText: target.angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
       });
       if (error || data?.error) { toast.error('Erro ao regenerar imagem'); return; }
-      const updated = images.map(img => img.angle === angle ? { ...img, url: data.imageUrl } : img);
+      const updated = images.map(img => img.id === imageId ? { ...img, url: data.imageUrl } : img);
       onImagesChange(updated);
       toast.success('Imagem regenerada!');
     } catch { toast.error('Erro ao regenerar imagem'); } finally { setGeneratingAngles(new Set()); }
   }, [prompt, promptMode, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
 
-  const removeImage = (angle: ImageAngle) => {
-    const updated = images.filter(img => img.angle !== angle);
+  const removeImage = (imageId: string) => {
+    const updated = images.filter(img => img.id !== imageId);
     if (updated.length > 0 && !updated.some(i => i.isCover)) updated[0].isCover = true;
     onImagesChange(updated);
   };
 
-  const setCover = (angle: ImageAngle) => {
-    const updated = images.map(img => ({ ...img, isCover: img.angle === angle }));
+  const setCover = (imageId: string) => {
+    const updated = images.map(img => ({ ...img, isCover: img.id === imageId }));
     onImagesChange(updated);
   };
 
@@ -271,13 +268,13 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const reader = new FileReader();
     reader.onload = () => {
       const url = reader.result as string;
-      const newImage: GeneratedImage = { angle: 'frente', url, isCover: images.length === 0 };
+      const newImage: GeneratedImage = { id: crypto.randomUUID(), angle: 'frente', url, isCover: images.length === 0 };
       onImagesChange([...images, newImage]);
     };
     reader.readAsDataURL(file);
   };
 
-  const allSlots = Array.from(new Set([...images.map(i => i.angle), ...Array.from(selectedAngles)]));
+  // No more slot-based: gallery shows all images directly
 
   return (
     <div className="grid grid-cols-[340px_1fr] gap-3">
@@ -558,12 +555,11 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
 
         <ImageGallery
           images={images}
-          allSlots={allSlots}
           generatingAngles={generatingAngles}
           completedAngles={completedAngles}
           angleStartTimes={angleStartTimes}
           onImagesChange={onImagesChange}
-          onRegenerate={regenerateAngle}
+          onRegenerate={regenerateImage}
           onRemove={removeImage}
           onSetCover={setCover}
           aspectRatio={activeRatio}
@@ -596,19 +592,18 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
 /* ─── Image Gallery (Main image + Thumbnail strip) ─── */
 interface ImageGalleryProps {
   images: GeneratedImage[];
-  allSlots: ImageAngle[];
   generatingAngles: Set<ImageAngle>;
   completedAngles: Set<ImageAngle>;
   angleStartTimes: Record<string, number>;
   onImagesChange: (images: GeneratedImage[]) => void;
-  onRegenerate: (angle: ImageAngle) => void;
-  onRemove: (angle: ImageAngle) => void;
-  onSetCover: (angle: ImageAngle) => void;
+  onRegenerate: (imageId: string) => void;
+  onRemove: (imageId: string) => void;
+  onSetCover: (imageId: string) => void;
   aspectRatio: AspectRatio;
   onAddUpload: () => void;
 }
 
-function ImageGallery({ images, allSlots, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover, aspectRatio, onAddUpload }: ImageGalleryProps) {
+function ImageGallery({ images, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover, aspectRatio, onAddUpload }: ImageGalleryProps) {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [slideDir, setSlideDir] = useState<'left' | 'right' | null>(null);
   const [isSliding, setIsSliding] = useState(false);
@@ -619,12 +614,13 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Build display list: real images first, then empty slots for generating/pending angles
-  const imageAngles = images.map(i => i.angle);
-  const emptyAngles = allSlots.filter(a => !imageAngles.includes(a));
+  // Build display list: all images + generating slots for angles not yet done
+  const generatingSlots = Array.from(generatingAngles)
+    .filter(angle => !images.some(img => img.angle === angle && img.justCompleted))
+    .map(angle => ({ angle, empty: true as const }));
   const displayList: (GeneratedImage | { angle: ImageAngle; empty: true })[] = [
     ...images,
-    ...emptyAngles.map(a => ({ angle: a, empty: true as const })),
+    ...generatingSlots,
   ];
 
   // Clamp selected index
@@ -690,11 +686,11 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
     const fromItem = displayList[dragIdx];
     if (!fromItem || 'empty' in fromItem) { setDragIdx(null); setDragOverIdx(null); return; }
     const reordered = [...images];
-    const fromImageIdx = reordered.findIndex(i => i.angle === fromItem.angle);
+    const fromImageIdx = reordered.findIndex(i => i.id === (fromItem as GeneratedImage).id);
     if (fromImageIdx < 0) { setDragIdx(null); setDragOverIdx(null); return; }
     const toItem = displayList[dropIdx];
     let toImageIdx: number;
-    if ('empty' in toItem) { toImageIdx = reordered.length - 1; } else { toImageIdx = reordered.findIndex(i => i.angle === toItem.angle); }
+    if ('empty' in toItem) { toImageIdx = reordered.length - 1; } else { toImageIdx = reordered.findIndex(i => i.id === (toItem as GeneratedImage).id); }
     const [moved] = reordered.splice(fromImageIdx, 1);
     reordered.splice(toImageIdx, 0, moved);
     const updated = reordered.map((img, i) => ({ ...img, isCover: i === 0 }));
@@ -816,13 +812,13 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
             {/* Hover overlay */}
             {currentImage && hovered && (
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3 transition-opacity">
-                <button onClick={() => onRegenerate(currentImage.angle)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Regenerar">
+                <button onClick={() => onRegenerate(currentImage.id)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Regenerar">
                   <RefreshCw className="w-4 h-4" />
                 </button>
-                <button onClick={() => onSetCover(currentImage.angle)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Definir como capa">
+                <button onClick={() => onSetCover(currentImage.id)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Definir como capa">
                   <Star className="w-4 h-4" />
                 </button>
-                <button onClick={() => onRemove(currentImage.angle)} className="p-2 rounded-full bg-black/60 text-white hover:bg-destructive transition-colors" title="Remover">
+                <button onClick={() => onRemove(currentImage.id)} className="p-2 rounded-full bg-black/60 text-white hover:bg-destructive transition-colors" title="Remover">
                   <Trash2 className="w-4 h-4" />
                 </button>
                 <button onClick={() => setPreviewOpen(true)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Ampliar">
