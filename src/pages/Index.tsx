@@ -6,6 +6,7 @@ import { SaveStatusIndicator } from '@/components/SaveStatusIndicator';
 import { ProductFormData, ProductSize, ProductGender, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
 import { useProductUnderstanding } from '@/hooks/useProductUnderstanding';
 import { ProductHistory } from '@/components/ProductHistory';
+import { StoreSelector } from '@/components/StoreSelector';
 import { useStoreContext } from '@/hooks/useStoreContext';
 import type { MarketConfig, ShopifyStore } from '@/hooks/useStoreManager';
 import { useRegionGroups } from '@/hooks/useRegionGroups';
@@ -564,12 +565,21 @@ const Index = () => {
               beta
             </span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             <SaveStatusIndicator status={saveStatus} />
             {publishedCount > 0 && (
               <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-[hsl(var(--sidebar-primary)/0.1)] text-[hsl(var(--info))]">
-                <Zap className="w-3 h-3" />{publishedCount} publicações
+                <Zap className="w-3 h-3" />{publishedCount}
               </span>
+            )}
+            {/* Store selector in header */}
+            {stores.length > 0 && (
+              <StoreSelector
+                stores={stores}
+                activeStoreId={activeStore?.id || null}
+                onSelectStore={setActiveStore}
+                onAddStore={handleAddStore}
+              />
             )}
             <Button variant="ghost" size="icon" className="h-8 w-8 text-[hsl(var(--sidebar-foreground))] hover:text-foreground" onClick={() => setShowOnboarding(true)} title="Como funciona?"><HelpCircle className="w-4 h-4" /></Button>
             {stores.length > 0 && <Button variant="ghost" size="icon" className="h-8 w-8 text-[hsl(var(--sidebar-foreground))] hover:text-foreground" onClick={() => setShowManagement(true)} title="Gerenciar lojas"><Settings className="w-4 h-4" /></Button>}
@@ -588,7 +598,7 @@ const Index = () => {
 
       {/* DASHBOARD */}
       <div className="flex-1 flex">
-        <DashboardSidebar stores={stores} activeStoreId={activeStore?.id || null} onSelectStore={setActiveStore} onAddStore={handleAddStore} currentView={currentView} onViewChange={handleViewChange} />
+        <DashboardSidebar currentView={currentView} onViewChange={handleViewChange} />
 
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto px-4 py-3">
