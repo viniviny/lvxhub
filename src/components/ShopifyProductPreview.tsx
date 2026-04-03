@@ -12,6 +12,7 @@ interface ShopifyProductPreviewProps {
   imagePreview: string | null;
   storeDomain: string;
   currencySymbol: string;
+  storeLogo?: string | null;
 }
 
 const DEVICE_KEY = 'publify_preview_device';
