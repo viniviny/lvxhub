@@ -22,27 +22,8 @@ export function ProductHistory({ onEditProduct }: ProductHistoryProps) {
   const [search, setSearch] = useState('');
   const [deleteProduct, setDeleteProduct] = useState<PublishedProduct | null>(null);
   const [deleting, setDeleting] = useState(false);
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('published_products')
-        .update({
-          title: editTitle,
-          description: editDescription,
-          local_price: editPrice ? parseFloat(editPrice) : null,
-        })
-        .eq('id', editingProduct.id);
-      if (error) throw error;
-      toast.success('Produto atualizado com sucesso');
-      setEditingProduct(null);
-      refetch();
-    } catch (err) {
-      console.error(err);
-      toast.error('Erro ao atualizar produto');
-    } finally {
-      setSaving(false);
-    }
-  };
+
+
 
   const handleDelete = async () => {
     if (!deleteProduct) return;
