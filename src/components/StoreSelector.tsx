@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ShopifyStore } from '@/hooks/useStoreManager';
-import { ChevronDown, Plus, ImagePlus, X } from 'lucide-react';
-import { useStoreContext } from '@/hooks/useStoreContext';
-import { toast } from 'sonner';
+import { ChevronDown, Plus } from 'lucide-react';
 
 interface StoreSelectorProps {
   stores: ShopifyStore[];
@@ -19,8 +17,6 @@ function truncateDomain(domain: string, max = 18): string {
 export function StoreSelector({ stores, activeStoreId, onSelectStore, onAddStore }: StoreSelectorProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const logoInputRef = useRef<HTMLInputElement>(null);
-  const { updateStoreLogo } = useStoreContext();
 
   const active = stores.find(s => s.id === activeStoreId) || stores.find(s => s.connected) || stores[0];
 
@@ -37,52 +33,13 @@ export function StoreSelector({ stores, activeStoreId, onSelectStore, onAddStore
 
   const mc = active?.marketConfig;
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !active) return;
-    const valid = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
-    if (!valid.includes(file.type)) {
-      toast.error('Use PNG, JPG, WEBP ou SVG.');
-      return;
-    }
-    if (file.size > 500_000) {
-      toast.error('Imagem muito grande (máx. 500KB).');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      updateStoreLogo(active.id, reader.result as string);
-      toast.success('Logo atualizada!');
-    };
-    reader.readAsDataURL(file);
-    if (logoInputRef.current) logoInputRef.current.value = '';
-  };
-
-  const handleRemoveLogo = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (active) {
-      updateStoreLogo(active.id, null);
-      toast.success('Logo removida');
-    }
-  };
-
   return (
     <div ref={ref} className="relative">
-      <input
-        ref={logoInputRef}
-        type="file"
-        accept="image/png,image/jpeg,image/webp,image/svg+xml"
-        className="hidden"
-        onChange={handleLogoUpload}
-      />
-
-      {/* Compact trigger */}
       <button
         onClick={() => setOpen(o => !o)}
         className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition-all duration-150
           bg-secondary/50 border border-border hover:border-[hsl(var(--info)/0.4)] hover:bg-secondary"
       >
-        {/* Logo or flag */}
         {active?.logoUrl ? (
           <img src={active.logoUrl} alt="Logo" className="w-5 h-5 rounded object-contain flex-shrink-0" />
         ) : (
@@ -101,9 +58,8 @@ export function StoreSelector({ stores, activeStoreId, onSelectStore, onAddStore
         />
       </button>
 
-      {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-[240px] rounded-lg border border-border bg-[hsl(var(--sidebar-background))] shadow-[0_8px_24px_rgba(0,0,0,0.4)] overflow-hidden animate-fade-in z-50">
+        <div className="absolute right-0 top-full mt-1 w-[220px] rounded-lg border border-border bg-[hsl(var(--sidebar-background))] shadow-[0_8px_24px_rgba(0,0,0,0.4)] overflow-hidden animate-fade-in z-50">
           {stores.map(store => {
             const smc = store.marketConfig;
             const isActive = store.id === (activeStoreId || active?.id);
@@ -138,27 +94,6 @@ export function StoreSelector({ stores, activeStoreId, onSelectStore, onAddStore
             );
           })}
 
-          {/* Logo actions */}
-          <div className="border-t border-border">
-            <button
-              onClick={() => { logoInputRef.current?.click(); }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-medium text-muted-foreground hover:bg-[hsl(var(--sidebar-primary)/0.08)] hover:text-foreground transition-colors"
-            >
-              <ImagePlus className="w-3.5 h-3.5" />
-              {active?.logoUrl ? 'Alterar logo' : 'Adicionar logo'}
-            </button>
-            {active?.logoUrl && (
-              <button
-                onClick={handleRemoveLogo}
-                className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-medium text-destructive hover:bg-destructive/10 transition-colors"
-              >
-                <X className="w-3.5 h-3.5" />
-                Remover logo
-              </button>
-            )}
-          </div>
-
-          {/* Add store */}
           <div className="border-t border-border">
             <button
               onClick={() => { onAddStore(); setOpen(false); }}
