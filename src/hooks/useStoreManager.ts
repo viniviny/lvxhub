@@ -173,6 +173,16 @@ export function useStoreManager() {
     });
   }, []);
 
+  const updateStoreLogo = useCallback((storeId: string, logoUrl: string | null) => {
+    setStores(prev => {
+      const updated = prev.map(s =>
+        s.id === storeId ? { ...s, logoUrl } : s
+      );
+      persistStores(updated);
+      return updated;
+    });
+  }, []);
+
   const startOAuth = useCallback((store: ShopifyStore) => {
     // Save pending store id so callback knows which store to connect
     localStorage.setItem('publify_pending_store', store.id);
