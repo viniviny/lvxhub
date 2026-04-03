@@ -260,6 +260,12 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     onImagesChange(updated);
   };
 
+  const bulkRemove = (imageIds: string[]) => {
+    const updated = images.filter(img => !imageIds.includes(img.id));
+    if (updated.length > 0 && !updated.some(i => i.isCover)) updated[0].isCover = true;
+    onImagesChange(updated);
+  };
+
   const handleManualUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
