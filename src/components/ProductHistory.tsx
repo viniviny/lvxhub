@@ -20,23 +20,8 @@ interface ProductHistoryProps {
 export function ProductHistory({ onEditProduct }: ProductHistoryProps) {
   const { products, loading, filters, setFilters, refetch } = usePublishedProducts();
   const [search, setSearch] = useState('');
-  const [editingProduct, setEditingProduct] = useState<PublishedProduct | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editDescription, setEditDescription] = useState('');
-  const [editPrice, setEditPrice] = useState('');
-  const [saving, setSaving] = useState(false);
   const [deleteProduct, setDeleteProduct] = useState<PublishedProduct | null>(null);
   const [deleting, setDeleting] = useState(false);
-
-  const handleEdit = (product: PublishedProduct) => {
-    setEditingProduct(product);
-    setEditTitle(product.title);
-    setEditDescription(product.description || '');
-    setEditPrice(product.local_price?.toString() || '');
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editingProduct) return;
     setSaving(true);
     try {
       const { error } = await supabase
