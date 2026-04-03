@@ -3,57 +3,24 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ExternalLink, Package, Search, Loader2, Filter, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-export function ProductHistory() {
+interface ProductHistoryProps {
+  onEditProduct?: (product: PublishedProduct) => void;
+}
+
+export function ProductHistory({ onEditProduct }: ProductHistoryProps) {
   const { products, loading, filters, setFilters, refetch } = usePublishedProducts();
   const [search, setSearch] = useState('');
-  const [editingProduct, setEditingProduct] = useState<PublishedProduct | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editDescription, setEditDescription] = useState('');
-  const [editPrice, setEditPrice] = useState('');
-  const [saving, setSaving] = useState(false);
   const [deleteProduct, setDeleteProduct] = useState<PublishedProduct | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const handleEdit = (product: PublishedProduct) => {
-    setEditingProduct(product);
-    setEditTitle(product.title);
-    setEditDescription(product.description || '');
-    setEditPrice(product.local_price?.toString() || '');
-  };
 
-  const handleSaveEdit = async () => {
-    if (!editingProduct) return;
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('published_products')
-        .update({
-          title: editTitle,
-          description: editDescription,
-          local_price: editPrice ? parseFloat(editPrice) : null,
-        })
-        .eq('id', editingProduct.id);
-      if (error) throw error;
-      toast.success('Produto atualizado com sucesso');
-      setEditingProduct(null);
-      refetch();
-    } catch (err) {
-      console.error(err);
-      toast.error('Erro ao atualizar produto');
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleDelete = async () => {
     if (!deleteProduct) return;
@@ -253,7 +220,7 @@ export function ProductHistory() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleEdit(product)}>
+                  <DropdownMenuItem onClick={() => onEditProduct?.(product)}>
                     <Pencil className="w-3.5 h-3.5 mr-2" />
                     Editar
                   </DropdownMenuItem>
@@ -278,35 +245,8 @@ export function ProductHistory() {
         </div>
       )}
 
-      {/* Edit Dialog */}
-      <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar produto</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Título</Label>
-              <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Descrição</Label>
-              <Textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={3} />
-            </div>
-            <div className="space-y-2">
-              <Label>Preço local</Label>
-              <Input type="number" step="0.01" value={editPrice} onChange={e => setEditPrice(e.target.value)} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingProduct(null)}>Cancelar</Button>
-            <Button onClick={handleSaveEdit} disabled={saving}>
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteProduct} onOpenChange={(open) => !open && setDeleteProduct(null)}>

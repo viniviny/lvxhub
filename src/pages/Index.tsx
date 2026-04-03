@@ -484,6 +484,43 @@ const Index = () => {
     await createNewProject();
   };
 
+  const handleEditPublishedProduct = (product: import('@/hooks/usePublishedProducts').PublishedProduct) => {
+    // Load published product data into the wizard form
+    setForm(prev => ({
+      ...prev,
+      title: product.title || '',
+      description: product.description || '',
+      price: product.local_price || product.base_price || 0,
+      collection: product.collection || '',
+      sizes: (product.sizes || []) as ProductSize[],
+    }));
+    syncFormToProject({
+      ...form,
+      title: product.title || '',
+      description: product.description || '',
+      price: product.local_price || product.base_price || 0,
+      collection: product.collection || '',
+      sizes: (product.sizes || []) as ProductSize[],
+    });
+
+    // Load image if available
+    if (product.image_url) {
+      setImagePreview(product.image_url);
+      setGeneratedImages([{
+        id: crypto.randomUUID(),
+        url: product.image_url,
+        isCover: true,
+        angle: 'frente' as ImageAngle,
+      }]);
+    }
+
+    setPublishResult(null);
+    setWizardStep(4); // Go to review step
+    setCompletedSteps(new Set([1, 2, 3]));
+    setCurrentView('publish');
+    toast.info('Produto carregado para edição');
+  };
+
   const handleAddStore = () => { stores.length > 0 ? setShowConnect(true) : setShowOnboarding(true); };
 
   const handleCredentialsSubmit = (data: { domain: string; clientId: string; clientSecret: string; apiVersion: string; redirectUri: string; }) => {
@@ -1104,7 +1141,7 @@ const Index = () => {
             )}
 
             {/* HISTORY VIEW */}
-            {currentView === 'history' && <ProductHistory />}
+            {currentView === 'history' && <ProductHistory onEditProduct={handleEditPublishedProduct} />}
 
             {/* STORES VIEW */}
             {currentView === 'stores' && (
