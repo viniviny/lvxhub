@@ -1,6 +1,6 @@
-import { Package, ClipboardList, Store, Settings, Layers, BookOpen } from 'lucide-react';
+import { Package, ClipboardList, Store, Settings, Layers, BookOpen, ImageIcon } from 'lucide-react';
 
-export type DashboardView = 'publish' | 'history' | 'prompts' | 'stores' | 'regions' | 'settings';
+export type DashboardView = 'publish' | 'history' | 'library' | 'prompts' | 'stores' | 'regions' | 'settings';
 
 interface DashboardSidebarProps {
   currentView: DashboardView;
@@ -10,6 +10,7 @@ interface DashboardSidebarProps {
 const navItems: { id: DashboardView; label: string; icon: React.ReactNode }[] = [
   { id: 'publish', label: 'Publicar Produto', icon: <Package className="w-4 h-4" /> },
   { id: 'history', label: 'Histórico', icon: <ClipboardList className="w-4 h-4" /> },
+  { id: 'library', label: 'Biblioteca', icon: <ImageIcon className="w-4 h-4" /> },
   { id: 'prompts', label: 'Meus Prompts', icon: <BookOpen className="w-4 h-4" /> },
   { id: 'stores', label: 'Lojas', icon: <Store className="w-4 h-4" /> },
   { id: 'regions', label: 'Grupos de Região', icon: <Layers className="w-4 h-4" /> },
