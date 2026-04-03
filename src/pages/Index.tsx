@@ -1054,6 +1054,7 @@ const Index = () => {
                         imagePreview={imagePreview}
                         storeDomain={activeStore?.domain || ''}
                         currencySymbol={currencySymbol}
+                        storeLogo={activeStore?.logoUrl}
                       />
                     </div>
                   )}
