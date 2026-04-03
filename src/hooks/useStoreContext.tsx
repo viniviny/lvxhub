@@ -17,6 +17,7 @@ interface StoreContextType {
   removeStore: (storeId: string) => void;
   setDefault: (storeId: string) => void;
   updateStoreMarket: (storeId: string, marketConfig: MarketConfig) => void;
+  updateStoreLogo: (storeId: string, logoUrl: string | null) => void;
   startOAuth: (store: ShopifyStore) => void;
   incrementPublished: () => void;
   refreshStores: () => void;
