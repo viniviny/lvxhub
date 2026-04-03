@@ -122,6 +122,7 @@ const Index = () => {
   const [publishStep, setPublishStep] = useState(0);
   const [imageUploadProgress, setImageUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [publishResult, setPublishResult] = useState<{ title: string; shopifyUrl: string; imageUrl?: string } | null>(null);
+  const [editingShopifyProductId, setEditingShopifyProductId] = useState<string | null>(null);
   const [wizardStep, setWizardStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [publishStatus, setPublishStatus] = useState<'draft' | 'active' | 'scheduled'>('active');
