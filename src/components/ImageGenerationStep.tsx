@@ -892,6 +892,9 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
             {/* Hover overlay */}
             {currentImage && hovered && (
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3 transition-opacity">
+                <button onClick={() => onUseAsReference(currentImage.url)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Usar como referência">
+                  <Camera className="w-4 h-4" />
+                </button>
                 <button onClick={() => onRegenerate(currentImage.id)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Regenerar">
                   <RefreshCw className="w-4 h-4" />
                 </button>
