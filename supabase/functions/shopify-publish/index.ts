@@ -198,7 +198,10 @@ serve(async (req) => {
 
       steps.push(`Produto atualizado com ${product.images?.length || 0} imagens!`);
       console.log(`[shopify-publish] Product updated: ${product.id}, images: ${product.images?.length || 0}`);
-    } else {
+      }
+    }
+
+    if (!isUpdate || createdNew) {
       // CREATE new product
       console.log(`[shopify-publish] Creating product with ${productImages.length} images`);
 
