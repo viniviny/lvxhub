@@ -1141,7 +1141,7 @@ const Index = () => {
             )}
 
             {/* HISTORY VIEW */}
-            {currentView === 'history' && <ProductHistory />}
+            {currentView === 'history' && <ProductHistory onEditProduct={handleEditPublishedProduct} />}
 
             {/* STORES VIEW */}
             {currentView === 'stores' && (
