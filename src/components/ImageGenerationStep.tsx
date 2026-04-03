@@ -686,11 +686,11 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
     const fromItem = displayList[dragIdx];
     if (!fromItem || 'empty' in fromItem) { setDragIdx(null); setDragOverIdx(null); return; }
     const reordered = [...images];
-    const fromImageIdx = reordered.findIndex(i => i.angle === fromItem.angle);
+    const fromImageIdx = reordered.findIndex(i => i.id === (fromItem as GeneratedImage).id);
     if (fromImageIdx < 0) { setDragIdx(null); setDragOverIdx(null); return; }
     const toItem = displayList[dropIdx];
     let toImageIdx: number;
-    if ('empty' in toItem) { toImageIdx = reordered.length - 1; } else { toImageIdx = reordered.findIndex(i => i.angle === toItem.angle); }
+    if ('empty' in toItem) { toImageIdx = reordered.length - 1; } else { toImageIdx = reordered.findIndex(i => i.id === (toItem as GeneratedImage).id); }
     const [moved] = reordered.splice(fromImageIdx, 1);
     reordered.splice(toImageIdx, 0, moved);
     const updated = reordered.map((img, i) => ({ ...img, isCover: i === 0 }));
