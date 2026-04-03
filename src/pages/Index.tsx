@@ -120,6 +120,7 @@ const Index = () => {
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishStep, setPublishStep] = useState(0);
+  const [imageUploadProgress, setImageUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [publishResult, setPublishResult] = useState<{ title: string; shopifyUrl: string; imageUrl?: string } | null>(null);
   const [wizardStep, setWizardStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
@@ -336,10 +337,15 @@ const Index = () => {
       // Build additional images array from all generated images (excluding cover if already used)
       const additionalImages: { imageBase64: string; imageName: string }[] = [];
       const coverUrl = coverImage?.url;
-      for (const img of generatedImages) {
-        if (!img.url) continue;
-        // Skip the cover image if it was already used as main
-        if (!imageFile && img.url === coverUrl) continue;
+      const imagesToProcess = generatedImages.filter(img => img.url && !((!imageFile) && img.url === coverUrl));
+      const totalToProcess = imagesToProcess.length + (colors.filter(c => c.imageUrl).length);
+      let processedCount = 0;
+
+      if (totalToProcess > 0) {
+        setImageUploadProgress({ current: 0, total: totalToProcess });
+      }
+
+      for (const img of imagesToProcess) {
         try {
           const resp = await fetch(img.url);
           const blob = await resp.blob();
@@ -353,6 +359,8 @@ const Index = () => {
         } catch (err) {
           console.warn(`[Publish] Failed to fetch generated image:`, err);
         }
+        processedCount++;
+        setImageUploadProgress({ current: processedCount, total: totalToProcess });
       }
       const mc = activeStore?.marketConfig;
 
@@ -398,8 +406,11 @@ const Index = () => {
           } catch (err) {
             console.warn(`[Publish] Failed to fetch color image for ${color.name}:`, err);
           }
+          processedCount++;
+          setImageUploadProgress({ current: processedCount, total: totalToProcess });
         }
       }
+      setImageUploadProgress(null);
 
       const { data, error } = await supabase.functions.invoke('shopify-publish', {
         body: {
@@ -1027,8 +1038,27 @@ const Index = () => {
                 <div className="glass-card p-10 text-center max-w-md w-full">
                   <Loader2 className="w-12 h-12 mx-auto animate-spin text-primary mb-6" />
                   <h2 className="font-display text-xl font-bold text-foreground mb-2">Publicando no Shopify</h2>
-                  <p className="text-sm text-muted-foreground mb-4">{PUBLISH_STEPS[publishStep]} ({publishStep + 1}/{PUBLISH_STEPS.length})</p>
-                  <Progress value={((publishStep + 1) / PUBLISH_STEPS.length) * 100} className="h-2" />
+
+                  {imageUploadProgress ? (
+                    <>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Preparando imagens... {imageUploadProgress.current}/{imageUploadProgress.total}
+                      </p>
+                      <div className="space-y-2">
+                        <Progress value={(imageUploadProgress.current / imageUploadProgress.total) * 100} className="h-2" />
+                        <p className="text-[10px] text-muted-foreground">
+                          {imageUploadProgress.current < imageUploadProgress.total
+                            ? `Processando imagem ${imageUploadProgress.current + 1} de ${imageUploadProgress.total}...`
+                            : 'Todas as imagens processadas!'}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground mb-4">{PUBLISH_STEPS[publishStep]} ({publishStep + 1}/{PUBLISH_STEPS.length})</p>
+                      <Progress value={((publishStep + 1) / PUBLISH_STEPS.length) * 100} className="h-2" />
+                    </>
+                  )}
                 </div>
               </div>
             )}
