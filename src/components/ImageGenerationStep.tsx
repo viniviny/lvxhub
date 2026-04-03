@@ -569,6 +569,25 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           onRemove={removeImage}
           onSetCover={setCover}
           onBulkRemove={bulkRemove}
+          onUseAsReference={async (url) => {
+            if (url.startsWith('data:')) {
+              setReferenceImage(url);
+              toast.success('Imagem definida como referência!');
+              return;
+            }
+            try {
+              const res = await fetch(url);
+              const blob = await res.blob();
+              const reader = new FileReader();
+              reader.onload = () => {
+                setReferenceImage(reader.result as string);
+                toast.success('Imagem definida como referência!');
+              };
+              reader.readAsDataURL(blob);
+            } catch {
+              toast.error('Erro ao carregar imagem como referência.');
+            }
+          }}
           aspectRatio={activeRatio}
           onAddUpload={() => fileInputRef.current?.click()}
         />
@@ -607,11 +626,12 @@ interface ImageGalleryProps {
   onRemove: (imageId: string) => void;
   onSetCover: (imageId: string) => void;
   onBulkRemove: (imageIds: string[]) => void;
+  onUseAsReference: (imageUrl: string) => void;
   aspectRatio: AspectRatio;
   onAddUpload: () => void;
 }
 
-function ImageGallery({ images, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover, onBulkRemove, aspectRatio, onAddUpload }: ImageGalleryProps) {
+function ImageGallery({ images, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover, onBulkRemove, onUseAsReference, aspectRatio, onAddUpload }: ImageGalleryProps) {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [slideDir, setSlideDir] = useState<'left' | 'right' | null>(null);
   const [isSliding, setIsSliding] = useState(false);
@@ -891,6 +911,9 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
             {/* Hover overlay */}
             {currentImage && hovered && (
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3 transition-opacity">
+                <button onClick={() => onUseAsReference(currentImage.url)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Usar como referência">
+                  <Camera className="w-4 h-4" />
+                </button>
                 <button onClick={() => onRegenerate(currentImage.id)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Regenerar">
                   <RefreshCw className="w-4 h-4" />
                 </button>
