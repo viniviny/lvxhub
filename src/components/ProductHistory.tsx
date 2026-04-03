@@ -227,7 +227,6 @@ export function ProductHistory({ onEditProduct }: ProductHistoryProps) {
                     <Pencil className="w-3.5 h-3.5 mr-2" />
                     Editar
                   </DropdownMenuItem>
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setDeleteProduct(product)} className="text-destructive focus:text-destructive">
                     <Trash2 className="w-3.5 h-3.5 mr-2" />
                     Remover
