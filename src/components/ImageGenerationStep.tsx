@@ -260,6 +260,12 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     onImagesChange(updated);
   };
 
+  const bulkRemove = (imageIds: string[]) => {
+    const updated = images.filter(img => !imageIds.includes(img.id));
+    if (updated.length > 0 && !updated.some(i => i.isCover)) updated[0].isCover = true;
+    onImagesChange(updated);
+  };
+
   const handleManualUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -562,6 +568,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           onRegenerate={regenerateImage}
           onRemove={removeImage}
           onSetCover={setCover}
+          onBulkRemove={bulkRemove}
           aspectRatio={activeRatio}
           onAddUpload={() => fileInputRef.current?.click()}
         />
@@ -599,11 +606,12 @@ interface ImageGalleryProps {
   onRegenerate: (imageId: string) => void;
   onRemove: (imageId: string) => void;
   onSetCover: (imageId: string) => void;
+  onBulkRemove: (imageIds: string[]) => void;
   aspectRatio: AspectRatio;
   onAddUpload: () => void;
 }
 
-function ImageGallery({ images, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover, aspectRatio, onAddUpload }: ImageGalleryProps) {
+function ImageGallery({ images, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover, onBulkRemove, aspectRatio, onAddUpload }: ImageGalleryProps) {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [slideDir, setSlideDir] = useState<'left' | 'right' | null>(null);
   const [isSliding, setIsSliding] = useState(false);
@@ -613,6 +621,8 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Build display list: all images + generating slots for angles not yet done
   const generatingSlots = Array.from(generatingAngles)
@@ -706,8 +716,68 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
   const mainMaxW = aspectRatio === '4:5' ? '496px' : '520px';
   const mainAspect = aspectRatio === '4:5' ? '4/5' : '1/1';
 
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) return;
+    onBulkRemove(Array.from(selectedIds));
+    setSelectedIds(new Set());
+    setSelectMode(false);
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
   return (
     <div className="flex-1 flex flex-col min-h-0" ref={containerRef} tabIndex={0} style={{ outline: 'none' }}>
+      {/* Select mode toolbar */}
+      {images.length > 1 && (
+        <div className="flex items-center justify-between mb-2">
+          {selectMode ? (
+            <div className="flex items-center gap-2 w-full">
+              <button
+                onClick={() => {
+                  if (selectedIds.size === images.length) setSelectedIds(new Set());
+                  else setSelectedIds(new Set(images.map(i => i.id)));
+                }}
+                className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {selectedIds.size === images.length ? 'Desmarcar tudo' : 'Selecionar tudo'}
+              </button>
+              <span className="text-[10px] text-muted-foreground flex-1">
+                {selectedIds.size} {selectedIds.size === 1 ? 'selecionada' : 'selecionadas'}
+              </span>
+              <button
+                onClick={handleBulkDelete}
+                disabled={selectedIds.size === 0}
+                className="flex items-center gap-1 text-[10px] text-destructive hover:text-destructive/80 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <Trash2 className="w-3 h-3" />
+                Excluir
+              </button>
+              <button onClick={exitSelectMode} className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setSelectMode(true)}
+              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors ml-auto"
+            >
+              <Check className="w-3 h-3" />
+              Selecionar
+            </button>
+          )}
+        </div>
+      )}
       <div className="flex gap-3 flex-1 min-h-0">
         {/* Thumbnail strip — vertical, left side */}
         {displayList.length > 0 && (
@@ -723,15 +793,16 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
 
               return (
                 <div
-                  key={`thumb-${angle}-${i}`}
+                  key={`thumb-${img?.id || angle}-${i}`}
                   className={`relative shrink-0 cursor-pointer rounded-md overflow-hidden transition-all duration-150
-                    ${isActive ? 'border-2 border-primary opacity-100' : 'border-2 border-transparent opacity-60 hover:opacity-100 hover:border-primary/40'}
+                    ${isActive && !selectMode ? 'border-2 border-primary opacity-100' : 'border-2 border-transparent opacity-60 hover:opacity-100 hover:border-primary/40'}
+                    ${selectMode && img && selectedIds.has(img.id) ? 'border-2 border-primary opacity-100 ring-1 ring-primary' : ''}
                     ${dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-primary' : ''}
                     ${dragIdx === i ? 'opacity-30' : ''}
                   `}
                   style={{ width: '64px', aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
-                  onClick={() => setSelectedIdx(i)}
-                  draggable={!!img}
+                  onClick={() => selectMode && img ? toggleSelect(img.id) : setSelectedIdx(i)}
+                  draggable={!selectMode && !!img}
                   onDragStart={e => handleThumbDragStart(e, i)}
                   onDragOver={e => handleThumbDragOver(e, i)}
                   onDrop={e => handleThumbDrop(e, i)}
@@ -751,7 +822,15 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
                       <span className="text-[7px] text-muted-foreground/40 leading-tight">{label}</span>
                     </div>
                   )}
-                  {isFirst && img && (
+                  {/* Select mode checkbox */}
+                  {selectMode && img && (
+                    <div className={`absolute top-0.5 right-0.5 w-4 h-4 rounded-sm border flex items-center justify-center transition-all
+                      ${selectedIds.has(img.id) ? 'bg-primary border-primary' : 'bg-black/40 border-white/50'}`}
+                    >
+                      {selectedIds.has(img.id) && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                    </div>
+                  )}
+                  {!selectMode && isFirst && img && (
                     <span className="absolute bottom-0.5 left-0.5 text-[7px] font-semibold px-1 py-0.5 rounded bg-black/70 text-white/90">
                       Capa
                     </span>
