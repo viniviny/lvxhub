@@ -598,7 +598,7 @@ const Index = () => {
 
       {/* DASHBOARD */}
       <div className="flex-1 flex">
-        <DashboardSidebar stores={stores} activeStoreId={activeStore?.id || null} onSelectStore={setActiveStore} onAddStore={handleAddStore} currentView={currentView} onViewChange={handleViewChange} />
+        <DashboardSidebar currentView={currentView} onViewChange={handleViewChange} />
 
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto px-4 py-3">
