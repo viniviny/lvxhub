@@ -492,7 +492,7 @@ const Index = () => {
       description: product.description || '',
       price: product.local_price || product.base_price || 0,
       collection: product.collection || '',
-      sizes: product.sizes || [],
+      sizes: (product.sizes || []) as ProductSize[],
     }));
     syncFormToProject({
       ...form,
@@ -500,7 +500,7 @@ const Index = () => {
       description: product.description || '',
       price: product.local_price || product.base_price || 0,
       collection: product.collection || '',
-      sizes: product.sizes || [],
+      sizes: (product.sizes || []) as ProductSize[],
     });
 
     // Load image if available
