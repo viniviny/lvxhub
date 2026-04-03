@@ -72,7 +72,7 @@ function PreviewContent({ form, images, imagePreview, storeDomain, currencySymbo
   const [mainImage, setMainImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState(form.sizes[0] || form.variants[0]?.name || '');
   const [openAccordion, setOpenAccordion] = useState<string | null>('description');
-  const [qty, setQty] = useState(1);
+  
   const [showArrows, setShowArrows] = useState(false);
 
   const discount = calculateDiscount(form.price, form.compareAtPrice);
