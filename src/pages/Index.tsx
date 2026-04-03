@@ -431,6 +431,7 @@ const Index = () => {
           languageLabel: activeStoreLang?.label || null,
           marketName: mc?.marketName || null,
           colorImages,
+          additionalImages,
         },
       });
 
