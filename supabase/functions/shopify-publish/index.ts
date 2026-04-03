@@ -68,7 +68,7 @@ serve(async (req) => {
           weight: v.weight || weight || 0,
           weight_unit: v.weightUnit || weightUnit || 'kg',
         }))
-      : (sizes && sizes.length > 0 ? sizes : ['Único']).map((size: string) => ({
+      : (sizes && sizes.length > 0 ? sizes : ['One Size']).map((size: string) => ({
           option1: size,
           price: (price || 0).toString(),
           compare_at_price: compareAtPrice ? compareAtPrice.toString() : null,
