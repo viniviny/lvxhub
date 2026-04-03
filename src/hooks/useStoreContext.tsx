@@ -17,6 +17,7 @@ interface StoreContextType {
   removeStore: (storeId: string) => void;
   setDefault: (storeId: string) => void;
   updateStoreMarket: (storeId: string, marketConfig: MarketConfig) => void;
+  updateStoreLogo: (storeId: string, logoUrl: string | null) => void;
   startOAuth: (store: ShopifyStore) => void;
   incrementPublished: () => void;
   refreshStores: () => void;
@@ -228,6 +229,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const updateStoreLogo = useCallback((storeId: string, logoUrl: string | null) => {
+    setStores(prev => {
+      const updated = prev.map(s => s.id === storeId ? { ...s, logoUrl } : s);
+      persistStores(updated);
+      return updated;
+    });
+  }, []);
+
   const startOAuth = useCallback((store: ShopifyStore) => {
     localStorage.setItem('publify_pending_store', store.id);
     localStorage.setItem('shopify_settings', JSON.stringify({
@@ -254,7 +263,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     <StoreContext.Provider value={{
       stores, activeStore, activeStoreId, hasConnectedStore, publishedCount, isLoading,
       setActiveStore: setActiveStoreAction, addStore, connectStore, connectStoreWithMarket,
-      disconnectStore, removeStore, setDefault, updateStoreMarket, startOAuth,
+      disconnectStore, removeStore, setDefault, updateStoreMarket, updateStoreLogo, startOAuth,
       incrementPublished, refreshStores,
     }}>
       {children}
