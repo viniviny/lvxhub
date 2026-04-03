@@ -323,7 +323,7 @@ serve(async (req) => {
     }
 
     // --- Persist to published_products ---
-    await adminClient.from('published_products').insert({
+    const publishedRecord = {
       user_id: userId,
       shopify_product_id: product.id.toString(),
       title: product.title,
@@ -345,7 +345,17 @@ serve(async (req) => {
       market_name: marketName || null,
       region_group: regionGroup || null,
       shopify_url: shopifyProductUrl,
-    });
+    };
+
+    if (isUpdate) {
+      // Update existing record by shopify_product_id
+      await adminClient.from('published_products')
+        .update(publishedRecord)
+        .eq('shopify_product_id', shopifyProductId)
+        .eq('user_id', userId);
+    } else {
+      await adminClient.from('published_products').insert(publishedRecord);
+    }
 
     return new Response(JSON.stringify({
       productId: product.id.toString(),
