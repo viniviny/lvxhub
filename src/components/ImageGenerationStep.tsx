@@ -569,6 +569,25 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           onRemove={removeImage}
           onSetCover={setCover}
           onBulkRemove={bulkRemove}
+          onUseAsReference={async (url) => {
+            if (url.startsWith('data:')) {
+              setReferenceImage(url);
+              toast.success('Imagem definida como referência!');
+              return;
+            }
+            try {
+              const res = await fetch(url);
+              const blob = await res.blob();
+              const reader = new FileReader();
+              reader.onload = () => {
+                setReferenceImage(reader.result as string);
+                toast.success('Imagem definida como referência!');
+              };
+              reader.readAsDataURL(blob);
+            } catch {
+              toast.error('Erro ao carregar imagem como referência.');
+            }
+          }}
           aspectRatio={activeRatio}
           onAddUpload={() => fileInputRef.current?.click()}
         />
