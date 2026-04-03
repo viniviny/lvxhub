@@ -103,36 +103,55 @@ serve(async (req) => {
 
     let product: any;
 
+    let createdNew = false;
+
     if (isUpdate) {
       // UPDATE existing product
       console.log(`[shopify-publish] Updating product ${shopifyProductId} with ${productImages.length} images`);
 
-      const updatePayload: Record<string, unknown> = {
-        product: {
-          id: shopifyProductId,
-          title: title || 'Produto sem título',
-          body_html: cleanDescription || '',
-          product_type: collection || '',
-          tags: tags || '',
-          variants: variantsPayload,
-          options: [{ name: 'Tamanho', values: optionValues }],
-        },
-      };
-
-      const updateRes = await fetch(`${baseUrl}/products/${shopifyProductId}.json`, {
-        method: 'PUT',
-        headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatePayload),
+      // First check if product still exists
+      const checkRes = await fetch(`${baseUrl}/products/${shopifyProductId}.json`, {
+        headers: { 'X-Shopify-Access-Token': accessToken },
       });
 
-      if (!updateRes.ok) {
-        const errText = await updateRes.text();
-        console.error('[shopify-publish] Update product error:', errText);
-        return new Response(JSON.stringify({ error: 'Erro ao atualizar produto no Shopify.', step: 'update_product', details: errText }), { status: updateRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
+      if (checkRes.status === 404) {
+        // Product no longer exists — fall back to creating a new one
+        console.warn(`[shopify-publish] Product ${shopifyProductId} not found, creating new product instead`);
+        await checkRes.text(); // consume body
+        createdNew = true;
+      } else if (!checkRes.ok) {
+        const errText = await checkRes.text();
+        console.error('[shopify-publish] Check product error:', errText);
+        return new Response(JSON.stringify({ error: 'Erro ao verificar produto no Shopify.', step: 'check_product', details: errText }), { status: checkRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      } else {
+        await checkRes.text(); // consume body
 
-      const updateData = await updateRes.json();
-      product = updateData.product;
+        const updatePayload: Record<string, unknown> = {
+          product: {
+            id: shopifyProductId,
+            title: title || 'Produto sem título',
+            body_html: cleanDescription || '',
+            product_type: collection || '',
+            tags: tags || '',
+            variants: variantsPayload,
+            options: [{ name: 'Tamanho', values: optionValues }],
+          },
+        };
+
+        const updateRes = await fetch(`${baseUrl}/products/${shopifyProductId}.json`, {
+          method: 'PUT',
+          headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatePayload),
+        });
+
+        if (!updateRes.ok) {
+          const errText = await updateRes.text();
+          console.error('[shopify-publish] Update product error:', errText);
+          return new Response(JSON.stringify({ error: 'Erro ao atualizar produto no Shopify.', step: 'update_product', details: errText }), { status: updateRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+
+        const updateData = await updateRes.json();
+        product = updateData.product;
 
       // If new images provided, delete old images first then upload new ones
       if (productImages.length > 0) {
