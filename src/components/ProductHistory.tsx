@@ -14,8 +14,66 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export function ProductHistory() {
-  const { products, loading, filters, setFilters } = usePublishedProducts();
+  const { products, loading, filters, setFilters, refetch } = usePublishedProducts();
   const [search, setSearch] = useState('');
+  const [editingProduct, setEditingProduct] = useState<PublishedProduct | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [deleteProduct, setDeleteProduct] = useState<PublishedProduct | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleEdit = (product: PublishedProduct) => {
+    setEditingProduct(product);
+    setEditTitle(product.title);
+    setEditDescription(product.description || '');
+    setEditPrice(product.local_price?.toString() || '');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingProduct) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('published_products')
+        .update({
+          title: editTitle,
+          description: editDescription,
+          local_price: editPrice ? parseFloat(editPrice) : null,
+        })
+        .eq('id', editingProduct.id);
+      if (error) throw error;
+      toast.success('Produto atualizado com sucesso');
+      setEditingProduct(null);
+      refetch();
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao atualizar produto');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteProduct) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('published_products')
+        .delete()
+        .eq('id', deleteProduct.id);
+      if (error) throw error;
+      toast.success('Produto removido do histórico');
+      setDeleteProduct(null);
+      refetch();
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao remover produto');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return products;
