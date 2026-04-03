@@ -188,11 +188,10 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     setGenStartTime(now);
     setCompletedAngles(new Set());
     setAngleStartTimes(Object.fromEntries(angles.map(a => [a, now])));
-    const results: GeneratedImage[] = [...images];
+    const newImages: GeneratedImage[] = [];
     const isCustomPrompt = promptMode === 'custom';
     const promises = angles.map(async (angle) => {
       try {
-        // Extract base64 and mimeType from data URL if reference image exists
         let refBase64: string | undefined;
         let refMimeType: string | undefined;
         if (referenceImage) {
@@ -204,33 +203,29 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         });
         if (error || data?.error) { toast.error(`Erro ao gerar imagem (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`); return null; }
         const imageUrl = data.imageUrl;
-        const idx = results.findIndex(img => img.angle === angle);
-        const newImage: GeneratedImage = { angle, url: imageUrl, isCover: results.length === 0 && angle === angles[0], justCompleted: true };
-        if (idx >= 0) results[idx] = newImage; else results.push(newImage);
+        const newImage: GeneratedImage = { id: crypto.randomUUID(), angle, url: imageUrl, isCover: false, justCompleted: true };
+        newImages.push(newImage);
         setGeneratedCount(prev => prev + 1);
         setCompletedAngles(prev => new Set(prev).add(angle));
         setGeneratingAngles(prev => { const next = new Set(prev); next.delete(angle); return next; });
-        // Update parent with partial results so slots show images as they arrive
-        const snapshot = [...results];
-        if (snapshot.length > 0 && !snapshot.some(r => r.isCover)) snapshot[0].isCover = true;
-        onImagesChange(snapshot);
+        // Update parent with partial results — append to existing
+        const allImgs = [...images, ...newImages];
+        if (allImgs.length > 0 && !allImgs.some(r => r.isCover)) allImgs[0].isCover = true;
+        onImagesChange(allImgs);
         return newImage;
       } catch { toast.error(`Erro ao gerar imagem (${angle})`); return null; }
     });
     await Promise.all(promises);
-    if (results.length > 0 && !results.some(r => r.isCover)) results[0].isCover = true;
-    onImagesChange(results.map(r => ({ ...r, justCompleted: false })));
+    const allFinal = [...images, ...newImages];
+    if (allFinal.length > 0 && !allFinal.some(r => r.isCover)) allFinal[0].isCover = true;
+    onImagesChange(allFinal.map(r => ({ ...r, justCompleted: false })));
     setIsGenerating(false);
     setGeneratingAngles(new Set());
     setGenStartTime(null);
     setAngleStartTimes({});
     const elapsed = ((Date.now() - now) / 1000).toFixed(0);
-    const successCount = results.filter(r => r.url).length;
-    if (successCount > 0) toast.success(`${successCount} imagens geradas em ${elapsed}s ✓`);
-    // Clear justCompleted flags after animation
-    setTimeout(() => {
-      setCompletedAngles(new Set());
-    }, 2500);
+    if (newImages.length > 0) toast.success(`${newImages.length} imagens geradas em ${elapsed}s ✓`);
+    setTimeout(() => { setCompletedAngles(new Set()); }, 2500);
   }, [prompt, promptMode, selectedAngles, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
 
   const regenerateAngle = useCallback(async (angle: ImageAngle) => {
