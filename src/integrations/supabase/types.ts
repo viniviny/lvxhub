@@ -241,6 +241,8 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          logo_url: string | null
+          market_config: Json | null
           shop_name: string
           store_domain: string
           updated_at: string
@@ -251,6 +253,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          logo_url?: string | null
+          market_config?: Json | null
           shop_name: string
           store_domain: string
           updated_at?: string
@@ -261,6 +265,8 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          logo_url?: string | null
+          market_config?: Json | null
           shop_name?: string
           store_domain?: string
           updated_at?: string
