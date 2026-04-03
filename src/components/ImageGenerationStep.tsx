@@ -793,15 +793,16 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
 
               return (
                 <div
-                  key={`thumb-${angle}-${i}`}
+                  key={`thumb-${img?.id || angle}-${i}`}
                   className={`relative shrink-0 cursor-pointer rounded-md overflow-hidden transition-all duration-150
-                    ${isActive ? 'border-2 border-primary opacity-100' : 'border-2 border-transparent opacity-60 hover:opacity-100 hover:border-primary/40'}
+                    ${isActive && !selectMode ? 'border-2 border-primary opacity-100' : 'border-2 border-transparent opacity-60 hover:opacity-100 hover:border-primary/40'}
+                    ${selectMode && img && selectedIds.has(img.id) ? 'border-2 border-primary opacity-100 ring-1 ring-primary' : ''}
                     ${dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-primary' : ''}
                     ${dragIdx === i ? 'opacity-30' : ''}
                   `}
                   style={{ width: '64px', aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
-                  onClick={() => setSelectedIdx(i)}
-                  draggable={!!img}
+                  onClick={() => selectMode && img ? toggleSelect(img.id) : setSelectedIdx(i)}
+                  draggable={!selectMode && !!img}
                   onDragStart={e => handleThumbDragStart(e, i)}
                   onDragOver={e => handleThumbDragOver(e, i)}
                   onDrop={e => handleThumbDrop(e, i)}
@@ -821,7 +822,15 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
                       <span className="text-[7px] text-muted-foreground/40 leading-tight">{label}</span>
                     </div>
                   )}
-                  {isFirst && img && (
+                  {/* Select mode checkbox */}
+                  {selectMode && img && (
+                    <div className={`absolute top-0.5 right-0.5 w-4 h-4 rounded-sm border flex items-center justify-center transition-all
+                      ${selectedIds.has(img.id) ? 'bg-primary border-primary' : 'bg-black/40 border-white/50'}`}
+                    >
+                      {selectedIds.has(img.id) && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
+                    </div>
+                  )}
+                  {!selectMode && isFirst && img && (
                     <span className="absolute bottom-0.5 left-0.5 text-[7px] font-semibold px-1 py-0.5 rounded bg-black/70 text-white/90">
                       Capa
                     </span>
