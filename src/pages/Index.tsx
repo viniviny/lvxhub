@@ -122,6 +122,7 @@ const Index = () => {
   const [publishStep, setPublishStep] = useState(0);
   const [imageUploadProgress, setImageUploadProgress] = useState<{ current: number; total: number } | null>(null);
   const [publishResult, setPublishResult] = useState<{ title: string; shopifyUrl: string; imageUrl?: string } | null>(null);
+  const [editingShopifyProductId, setEditingShopifyProductId] = useState<string | null>(null);
   const [wizardStep, setWizardStep] = useState(1);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [publishStatus, setPublishStatus] = useState<'draft' | 'active' | 'scheduled'>('active');
@@ -443,6 +444,7 @@ const Index = () => {
           marketName: mc?.marketName || null,
           colorImages,
           additionalImages,
+          shopifyProductId: editingShopifyProductId || null,
         },
       });
 
@@ -453,7 +455,8 @@ const Index = () => {
 
       incrementPublished();
       setPublishResult({ title: data.title, shopifyUrl: data.shopifyUrl, imageUrl: data.imageUrl });
-      toast.success(`Produto publicado em ${activeStore.domain}!`);
+      setEditingShopifyProductId(null);
+      toast.success(editingShopifyProductId ? `Produto atualizado em ${activeStore.domain}!` : `Produto publicado em ${activeStore.domain}!`);
       // Mark project as published
       publishProject();
     } catch (err: any) {
@@ -478,7 +481,7 @@ const Index = () => {
   };
 
   const handleNewProduct = async () => {
-    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced'); resetUnderstanding(); setUsedTitleNames([]);
+    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setEditingShopifyProductId(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced'); resetUnderstanding(); setUsedTitleNames([]);
     if (fileInputRef.current) fileInputRef.current.value = '';
     projectRestoredRef.current = false;
     await createNewProject();
@@ -515,7 +518,8 @@ const Index = () => {
     }
 
     setPublishResult(null);
-    setWizardStep(4); // Go to review step
+    setEditingShopifyProductId(product.shopify_product_id || null);
+    setWizardStep(4);
     setCompletedSteps(new Set([1, 2, 3]));
     setCurrentView('publish');
     toast.info('Produto carregado para edição');
