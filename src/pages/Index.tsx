@@ -359,6 +359,26 @@ const Index = () => {
       // Start from step 1 (past optimization) if optimization was done
       if (optimizeImages) setPublishStep(1);
 
+      // Build color image map: fetch color images and convert to base64
+      const colorImages: { variantName: string; imageBase64: string; imageName: string }[] = [];
+      for (const color of colors) {
+        if (color.imageUrl) {
+          try {
+            const resp = await fetch(color.imageUrl);
+            const blob = await resp.blob();
+            const reader = new FileReader();
+            let b64 = await new Promise<string>((resolve) => {
+              reader.onload = () => resolve(reader.result as string);
+              reader.readAsDataURL(blob);
+            });
+            if (b64.includes(',')) b64 = b64.split(',')[1];
+            colorImages.push({ variantName: color.name, imageBase64: b64, imageName: `variant-${color.name}-${Date.now()}.png` });
+          } catch (err) {
+            console.warn(`[Publish] Failed to fetch color image for ${color.name}:`, err);
+          }
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke('shopify-publish', {
         body: {
           title: form.title,
@@ -388,6 +408,7 @@ const Index = () => {
           language: mc?.language || null,
           languageLabel: activeStoreLang?.label || null,
           marketName: mc?.marketName || null,
+          colorImages,
         },
       });
 
