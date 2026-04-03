@@ -1,13 +1,79 @@
-import { usePublishedProducts, type HistoryFilters } from '@/hooks/usePublishedProducts';
+import { usePublishedProducts, type HistoryFilters, type PublishedProduct } from '@/hooks/usePublishedProducts';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ExternalLink, Package, Search, Loader2, Filter } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { ExternalLink, Package, Search, Loader2, Filter, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export function ProductHistory() {
-  const { products, loading, filters, setFilters } = usePublishedProducts();
+  const { products, loading, filters, setFilters, refetch } = usePublishedProducts();
   const [search, setSearch] = useState('');
+  const [editingProduct, setEditingProduct] = useState<PublishedProduct | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [deleteProduct, setDeleteProduct] = useState<PublishedProduct | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleEdit = (product: PublishedProduct) => {
+    setEditingProduct(product);
+    setEditTitle(product.title);
+    setEditDescription(product.description || '');
+    setEditPrice(product.local_price?.toString() || '');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingProduct) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('published_products')
+        .update({
+          title: editTitle,
+          description: editDescription,
+          local_price: editPrice ? parseFloat(editPrice) : null,
+        })
+        .eq('id', editingProduct.id);
+      if (error) throw error;
+      toast.success('Produto atualizado com sucesso');
+      setEditingProduct(null);
+      refetch();
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao atualizar produto');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteProduct) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('published_products')
+        .delete()
+        .eq('id', deleteProduct.id);
+      if (error) throw error;
+      toast.success('Produto removido do histórico');
+      setDeleteProduct(null);
+      refetch();
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao remover produto');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const filteredProducts = useMemo(() => {
     if (!search.trim()) return products;
@@ -179,6 +245,24 @@ export function ProductHistory() {
               {product.collection && (
                 <Badge variant="secondary" className="text-xs flex-shrink-0">{product.collection}</Badge>
               )}
+              {/* Actions menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="flex-shrink-0 h-8 w-8">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleEdit(product)}>
+                    <Pencil className="w-3.5 h-3.5 mr-2" />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setDeleteProduct(product)} className="text-destructive focus:text-destructive">
+                    <Trash2 className="w-3.5 h-3.5 mr-2" />
+                    Remover
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ))}
         </div>
@@ -193,6 +277,55 @@ export function ProductHistory() {
           <span>{languages.length} idioma{languages.length !== 1 ? 's' : ''}</span>
         </div>
       )}
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar produto</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Título</Label>
+              <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Descrição</Label>
+              <Textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={3} />
+            </div>
+            <div className="space-y-2">
+              <Label>Preço local</Label>
+              <Input type="number" step="0.01" value={editPrice} onChange={e => setEditPrice(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingProduct(null)}>Cancelar</Button>
+            <Button onClick={handleSaveEdit} disabled={saving}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteProduct} onOpenChange={(open) => !open && setDeleteProduct(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover produto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover "{deleteProduct?.title}" do histórico? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
