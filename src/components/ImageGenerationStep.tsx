@@ -592,19 +592,18 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
 /* ─── Image Gallery (Main image + Thumbnail strip) ─── */
 interface ImageGalleryProps {
   images: GeneratedImage[];
-  allSlots: ImageAngle[];
   generatingAngles: Set<ImageAngle>;
   completedAngles: Set<ImageAngle>;
   angleStartTimes: Record<string, number>;
   onImagesChange: (images: GeneratedImage[]) => void;
-  onRegenerate: (angle: ImageAngle) => void;
-  onRemove: (angle: ImageAngle) => void;
-  onSetCover: (angle: ImageAngle) => void;
+  onRegenerate: (imageId: string) => void;
+  onRemove: (imageId: string) => void;
+  onSetCover: (imageId: string) => void;
   aspectRatio: AspectRatio;
   onAddUpload: () => void;
 }
 
-function ImageGallery({ images, allSlots, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover, aspectRatio, onAddUpload }: ImageGalleryProps) {
+function ImageGallery({ images, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover, aspectRatio, onAddUpload }: ImageGalleryProps) {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [slideDir, setSlideDir] = useState<'left' | 'right' | null>(null);
   const [isSliding, setIsSliding] = useState(false);
@@ -615,12 +614,13 @@ function ImageGallery({ images, allSlots, generatingAngles, completedAngles, ang
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Build display list: real images first, then empty slots for generating/pending angles
-  const imageAngles = images.map(i => i.angle);
-  const emptyAngles = allSlots.filter(a => !imageAngles.includes(a));
+  // Build display list: all images + generating slots for angles not yet done
+  const generatingSlots = Array.from(generatingAngles)
+    .filter(angle => !images.some(img => img.angle === angle && img.justCompleted))
+    .map(angle => ({ angle, empty: true as const }));
   const displayList: (GeneratedImage | { angle: ImageAngle; empty: true })[] = [
     ...images,
-    ...emptyAngles.map(a => ({ angle: a, empty: true as const })),
+    ...generatingSlots,
   ];
 
   // Clamp selected index
