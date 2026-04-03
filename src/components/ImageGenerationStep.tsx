@@ -568,6 +568,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           onRegenerate={regenerateImage}
           onRemove={removeImage}
           onSetCover={setCover}
+          onBulkRemove={bulkRemove}
           aspectRatio={activeRatio}
           onAddUpload={() => fileInputRef.current?.click()}
         />
