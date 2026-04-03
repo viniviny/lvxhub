@@ -769,9 +769,9 @@ const Index = () => {
 
                   {/* ═══ STEP 3: VARIANTS & SHIPPING ═══ */}
                   {wizardStep === 3 && (
-                    <div className="grid grid-cols-[340px_1fr] gap-3">
-                      {/* LEFT — Price + Sizes + Variants */}
-                      <div className="space-y-3">
+                    <div className="space-y-3">
+                      {/* TOP ROW — Price + Shipping side by side */}
+                      <div className="grid grid-cols-2 gap-3">
                         <div className="glass-card p-4 space-y-3">
                           <h3 className="font-display font-semibold text-[13px] text-foreground">Preço</h3>
                           <PriceSection
@@ -785,40 +785,37 @@ const Index = () => {
                           />
                         </div>
 
-                        <div className="glass-card p-4 space-y-3">
-                          <h3 className="font-display font-semibold text-[13px] text-foreground">Tamanhos e variantes</h3>
-                          <div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {AVAILABLE_SIZES.map(size => (
-                                <button key={size} type="button" onClick={() => toggleSize(size)} className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${form.sizes.includes(size) ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>{size}</button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <VariantsTable
-                            variants={form.variants}
-                            onChange={v => setFormWithSave(prev => ({ ...prev, variants: v }))}
-                            inventoryPolicy={form.inventoryPolicy}
-                            onInventoryPolicyChange={p => setFormWithSave(prev => ({ ...prev, inventoryPolicy: p }))}
-                            productType={form.collection || form.title}
-                            currencySymbol={currencySymbol}
+                        <div className="flex flex-col gap-3">
+                          <ShippingCard
+                            requiresShipping={form.requiresShipping}
+                            onRequiresShippingChange={v => setFormWithSave(prev => ({ ...prev, requiresShipping: v }))}
+                            weight={form.weight}
+                            onWeightChange={v => setFormWithSave(prev => ({ ...prev, weight: v }))}
+                            weightUnit={form.weightUnit}
+                            onWeightUnitChange={v => setFormWithSave(prev => ({ ...prev, weightUnit: v }))}
+                            countryOfOrigin={form.countryOfOrigin}
+                            onCountryOfOriginChange={v => setFormWithSave(prev => ({ ...prev, countryOfOrigin: v }))}
                           />
+                          <ColorManager colors={colors} onColorsChange={setColors} />
                         </div>
                       </div>
 
-                      {/* RIGHT — Color + Shipping */}
-                      <div className="space-y-3">
-                        <ColorManager colors={colors} onColorsChange={setColors} />
+                      {/* BOTTOM — Sizes + Variants full width */}
+                      <div className="glass-card p-4 space-y-3">
+                        <h3 className="font-display font-semibold text-[13px] text-foreground">Tamanhos e variantes</h3>
+                        <div className="flex flex-wrap gap-1.5">
+                          {AVAILABLE_SIZES.map(size => (
+                            <button key={size} type="button" onClick={() => toggleSize(size)} className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${form.sizes.includes(size) ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>{size}</button>
+                          ))}
+                        </div>
 
-                        <ShippingCard
-                          requiresShipping={form.requiresShipping}
-                          onRequiresShippingChange={v => setFormWithSave(prev => ({ ...prev, requiresShipping: v }))}
-                          weight={form.weight}
-                          onWeightChange={v => setFormWithSave(prev => ({ ...prev, weight: v }))}
-                          weightUnit={form.weightUnit}
-                          onWeightUnitChange={v => setFormWithSave(prev => ({ ...prev, weightUnit: v }))}
-                          countryOfOrigin={form.countryOfOrigin}
-                          onCountryOfOriginChange={v => setFormWithSave(prev => ({ ...prev, countryOfOrigin: v }))}
+                        <VariantsTable
+                          variants={form.variants}
+                          onChange={v => setFormWithSave(prev => ({ ...prev, variants: v }))}
+                          inventoryPolicy={form.inventoryPolicy}
+                          onInventoryPolicyChange={p => setFormWithSave(prev => ({ ...prev, inventoryPolicy: p }))}
+                          productType={form.collection || form.title}
+                          currencySymbol={currencySymbol}
                         />
                       </div>
                     </div>
