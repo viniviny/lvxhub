@@ -604,7 +604,7 @@ interface ImageGalleryProps {
   onAddUpload: () => void;
 }
 
-function ImageGallery({ images, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover, aspectRatio, onAddUpload }: ImageGalleryProps) {
+function ImageGallery({ images, generatingAngles, completedAngles, angleStartTimes, onImagesChange, onRegenerate, onRemove, onSetCover, onBulkRemove, aspectRatio, onAddUpload }: ImageGalleryProps) {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [slideDir, setSlideDir] = useState<'left' | 'right' | null>(null);
   const [isSliding, setIsSliding] = useState(false);
@@ -614,6 +614,8 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Build display list: all images + generating slots for angles not yet done
   const generatingSlots = Array.from(generatingAngles)
