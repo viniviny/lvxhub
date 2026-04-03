@@ -234,21 +234,40 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const persistToDb = useCallback(async (storeDomain: string, fields: { market_config?: MarketConfig; logo_url?: string | null }) => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session) return;
+      await supabase
+        .from('shopify_connections')
+        .update({ ...fields, updated_at: new Date().toISOString() } as any)
+        .eq('store_domain', storeDomain)
+        .eq('user_id', session.session.user.id)
+        .eq('is_active', true);
+    } catch (err) {
+      console.error('Error persisting store config to DB:', err);
+    }
+  }, []);
+
   const updateStoreMarket = useCallback((storeId: string, marketConfig: MarketConfig) => {
     setStores(prev => {
       const updated = prev.map(s => s.id === storeId ? { ...s, marketConfig } : s);
       persistStores(updated);
+      const store = updated.find(s => s.id === storeId);
+      if (store) persistToDb(store.domain, { market_config: marketConfig });
       return updated;
     });
-  }, []);
+  }, [persistToDb]);
 
   const updateStoreLogo = useCallback((storeId: string, logoUrl: string | null) => {
     setStores(prev => {
       const updated = prev.map(s => s.id === storeId ? { ...s, logoUrl } : s);
       persistStores(updated);
+      const store = updated.find(s => s.id === storeId);
+      if (store) persistToDb(store.domain, { logo_url: logoUrl });
       return updated;
     });
-  }, []);
+  }, [persistToDb]);
 
   const startOAuth = useCallback((store: ShopifyStore) => {
     localStorage.setItem('publify_pending_store', store.id);
