@@ -1173,6 +1173,9 @@ const Index = () => {
             {/* HISTORY VIEW */}
             {currentView === 'history' && <ProductHistory onEditProduct={handleEditPublishedProduct} />}
 
+            {/* LIBRARY VIEW */}
+            {currentView === 'library' && <ImageLibrary />}
+
             {/* STORES VIEW */}
             {currentView === 'stores' && (
               <div className="animate-fade-in">
