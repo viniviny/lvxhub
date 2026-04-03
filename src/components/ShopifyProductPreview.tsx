@@ -12,6 +12,7 @@ interface ShopifyProductPreviewProps {
   imagePreview: string | null;
   storeDomain: string;
   currencySymbol: string;
+  storeLogo?: string | null;
 }
 
 const DEVICE_KEY = 'publify_preview_device';
@@ -63,7 +64,7 @@ function DeviceFrame({ device, children }: { device: DeviceType; children: React
   );
 }
 
-function PreviewContent({ form, images, imagePreview, storeDomain, currencySymbol, device }: ShopifyProductPreviewProps & { device: DeviceType }) {
+function PreviewContent({ form, images, imagePreview, storeDomain, currencySymbol, storeLogo, device }: ShopifyProductPreviewProps & { device: DeviceType }) {
   const allImages: { url: string; label: string }[] = images.filter(i => i.url).map(i => ({ url: i.url!, label: i.angle }));
   if (imagePreview && !allImages.some(i => i.url === imagePreview)) {
     allImages.unshift({ url: imagePreview, label: 'Capa' });
@@ -115,9 +116,14 @@ function PreviewContent({ form, images, imagePreview, storeDomain, currencySymbo
 
       {/* Store header */}
       <div className={`flex items-center justify-between border-b border-[hsl(220,14%,96%)] bg-white ${isMobile ? 'h-11 px-4' : 'h-[52px] px-6'}`}>
-        <span className={`font-semibold text-[hsl(220,13%,13%)] ${isMobile ? 'text-xs' : 'text-sm'}`}>
-          {displayDomain.replace('.myshopify.com', '')}
-        </span>
+        <div className="flex items-center gap-2">
+          {storeLogo ? (
+            <img src={storeLogo} alt="Store logo" className={`object-contain rounded ${isMobile ? 'w-5 h-5' : 'w-6 h-6'}`} />
+          ) : null}
+          <span className={`font-semibold text-[hsl(220,13%,13%)] ${isMobile ? 'text-xs' : 'text-sm'}`}>
+            {displayDomain.replace('.myshopify.com', '')}
+          </span>
+        </div>
         {!isMobile && (
           <div className="flex items-center gap-5 text-xs text-[hsl(220,9%,46%)]">
             <span>Home</span><span>Collections</span><span>About</span>
