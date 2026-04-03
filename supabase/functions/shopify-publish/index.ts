@@ -369,7 +369,7 @@ serve(async (req) => {
       shopify_url: shopifyProductUrl,
     };
 
-    if (isUpdate) {
+    if (isUpdate && !createdNew) {
       // Update existing record by shopify_product_id
       await adminClient.from('published_products')
         .update(publishedRecord)
