@@ -1196,6 +1196,7 @@ const Index = () => {
                             </div>
                           </div>
                           <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" className="text-xs" onClick={() => setShowManagement(true)}>Editar</Button>
                             {!store.connected && <Button variant="ghost" size="sm" className="text-primary text-xs" onClick={() => handleReconnect(store)}>Reconectar</Button>}
                             <Button variant="ghost" size="sm" className="text-destructive text-xs" onClick={() => { removeStore(store.id); toast.success('Loja removida.'); }}>Remover</Button>
                           </div>
