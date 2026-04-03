@@ -133,6 +133,7 @@ const Index = () => {
   const [usedTitleNames, setUsedTitleNames] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const projectRestoredRef = useRef(false);
+  const savedToLibraryRef = useRef<Set<string>>(new Set());
 
   // Product understanding engine
   const {
