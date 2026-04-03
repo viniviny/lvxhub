@@ -222,6 +222,7 @@ export function useStoreManager() {
     removeStore,
     setDefault,
     updateStoreMarket,
+    updateStoreLogo,
     startOAuth,
     incrementPublished,
   };
