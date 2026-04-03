@@ -64,7 +64,7 @@ function DeviceFrame({ device, children }: { device: DeviceType; children: React
   );
 }
 
-function PreviewContent({ form, images, imagePreview, storeDomain, currencySymbol, device }: ShopifyProductPreviewProps & { device: DeviceType }) {
+function PreviewContent({ form, images, imagePreview, storeDomain, currencySymbol, storeLogo, device }: ShopifyProductPreviewProps & { device: DeviceType }) {
   const allImages: { url: string; label: string }[] = images.filter(i => i.url).map(i => ({ url: i.url!, label: i.angle }));
   if (imagePreview && !allImages.some(i => i.url === imagePreview)) {
     allImages.unshift({ url: imagePreview, label: 'Capa' });
