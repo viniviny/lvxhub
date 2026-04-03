@@ -1181,7 +1181,11 @@ const Index = () => {
                       return (
                         <div key={store.id} className="glass-card p-4 flex items-center justify-between">
                           <div className="flex items-center gap-3 min-w-0">
-                            <span className="text-2xl flex-shrink-0">{store.marketConfig?.countryFlag || '🏪'}</span>
+                            {store.logoUrl ? (
+                              <img src={store.logoUrl} alt="Logo" className="w-8 h-8 rounded-lg object-contain flex-shrink-0 border border-border" />
+                            ) : (
+                              <span className="text-2xl flex-shrink-0">{store.marketConfig?.countryFlag || '🏪'}</span>
+                            )}
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium text-foreground truncate">{store.marketConfig?.marketName || store.domain}</span>
