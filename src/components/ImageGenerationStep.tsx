@@ -38,6 +38,7 @@ const ANGLE_OPTIONS: AngleOption[] = [
 ];
 
 export interface GeneratedImage {
+  id: string;
   angle: ImageAngle;
   url: string;
   isCover: boolean;
