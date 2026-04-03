@@ -68,7 +68,7 @@ serve(async (req) => {
           weight: v.weight || weight || 0,
           weight_unit: v.weightUnit || weightUnit || 'kg',
         }))
-      : (sizes && sizes.length > 0 ? sizes : ['Único']).map((size: string) => ({
+      : (sizes && sizes.length > 0 ? sizes : ['One Size']).map((size: string) => ({
           option1: size,
           price: (price || 0).toString(),
           compare_at_price: compareAtPrice ? compareAtPrice.toString() : null,
@@ -81,7 +81,7 @@ serve(async (req) => {
 
     const optionValues = bodyVariants?.length > 0
       ? bodyVariants.map((v: any) => v.name)
-      : (sizes && sizes.length > 0 ? sizes : ['Único']);
+      : (sizes && sizes.length > 0 ? sizes : ['One Size']);
 
     // Build images array: main image + all additional images inline
     const productImages: { attachment: string; filename: string; position?: number }[] = [];
@@ -134,7 +134,7 @@ serve(async (req) => {
             product_type: collection || '',
             tags: tags || '',
             variants: variantsPayload,
-            options: [{ name: 'Tamanho', values: optionValues }],
+            options: [{ name: 'Size', values: optionValues }],
           },
         };
 
@@ -213,7 +213,7 @@ serve(async (req) => {
           product_type: collection || '',
           tags: tags || '',
           status: 'draft',
-          options: [{ name: 'Tamanho', values: optionValues }],
+          options: [{ name: 'Size', values: optionValues }],
           variants: variantsPayload,
           ...(productImages.length > 0 ? { images: productImages } : {}),
         },
