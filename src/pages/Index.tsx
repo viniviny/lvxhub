@@ -46,7 +46,7 @@ import { getAILanguageByCode } from '@/data/languages';
 import {
   Send, Loader2, Upload, CheckCircle2, ExternalLink,
   Package, XCircle, Zap, HelpCircle, Store, Settings, Globe, Layers,
-  ArrowLeft, ArrowRight, Eye, ClipboardList, Check, ChevronDown, Pencil
+  ArrowLeft, ArrowRight, Eye, ClipboardList, Check, ChevronDown, Pencil, X
 } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -630,10 +630,19 @@ const Index = () => {
                 <div className="mb-2 flex items-center gap-3">
                   <h2 className="font-display text-lg font-bold text-foreground leading-tight">Publicar Produto</h2>
                   {editingShopifyProductId && (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.3)]">
-                      <Pencil className="w-3 h-3" />
-                      Editando produto existente
-                    </span>
+                    <div className="inline-flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.3)]">
+                        <Pencil className="w-3 h-3" />
+                        Editando produto existente
+                      </span>
+                      <button
+                        onClick={handleNewProduct}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary border border-border transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                        Sair da edição
+                      </button>
+                    </div>
                   )}
                 </div>
 
