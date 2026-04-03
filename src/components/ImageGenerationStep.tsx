@@ -228,9 +228,10 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     setTimeout(() => { setCompletedAngles(new Set()); }, 2500);
   }, [prompt, promptMode, selectedAngles, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
 
-  const regenerateAngle = useCallback(async (angle: ImageAngle) => {
-    if (!prompt.trim()) return;
-    setGeneratingAngles(new Set([angle]));
+  const regenerateImage = useCallback(async (imageId: string) => {
+    const target = images.find(i => i.id === imageId);
+    if (!target || !prompt.trim()) return;
+    setGeneratingAngles(new Set([target.angle]));
     try {
       let refBase64: string | undefined;
       let refMimeType: string | undefined;
@@ -239,23 +240,23 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         if (match) { refMimeType = match[1]; refBase64 = match[2]; }
       }
       const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
+        body: { prompt, angle: target.angle, customAngleText: target.angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
       });
       if (error || data?.error) { toast.error('Erro ao regenerar imagem'); return; }
-      const updated = images.map(img => img.angle === angle ? { ...img, url: data.imageUrl } : img);
+      const updated = images.map(img => img.id === imageId ? { ...img, url: data.imageUrl } : img);
       onImagesChange(updated);
       toast.success('Imagem regenerada!');
     } catch { toast.error('Erro ao regenerar imagem'); } finally { setGeneratingAngles(new Set()); }
   }, [prompt, promptMode, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
 
-  const removeImage = (angle: ImageAngle) => {
-    const updated = images.filter(img => img.angle !== angle);
+  const removeImage = (imageId: string) => {
+    const updated = images.filter(img => img.id !== imageId);
     if (updated.length > 0 && !updated.some(i => i.isCover)) updated[0].isCover = true;
     onImagesChange(updated);
   };
 
-  const setCover = (angle: ImageAngle) => {
-    const updated = images.map(img => ({ ...img, isCover: img.angle === angle }));
+  const setCover = (imageId: string) => {
+    const updated = images.map(img => ({ ...img, isCover: img.id === imageId }));
     onImagesChange(updated);
   };
 
