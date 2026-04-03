@@ -268,7 +268,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const reader = new FileReader();
     reader.onload = () => {
       const url = reader.result as string;
-      const newImage: GeneratedImage = { angle: 'frente', url, isCover: images.length === 0 };
+      const newImage: GeneratedImage = { id: crypto.randomUUID(), angle: 'frente', url, isCover: images.length === 0 };
       onImagesChange([...images, newImage]);
     };
     reader.readAsDataURL(file);
