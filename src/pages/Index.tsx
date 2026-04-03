@@ -689,17 +689,20 @@ const Index = () => {
                         setGeneratedImages(imgs);
                         // Auto-save new images to library
                         const newImgs = imgs.filter(i => i.url && !i.url.startsWith('data:') && !savedToLibraryRef.current.has(i.id));
-                        if (newImgs.length > 0 && user) {
-                          const rows = newImgs.map(i => ({
-                            user_id: user.id,
-                            name: i.angle || 'imagem',
-                            url: i.url!,
-                            angle: i.angle,
-                            product_name: form.title || null,
-                            tags: [] as string[],
-                          }));
-                          supabase.from('image_library').insert(rows).then(() => {
-                            newImgs.forEach(i => savedToLibraryRef.current.add(i.id));
+                        if (newImgs.length > 0) {
+                          supabase.auth.getUser().then(({ data: { user: u } }) => {
+                            if (!u) return;
+                            const rows = newImgs.map(i => ({
+                              user_id: u.id,
+                              name: i.angle || 'imagem',
+                              url: i.url!,
+                              angle: i.angle,
+                              product_name: form.title || null,
+                              tags: [] as string[],
+                            }));
+                            supabase.from('image_library').insert(rows).then(() => {
+                              newImgs.forEach(i => savedToLibraryRef.current.add(i.id));
+                            });
                           });
                         }
                         const cover = imgs.find(i => i.isCover) || imgs[0];
