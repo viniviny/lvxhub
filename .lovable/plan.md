@@ -1,45 +1,20 @@
 
 
-## Ajustar card da imagem principal para formato vertical
+## Plano: Nomes das opções de variantes em inglês no Shopify
 
-### O que muda
+### Problema
+Os nomes das opções enviadas ao Shopify estão em português (`Tamanho`). O usuário quer que fiquem em inglês (`Size`).
 
-O card da imagem principal (coluna direita do Step 1) será redimensionado para respeitar a proporção escolhida na geração (1:1 ou 4:5), com layout vertical mais compacto.
+### Alterações
 
-### Alterações em `src/components/ImageGenerationStep.tsx`
+**1. Edge Function `supabase/functions/shopify-publish/index.ts`**
+- Linha 137: `{ name: 'Tamanho' }` → `{ name: 'Size' }`
+- Linha 216: `{ name: 'Tamanho' }` → `{ name: 'Size' }`
+- Linha 71: fallback `'Único'` → `'One Size'`
 
-**1. Container principal da galeria (linha ~486)**
-- Mudar de `flex flex-col` para centralizar o conteúdo com largura máxima controlada
-- Adicionar `items-center` para centralizar horizontalmente
+**2. UI labels no app (mantém português)**
+- Os labels na interface do app (ex: "Tamanhos e variantes" no Index.tsx) permanecem em português, pois são para o usuário do app. Apenas o que é enviado ao Shopify muda para inglês.
 
-**2. Viewer principal da imagem (linha ~650-652)**
-- Reduzir `maxHeight` de `480px` para `400px` (4:5) e `340px` (1:1)
-- Adicionar `max-width` proporcional: `320px` para 4:5, `340px` para 1:1
-- Manter `aspectRatio` dinâmico baseado na proporção selecionada
-- Centralizar com `mx-auto`
-
-**3. Thumbnails (linha ~798)**
-- Reduzir largura dos thumbs de `90px` para `72px`
-- Centralizar a strip com `justify-center`
-
-**4. Layout geral**
-- O card da coluna direita fica mais estreito e vertical
-- Grid principal muda de `grid-cols-[340px_1fr]` para `grid-cols-[340px_minmax(0,1fr)]` (sem mudança funcional, garante que não estoure)
-
-### Resumo visual
-
-```text
-ANTES:                          DEPOIS:
-┌──────────┬────────────────┐   ┌──────────┬──────────────┐
-│ Controls │  ┌──────────┐  │   │ Controls │  ┌────────┐  │
-│          │  │          │  │   │          │  │        │  │
-│          │  │  GRANDE  │  │   │          │  │ MENOR  │  │
-│          │  │          │  │   │          │  │VERTICAL│  │
-│          │  │          │  │   │          │  │        │  │
-│          │  └──────────┘  │   │          │  └────────┘  │
-│          │  [thumbs....]  │   │          │ [thumbs...]  │
-└──────────┴────────────────┘   └──────────┴──────────────┘
-```
-
-Nenhuma mudança de funcionalidade — apenas CSS/layout.
+### Resumo
+Mudança simples em 3 pontos da edge function para que os nomes das opções no Shopify apareçam em inglês.
 
