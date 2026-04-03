@@ -249,35 +249,8 @@ export function ProductHistory({ onEditProduct }: ProductHistoryProps) {
         </div>
       )}
 
-      {/* Edit Dialog */}
-      <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar produto</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Título</Label>
-              <Input value={editTitle} onChange={e => setEditTitle(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Descrição</Label>
-              <Textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} rows={3} />
-            </div>
-            <div className="space-y-2">
-              <Label>Preço local</Label>
-              <Input type="number" step="0.01" value={editPrice} onChange={e => setEditPrice(e.target.value)} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingProduct(null)}>Cancelar</Button>
-            <Button onClick={handleSaveEdit} disabled={saving}>
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Salvar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteProduct} onOpenChange={(open) => !open && setDeleteProduct(null)}>
