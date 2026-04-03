@@ -25,6 +25,7 @@ export interface ShopifyStore {
   connectedAt: string | null;
   isDefault: boolean;
   marketConfig?: MarketConfig;
+  logoUrl?: string | null;
 }
 
 const STORES_KEY = 'publify_stores';
