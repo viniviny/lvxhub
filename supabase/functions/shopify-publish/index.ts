@@ -146,7 +146,7 @@ serve(async (req) => {
         const updatePayload: Record<string, unknown> = {
           product: {
             id: shopifyProductId,
-            title: title || 'Produto sem título',
+            title: title || labels.untitled,
             body_html: cleanDescription || '',
             product_type: collection || '',
             tags: tags || '',
