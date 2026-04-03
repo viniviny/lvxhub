@@ -52,6 +52,23 @@ serve(async (req) => {
     const accessToken = conn.access_token;
     const steps: string[] = [];
 
+    // Language-aware option names
+    const sizeLabels: Record<string, { option: string; fallback: string; untitled: string }> = {
+      pt: { option: 'Tamanho', fallback: 'Único', untitled: 'Produto sem título' },
+      es: { option: 'Talla', fallback: 'Talla única', untitled: 'Producto sin título' },
+      fr: { option: 'Taille', fallback: 'Taille unique', untitled: 'Produit sans titre' },
+      de: { option: 'Größe', fallback: 'Einheitsgröße', untitled: 'Produkt ohne Titel' },
+      it: { option: 'Taglia', fallback: 'Taglia unica', untitled: 'Prodotto senza titolo' },
+      ja: { option: 'サイズ', fallback: 'フリーサイズ', untitled: '無題の商品' },
+      ko: { option: '사이즈', fallback: '프리사이즈', untitled: '제목 없는 상품' },
+      zh: { option: '尺码', fallback: '均码', untitled: '无标题产品' },
+      ar: { option: 'المقاس', fallback: 'مقاس واحد', untitled: 'منتج بدون عنوان' },
+      nl: { option: 'Maat', fallback: 'One Size', untitled: 'Product zonder titel' },
+      en: { option: 'Size', fallback: 'One Size', untitled: 'Untitled Product' },
+    };
+    const lang = bodyLanguage || 'en';
+    const labels = sizeLabels[lang] || sizeLabels['en'];
+
     // --- STEP 1: Create or Update product ---
     const isUpdate = !!shopifyProductId;
     steps.push(isUpdate ? 'Atualizando produto...' : 'Criando produto...');
