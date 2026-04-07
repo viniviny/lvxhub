@@ -175,6 +175,11 @@ const Index = () => {
     setSeoDescription(project.seoData?.seoDescription || '');
     setWizardStep(project.step || 1);
 
+    // Restore specs
+    if (project.specs) {
+      restoreSpecs(project.specs);
+    }
+
     // Restore images
     if (project.images && project.images.length > 0) {
       const restored: GeneratedImage[] = project.images.map(img => ({
