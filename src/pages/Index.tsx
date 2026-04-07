@@ -812,6 +812,8 @@ const Index = () => {
                               usedNames={usedTitleNames}
                               productContext={aiContext}
                               gender={form.gender}
+                              productSpecs={specs}
+                              onBeforeGenerate={ensureSpecs}
                             />
                           </div>
                           <Input value={form.title} onChange={e => {
@@ -837,6 +839,8 @@ const Index = () => {
                               tone={copyTone}
                               productContext={aiContext}
                               gender={form.gender}
+                              productSpecs={specs}
+                              onBeforeGenerate={ensureSpecs}
                             />
                           </div>
                           <div className="[&_.ProseMirror]:min-h-[160px]">
