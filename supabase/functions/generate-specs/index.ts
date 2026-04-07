@@ -20,10 +20,10 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
+    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
+    if (!GOOGLE_API_KEY) {
       return new Response(
-        JSON.stringify({ error: "LOVABLE_API_KEY not configured." }),
+        JSON.stringify({ error: "GOOGLE_API_KEY não configurada." }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -58,98 +58,68 @@ STYLE: ${style || 'Not specified'}
 MAIN COLOR: ${mainColor || 'Not specified'}
 VISUAL DETAILS: ${visualDetails || 'Not specified'}`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "product_specs",
-              description: "Return structured product specifications",
-              parameters: {
-                type: "object",
-                properties: {
-                  material: { type: "string" },
-                  fabric_composition: { type: "string" },
-                  style: { type: "string" },
-                  fit: { type: "string" },
-                  thickness: { type: "string" },
-                  craft: { type: "string" },
-                  collar_type: { type: "string" },
-                  sleeve_type: { type: "string" },
-                  length: { type: "string" },
-                  season: { type: "string" },
-                  use_case: { type: "string" },
-                  target_audience: { type: "string" },
-                  available_colors: { type: "array", items: { type: "string" } },
-                  available_sizes: { type: "array", items: { type: "string" } },
-                  additional_features: { type: "array", items: { type: "string" } },
-                },
-                required: [
-                  "material", "fabric_composition", "style", "fit", "thickness",
-                  "craft", "collar_type", "sleeve_type", "length", "season",
-                  "use_case", "target_audience", "available_colors", "available_sizes",
-                  "additional_features"
-                ],
-                additionalProperties: false,
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            { role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] },
+          ],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "OBJECT",
+              properties: {
+                material: { type: "STRING" },
+                fabric_composition: { type: "STRING" },
+                style: { type: "STRING" },
+                fit: { type: "STRING" },
+                thickness: { type: "STRING" },
+                craft: { type: "STRING" },
+                collar_type: { type: "STRING" },
+                sleeve_type: { type: "STRING" },
+                length: { type: "STRING" },
+                season: { type: "STRING" },
+                use_case: { type: "STRING" },
+                target_audience: { type: "STRING" },
+                available_colors: { type: "ARRAY", items: { type: "STRING" } },
+                available_sizes: { type: "ARRAY", items: { type: "STRING" } },
+                additional_features: { type: "ARRAY", items: { type: "STRING" } },
               },
+              required: [
+                "material", "fabric_composition", "style", "fit", "thickness",
+                "craft", "collar_type", "sleeve_type", "length", "season",
+                "use_case", "target_audience", "available_colors", "available_sizes",
+                "additional_features"
+              ],
             },
           },
-        ],
-        tool_choice: { type: "function", function: { name: "product_specs" } },
-      }),
-    });
+        }),
+      }
+    );
 
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Try again shortly." }),
+          JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }),
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Credits exhausted. Add funds in Settings > Workspace > Usage." }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("Google AI error:", response.status, errorText);
       return new Response(
-        JSON.stringify({ error: "AI gateway error" }),
+        JSON.stringify({ error: "Erro na API do Google AI." }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const data = await response.json();
-    
-    // Extract from tool call response
-    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    if (toolCall?.function?.arguments) {
-      const specs = typeof toolCall.function.arguments === 'string' 
-        ? JSON.parse(toolCall.function.arguments) 
-        : toolCall.function.arguments;
-      return new Response(
-        JSON.stringify({ specs }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    // Fallback: try parsing from content
-    const content = data.choices?.[0]?.message?.content || '';
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const specs = JSON.parse(jsonMatch[0]);
+    if (content) {
+      const specs = JSON.parse(content);
       return new Response(
         JSON.stringify({ specs }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -157,13 +127,13 @@ VISUAL DETAILS: ${visualDetails || 'Not specified'}`;
     }
 
     return new Response(
-      JSON.stringify({ error: "Failed to parse specs from AI response" }),
+      JSON.stringify({ error: "Falha ao interpretar resposta da IA." }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (e) {
     console.error("generate-specs error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Internal error" }),
+      JSON.stringify({ error: e instanceof Error ? e.message : "Erro interno." }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
