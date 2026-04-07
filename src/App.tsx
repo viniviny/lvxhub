@@ -18,6 +18,7 @@ import Admin from "./pages/Admin";
 import Callback from "./pages/Callback";
 import Prompts from "./pages/Prompts";
 import NotFound from "./pages/NotFound";
+import { UpdateNotification } from "@/components/UpdateNotification";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <UpdateNotification />
       <BrowserRouter>
         <AuthProvider>
           <StoreProvider>
