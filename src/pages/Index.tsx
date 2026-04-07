@@ -946,7 +946,7 @@ const Index = () => {
                         </div>
 
                         {/* AI Understanding summary */}
-                        <AIUnderstandingCard understanding={understanding} gender={form.gender} />
+                        <AIUnderstandingCard understanding={understanding} gender={form.gender} specs={specs} isGeneratingSpecs={isGeneratingSpecs} onRegenerateSpecs={handleRegenerateSpecs} />
                       </div>
                     </div>
                   )}
