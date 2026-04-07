@@ -63,13 +63,36 @@ function buildContextBlock(ctx: Record<string, string> | undefined): string {
   return `\n\nPRODUCT CONTEXT (resolved from user inputs + image analysis):\n${lines.join('\n')}`;
 }
 
+/** Build specs context block from generated product specifications */
+function buildSpecsBlock(specs: Record<string, any> | undefined): string {
+  if (!specs || typeof specs !== 'object') return '';
+  const lines: string[] = [];
+  if (specs.material && specs.material !== 'N/A') lines.push(`Material: ${specs.material}`);
+  if (specs.fabric_composition && specs.fabric_composition !== 'N/A') lines.push(`Fabric composition: ${specs.fabric_composition}`);
+  if (specs.style && specs.style !== 'N/A') lines.push(`Style: ${specs.style}`);
+  if (specs.fit && specs.fit !== 'N/A') lines.push(`Fit: ${specs.fit}`);
+  if (specs.thickness && specs.thickness !== 'N/A') lines.push(`Thickness: ${specs.thickness}`);
+  if (specs.craft && specs.craft !== 'N/A') lines.push(`Craft: ${specs.craft}`);
+  if (specs.collar_type && specs.collar_type !== 'N/A') lines.push(`Collar type: ${specs.collar_type}`);
+  if (specs.sleeve_type && specs.sleeve_type !== 'N/A') lines.push(`Sleeve type: ${specs.sleeve_type}`);
+  if (specs.length && specs.length !== 'N/A') lines.push(`Length: ${specs.length}`);
+  if (specs.season && specs.season !== 'N/A') lines.push(`Season: ${specs.season}`);
+  if (specs.use_case && specs.use_case !== 'N/A') lines.push(`Use case: ${specs.use_case}`);
+  if (specs.target_audience && specs.target_audience !== 'N/A') lines.push(`Target audience: ${specs.target_audience}`);
+  if (Array.isArray(specs.additional_features) && specs.additional_features.length > 0) {
+    lines.push(`Additional features: ${specs.additional_features.join(', ')}`);
+  }
+  if (lines.length === 0) return '';
+  return `\n\nPRODUCT SPECIFICATIONS (AI-generated, use to enrich content):\n${lines.join('\n')}`;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { type, brief, title, language, languageCode, countryName, customPrompt, tone, usedNames, gender, productContext } = await req.json();
+    const { type, brief, title, language, languageCode, countryName, customPrompt, tone, usedNames, gender, productContext, productSpecs } = await req.json();
 
     const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
     if (!GOOGLE_API_KEY) {
@@ -86,6 +109,7 @@ serve(async (req) => {
     const toneDirective = TONE_MAP[tone || 'minimal'] || TONE_MAP.minimal;
     const genderLine = gender && GENDER_MAP[gender] ? `\nTARGET GENDER: ${GENDER_MAP[gender]}. Adapt language, tone, and product positioning accordingly.` : '';
     const contextBlock = buildContextBlock(productContext);
+    const specsBlock = buildSpecsBlock(productSpecs);
 
     const brandContext = `You are a senior-level e-commerce copywriter, brand strategist, and SEO specialist working with premium global fashion brands.
 BRAND STYLE: ${toneDirective}${genderLine}
