@@ -562,6 +562,39 @@ const Index = () => {
   const aiContext = useMemo(() => buildProductAIContext(understanding, form.gender, form.tags, activeStoreLang?.label || 'English'), [understanding, form.gender, form.tags, activeStoreLang]);
   const canPublish = getCanPublish(form, !!imageFile || generatedImages.some(i => i.url));
 
+  // ─── Specs: ensure generated before text generation ───────
+  const ensureSpecs = useCallback(async () => {
+    if (specs) return; // already cached
+    const pt = understanding.finalProductType || form.productType;
+    if (!pt) return;
+    const result = await generateSpecs({
+      productType: pt,
+      gender: form.gender,
+      style: understanding.manualStyle || understanding.imageInsights.style || '',
+      mainColor: understanding.manualColor || understanding.imageInsights.mainColor || '',
+      visualDetails: understanding.imageInsights.visualDetails.join(', '),
+    });
+    if (result) {
+      updateProject(p => ({ ...p, specs: result }));
+    }
+  }, [specs, understanding, form.productType, form.gender, generateSpecs, updateProject]);
+
+  const handleRegenerateSpecs = useCallback(async () => {
+    clearSpecs();
+    const pt = understanding.finalProductType || form.productType;
+    if (!pt) return;
+    const result = await generateSpecs({
+      productType: pt,
+      gender: form.gender,
+      style: understanding.manualStyle || understanding.imageInsights.style || '',
+      mainColor: understanding.manualColor || understanding.imageInsights.mainColor || '',
+      visualDetails: understanding.imageInsights.visualDetails.join(', '),
+    });
+    if (result) {
+      updateProject(p => ({ ...p, specs: result }));
+    }
+  }, [understanding, form.productType, form.gender, generateSpecs, clearSpecs, updateProject]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
