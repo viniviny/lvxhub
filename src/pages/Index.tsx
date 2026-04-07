@@ -5,6 +5,7 @@ import { useProject } from '@/hooks/useProject';
 import { SaveStatusIndicator } from '@/components/SaveStatusIndicator';
 import { ProductFormData, ProductSize, ProductGender, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
 import { useProductUnderstanding } from '@/hooks/useProductUnderstanding';
+import { useProductSpecs } from '@/hooks/useProductSpecs';
 import { ProductHistory } from '@/components/ProductHistory';
 import { ImageLibrary } from '@/components/ImageLibrary';
 import { StoreSelector } from '@/components/StoreSelector';
@@ -140,6 +141,8 @@ const Index = () => {
     understanding, isAnalyzing, setManualProductType, setManualField,
     analyzeImage, updateFinalFromTitle, reset: resetUnderstanding,
   } = useProductUnderstanding();
+
+  const { specs, isGeneratingSpecs, generateSpecs, clearSpecs, restoreSpecs } = useProductSpecs();
 
   // ─── Restore project state on load ────────────────────────
   useEffect(() => {
