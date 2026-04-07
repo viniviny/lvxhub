@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.generate-text]
 verify_jwt = false
+
+[functions.generate-specs]
+verify_jwt = false

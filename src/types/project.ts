@@ -1,6 +1,7 @@
 import { ProductFormData } from './product';
 import { ProductUnderstanding } from './productUnderstanding';
 import { GeneratedImage } from '@/components/ImageGenerationStep';
+import type { ProductSpecs } from '@/hooks/useProductSpecs';
 
 export interface ProjectProductData {
   title: string;
@@ -55,6 +56,7 @@ export interface Project {
   productData: ProjectProductData;
   aiData: ProjectAIData;
   seoData: ProjectSEOData;
+  specs: ProductSpecs | null;
   images: ProjectImage[];
   createdAt: string;
   updatedAt: string;

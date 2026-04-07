@@ -20,6 +20,8 @@ interface AIFieldButtonsProps {
   usedNames?: string[];
   productContext?: ProductAIContext;
   gender?: string;
+  productSpecs?: Record<string, any> | null;
+  onBeforeGenerate?: () => Promise<void>;
 }
 
 const CATEGORY_MAP: Record<string, string> = {
@@ -27,7 +29,7 @@ const CATEGORY_MAP: Record<string, string> = {
   description: 'descricao',
 };
 
-export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated, tone, usedNames, productContext, gender }: AIFieldButtonsProps) {
+export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated, tone, usedNames, productContext, gender, productSpecs, onBeforeGenerate }: AIFieldButtonsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [generatedLang, setGeneratedLang] = useState('');
@@ -80,12 +82,16 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
+      if (onBeforeGenerate) await onBeforeGenerate();
       const body: Record<string, any> = { type, brief, title, language, languageCode, countryName, tone, gender };
       if (type === 'title' && usedNames && usedNames.length > 0) {
         body.usedNames = usedNames;
       }
       if (productContext) {
         body.productContext = productContext;
+      }
+      if (productSpecs) {
+        body.productSpecs = productSpecs;
       }
       const { data, error } = await supabase.functions.invoke('generate-text', { body });
       if (error) throw error;
@@ -106,6 +112,7 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
     setIsCustomGenerating(true);
     setSelectedPromptId(promptId);
     try {
+      if (onBeforeGenerate) await onBeforeGenerate();
       incrementUsage.mutate(promptId);
       const body: Record<string, any> = {
         type,
@@ -117,6 +124,9 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
       };
       if (productContext) {
         body.productContext = productContext;
+      }
+      if (productSpecs) {
+        body.productSpecs = productSpecs;
       }
       const { data, error } = await supabase.functions.invoke('generate-text', { body });
       if (error) throw error;
