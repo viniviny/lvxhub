@@ -62,6 +62,7 @@ export function useProductUnderstanding() {
           imageInsights: insights,
           finalProductType: resolveFinalProductType(prev.manualProductType, aiType, undefined, insights),
         }));
+        logUsage({ service: 'image-analysis', action: 'Análise de imagem' });
       }
     } catch (e) {
       console.warn('[ProductUnderstanding] Image analysis failed:', e);
