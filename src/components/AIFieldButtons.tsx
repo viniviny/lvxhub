@@ -102,7 +102,6 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
         applyContent(data.content);
         logUsage({ service: 'text-generation', action: `Gerar ${type === 'title' ? 'título' : 'descrição'}` });
       }
-      }
     } catch (e: any) {
       toast.error(e.message || 'Erro ao gerar conteúdo');
     } finally {
