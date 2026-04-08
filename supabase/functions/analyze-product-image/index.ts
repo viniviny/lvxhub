@@ -61,56 +61,50 @@ serve(async (req) => {
       );
     }
 
-    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
-    if (!GOOGLE_API_KEY) {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
       return new Response(
-        JSON.stringify({ error: "GOOGLE_API_KEY not configured." }),
+        JSON.stringify({ error: "LOVABLE_API_KEY not configured." }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const imageResponse = await fetch(imageUrl);
-    if (!imageResponse.ok) {
-      return new Response(
-        JSON.stringify({ error: "Failed to fetch image." }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    const imageBuffer = await imageResponse.arrayBuffer();
-    const imageBytes = new Uint8Array(imageBuffer);
-    let binary = '';
-    const chunkSize = 8192;
-    for (let i = 0; i < imageBytes.length; i += chunkSize) {
-      binary += String.fromCharCode(...imageBytes.subarray(i, i + chunkSize));
-    }
-    const base64Image = btoa(binary);
-    const mimeType = imageResponse.headers.get('content-type') || 'image/png';
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{
-            role: "user",
-            parts: [
-              { text: systemPrompt },
-              {
-                inlineData: {
-                  mimeType,
-                  data: base64Image,
-                },
-              },
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: systemPrompt },
+              { type: 'image_url', image_url: { url: imageUrl } },
             ],
-          }],
-        }),
-      }
-    );
+          },
+        ],
+        response_format: { type: 'json_object' },
+      }),
+    });
 
     if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns segundos." }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "Créditos esgotados. Adicione fundos ao workspace." }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       const errorText = await response.text();
-      console.error("Google AI Vision error:", response.status, errorText);
+      console.error("Lovable AI Gateway error:", response.status, errorText);
       return new Response(
         JSON.stringify({ error: "Image analysis failed." }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -118,11 +112,11 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    let content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    content = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    const content = data.choices?.[0]?.message?.content || '';
 
     try {
-      const parsed = JSON.parse(content);
+      const cleaned = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      const parsed = JSON.parse(cleaned);
       return new Response(
         JSON.stringify(parsed),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

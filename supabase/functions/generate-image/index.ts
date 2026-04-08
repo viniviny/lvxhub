@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { GoogleGenerativeAI } from "npm:@google/generative-ai";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -70,68 +69,103 @@ serve(async (req) => {
       }
     }
 
-    // Add aspect ratio instruction
     const ratioInstruction = RATIO_PROMPTS[aspectRatio] || RATIO_PROMPTS['4:5'];
     fullPrompt = `${fullPrompt}. ${ratioInstruction}`;
 
-    const GOOGLE_API_KEY = Deno.env.get('GOOGLE_API_KEY');
-    if (!GOOGLE_API_KEY) {
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
       return new Response(
-        JSON.stringify({ error: 'GOOGLE_API_KEY não configurada.' }),
+        JSON.stringify({ error: 'LOVABLE_API_KEY não configurada.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Initialize Google Generative AI with Nano Banana Pro
-    const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-3-pro-image-preview',
-      generationConfig: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      } as any,
-    });
+    // Build angle-specific instruction
+    const angleInstruction = angle && ANGLE_SUFFIXES[angle]
+      ? `MANDATORY CAMERA ANGLE: ${ANGLE_SUFFIXES[angle]}. You MUST shoot from this exact angle/perspective.`
+      : (angle === 'personalizado' && customAngleText ? `MANDATORY CAMERA ANGLE: ${customAngleText}. You MUST shoot from this exact angle/perspective.` : '');
 
-    // Build content parts
-    const parts: any[] = [];
+    // Build content parts for the user message
+    const contentParts: any[] = [];
     const hasReference = referenceImage && typeof referenceImage === 'string' && referenceImage.length > 100;
 
-    // Add reference image if provided as base64
     if (hasReference) {
-      console.log('Reference image included, size:', referenceImage.length);
-      parts.push({
-        inlineData: {
-          data: referenceImage,
-          mimeType: referenceMimeType || 'image/jpeg',
+      contentParts.push({
+        type: 'image_url',
+        image_url: {
+          url: `data:${referenceMimeType || 'image/jpeg'};base64,${referenceImage}`,
         },
       });
     }
 
-    // Build angle-specific instruction
-    const angleName = angle ? (ANGLE_SUFFIXES[angle] ? angle : 'custom') : 'general';
-    const angleInstruction = angle && ANGLE_SUFFIXES[angle] 
-      ? `MANDATORY CAMERA ANGLE: ${ANGLE_SUFFIXES[angle]}. You MUST shoot from this exact angle/perspective.`
-      : (angle === 'personalizado' && customAngleText ? `MANDATORY CAMERA ANGLE: ${customAngleText}. You MUST shoot from this exact angle/perspective.` : '');
-
-    // Use different prompt when reference image exists
+    // Build text prompt
+    let textPrompt: string;
     if (hasReference) {
-      parts.push({ text: `${angleInstruction ? angleInstruction + '\n\n' : ''}This is the exact product to photograph. Use it as your only reference. Keep all details: colors, patterns, cuts, buttons, zippers, fabric texture exactly as shown in the reference. Generate a professional studio e-commerce photo of this product. ${angleInstruction ? 'Remember: strictly follow the camera angle specified above.' : ''} Product description: ${prompt}. ${ratioInstruction} White seamless background. Soft diffused studio lighting. Sharp detail throughout. Premium fashion catalog quality. Do not change any product details. No text, no logos, no watermarks.` });
+      textPrompt = `${angleInstruction ? angleInstruction + '\n\n' : ''}This is the exact product to photograph. Use it as your only reference. Keep all details: colors, patterns, cuts, buttons, zippers, fabric texture exactly as shown in the reference. Generate a professional studio e-commerce photo of this product. ${angleInstruction ? 'Remember: strictly follow the camera angle specified above.' : ''} Product description: ${prompt}. ${ratioInstruction} White seamless background. Soft diffused studio lighting. Sharp detail throughout. Premium fashion catalog quality. Do not change any product details. No text, no logos, no watermarks.`;
     } else {
-      parts.push({ text: `${angleInstruction ? angleInstruction + '\n\n' : ''}Generate a professional e-commerce product photo: ${fullPrompt}. ${angleInstruction ? 'Remember: strictly follow the camera angle specified above.' : ''}` });
+      textPrompt = `${angleInstruction ? angleInstruction + '\n\n' : ''}Generate a professional e-commerce product photo: ${fullPrompt}. ${angleInstruction ? 'Remember: strictly follow the camera angle specified above.' : ''}`;
+    }
+    contentParts.push({ type: 'text', text: textPrompt });
+
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-3-pro-image-preview',
+        messages: [
+          { role: 'user', content: contentParts },
+        ],
+        modalities: ['text', 'image'],
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Limite de requisições atingido. Tente novamente em instantes.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'Créditos esgotados. Adicione fundos ao workspace.' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      const errorText = await response.text();
+      console.error('Lovable AI Gateway error:', response.status, errorText);
+      return new Response(
+        JSON.stringify({ error: 'Erro ao gerar imagem. Tente novamente.' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    const result = await model.generateContent(parts);
+    const data = await response.json();
 
-    // Extract image from response
+    // Extract image from gateway response
     let imageBase64: string | null = null;
     let imageMimeType = 'image/png';
 
-    const candidates = result.response.candidates;
-    if (candidates && candidates.length > 0) {
-      for (const part of candidates[0].content.parts) {
-        if ((part as any).inlineData) {
-          imageBase64 = (part as any).inlineData.data;
-          imageMimeType = (part as any).inlineData.mimeType || 'image/png';
-          break;
+    const choices = data.choices;
+    if (choices && choices.length > 0) {
+      const message = choices[0].message;
+      if (message?.content) {
+        // Handle array content (multimodal response)
+        if (Array.isArray(message.content)) {
+          for (const part of message.content) {
+            if (part.type === 'image_url' && part.image_url?.url) {
+              const dataUrl = part.image_url.url;
+              const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+              if (match) {
+                imageMimeType = match[1];
+                imageBase64 = match[2];
+                break;
+              }
+            }
+          }
         }
       }
     }
