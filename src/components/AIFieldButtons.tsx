@@ -188,11 +188,13 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
           <TooltipTrigger asChild>
             <button
               onClick={handleGenerate}
-              disabled={isGenerating}
+              disabled={isGenerating || disabled}
               className={`flex items-center gap-1 h-[22px] px-2 rounded text-[10px] font-medium transition-all border ${
-                showSuccess
-                  ? 'border-[hsl(var(--chart-2))] bg-[hsl(var(--chart-2))]/15 text-[hsl(var(--chart-2))]'
-                  : 'border-primary/50 bg-primary/15 text-[hsl(213,97%,67%)] hover:bg-primary/25'
+                disabled
+                  ? 'border-border bg-secondary/50 text-muted-foreground/40 cursor-not-allowed'
+                  : showSuccess
+                    ? 'border-[hsl(var(--chart-2))] bg-[hsl(var(--chart-2))]/15 text-[hsl(var(--chart-2))]'
+                    : 'border-primary/50 bg-primary/15 text-[hsl(213,97%,67%)] hover:bg-primary/25'
               }`}
             >
               {isGenerating ? (
