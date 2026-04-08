@@ -4,11 +4,13 @@ import {
   resolveFinalProductType, cleanProductType,
 } from '@/types/productUnderstanding';
 import { supabase } from '@/integrations/supabase/client';
+import { useApiUsage } from '@/hooks/useApiUsage';
 
 export function useProductUnderstanding() {
   const [understanding, setUnderstanding] = useState<ProductUnderstanding>(EMPTY_UNDERSTANDING);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const lastAnalyzedUrl = useRef<string | null>(null);
+  const { logUsage } = useApiUsage();
 
   const setManualProductType = useCallback((value: string) => {
     setUnderstanding(prev => {
