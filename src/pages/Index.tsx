@@ -884,6 +884,7 @@ const Index = () => {
                               gender={form.gender}
                               productSpecs={specs}
                               onBeforeGenerate={ensureSpecs}
+                              disabled={aiDisabled}
                             />
                           </div>
                           <Input value={form.title} onChange={e => {
