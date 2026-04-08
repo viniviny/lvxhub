@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Sparkles, Loader2, Check, X, BookOpen, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useApiUsage } from '@/hooks/useApiUsage';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUserPrompts } from '@/hooks/useUserPrompts';
 import type { ProductAIContext } from '@/types/productUnderstanding';
@@ -41,6 +42,7 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
   const popoverRef = useRef<HTMLDivElement>(null);
 
   const { prompts, incrementUsage } = useUserPrompts();
+  const { logUsage } = useApiUsage();
   const categoryKey = CATEGORY_MAP[type] || type;
   const filteredPrompts = prompts.filter(p => p.category === categoryKey);
 
@@ -98,6 +100,7 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
       if (data?.content) {
         setGeneratedLang(data.language || language);
         applyContent(data.content);
+        logUsage({ service: 'text-generation', action: `Gerar ${type === 'title' ? 'título' : 'descrição'}` });
       }
     } catch (e: any) {
       toast.error(e.message || 'Erro ao gerar conteúdo');
@@ -134,6 +137,7 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
         setGeneratedLang(data.language || language);
         applyContent(data.content);
         setShowPopover(false);
+        logUsage({ service: 'text-generation', action: `Gerar ${type} (prompt customizado)` });
       }
     } catch (e: any) {
       toast.error(e.message || 'Erro ao gerar conteúdo');

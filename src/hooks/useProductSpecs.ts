@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useApiUsage } from '@/hooks/useApiUsage';
 
 export interface ProductSpecs {
   material: string;
@@ -31,6 +32,7 @@ interface GenerateSpecsContext {
 export function useProductSpecs() {
   const [specs, setSpecs] = useState<ProductSpecs | null>(null);
   const [isGeneratingSpecs, setIsGeneratingSpecs] = useState(false);
+  const { logUsage } = useApiUsage();
 
   const generateSpecs = useCallback(async (context: GenerateSpecsContext): Promise<ProductSpecs | null> => {
     if (!context.productType) return null;
@@ -48,6 +50,7 @@ export function useProductSpecs() {
       if (error) throw error;
       if (data?.specs) {
         setSpecs(data.specs);
+        logUsage({ service: 'specs-generation', action: 'Gerar especificações' });
         return data.specs;
       }
       return null;

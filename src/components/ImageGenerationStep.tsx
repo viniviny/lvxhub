@@ -8,6 +8,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserPrompts } from '@/hooks/useUserPrompts';
 import { toast } from 'sonner';
+import { useApiUsage } from '@/hooks/useApiUsage';
 import {
   Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
   ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical,
@@ -59,6 +60,7 @@ type PromptMode = 'simple' | 'custom';
 export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange }: ImageGenerationStepProps) {
   const navigate = useNavigate();
   const { prompts: allPrompts, recentPrompts: allRecentPrompts, incrementUsage } = useUserPrompts();
+  const { logUsage } = useApiUsage();
   const savedPrompts = allPrompts.filter(p => p.category === 'imagem');
   const recentPrompts = allRecentPrompts.filter(p => p.category === 'imagem');
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
@@ -207,6 +209,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         const imageUrl = data.imageUrl;
         const newImage: GeneratedImage = { id: crypto.randomUUID(), angle, url: imageUrl, isCover: false, justCompleted: true };
         newImages.push(newImage);
+        logUsage({ service: 'image-generation', action: `Gerar imagem (${angle})` });
         setGeneratedCount(prev => prev + 1);
         setCompletedAngles(prev => new Set(prev).add(angle));
         setGeneratingAngles(prev => { const next = new Set(prev); next.delete(angle); return next; });
