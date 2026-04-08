@@ -912,6 +912,7 @@ const Index = () => {
                               gender={form.gender}
                               productSpecs={specs}
                               onBeforeGenerate={ensureSpecs}
+                              disabled={aiDisabled}
                             />
                           </div>
                           <div className="[&_.ProseMirror]:min-h-[160px]">
