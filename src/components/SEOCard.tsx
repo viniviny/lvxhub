@@ -27,6 +27,7 @@ interface SEOCardProps {
 export function SEOCard({ title, description, storeDomain, productTitle, onTitleChange, onDescriptionChange, compact, language, languageCode, countryName, productContext }: SEOCardProps) {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
+  const { logUsage } = useApiUsage();
 
   const seoTitle = title || productTitle || '';
   const seoDesc = description || '';
@@ -63,6 +64,7 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
       ]);
       if (titleRes.data?.content) onTitleChange(titleRes.data.content.replace(/^["']|["']$/g, '').slice(0, 70));
       if (descRes.data?.content) onDescriptionChange(descRes.data.content.replace(/^["']|["']$/g, '').slice(0, 160));
+      logUsage({ service: 'text-generation', action: 'Gerar SEO (título + descrição)' });
       toast.success('SEO otimizado com IA!');
     } catch (e: any) {
       toast.error(e.message || 'Erro ao otimizar SEO');
