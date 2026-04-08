@@ -7,6 +7,7 @@ import { Sparkles, Loader2, ChevronDown } from 'lucide-react';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useApiUsage } from '@/hooks/useApiUsage';
 import type { ProductAIContext } from '@/types/productUnderstanding';
 
 interface SEOCardProps {
