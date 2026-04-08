@@ -21,16 +21,19 @@ export function PricingEngine({ cost }: PricingEngineProps) {
     const totalCost = safeCost + cpa + safeCost * feesRate;
     const price = totalCost / (1 - margin);
     const markup = price / safeCost;
-    const adjustedPrice =
-      currency === 'GBP' ? price * 1.1 :
-      currency === 'EUR' ? price * 1.05 :
-      price;
+    const rates: Record<string, number> = {
+      USD: 1, GBP: 1.1, EUR: 1.05, BRL: 0.85, CAD: 1.02, AUD: 1.03,
+    };
+    const adjustedPrice = price * (rates[currency] ?? 1);
     const profit = adjustedPrice - totalCost;
     const fees = safeCost * feesRate;
     return { adjustedPrice, markup, fees, profit };
   }, [safeCost, cpa, margin, currency]);
 
-  const currencySymbol = currency === 'GBP' ? '£' : currency === 'EUR' ? '€' : '$';
+  const symbols: Record<string, string> = {
+    USD: '$', GBP: '£', EUR: '€', BRL: 'R$', CAD: 'C$', AUD: 'A$',
+  };
+  const currencySymbol = symbols[currency] ?? '$';
 
   return (
     <div className="glass-card p-4 space-y-3">
@@ -50,6 +53,9 @@ export function PricingEngine({ cost }: PricingEngineProps) {
               <SelectItem value="USD">USD ($)</SelectItem>
               <SelectItem value="GBP">GBP (£)</SelectItem>
               <SelectItem value="EUR">EUR (€)</SelectItem>
+              <SelectItem value="BRL">BRL (R$)</SelectItem>
+              <SelectItem value="CAD">CAD (C$)</SelectItem>
+              <SelectItem value="AUD">AUD (A$)</SelectItem>
             </SelectContent>
           </Select>
         </div>
