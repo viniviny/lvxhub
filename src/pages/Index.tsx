@@ -1013,6 +1013,7 @@ const Index = () => {
                           onMarginChange={v => setFormWithSave(prev => ({ ...prev, pricingMargin: v }))}
                           onShippingChange={v => setFormWithSave(prev => ({ ...prev, pricingShipping: v }))}
                           onPlatformChange={v => setFormWithSave(prev => ({ ...prev, pricingPlatform: v }))}
+                          onApplyPrice={v => setFormWithSave(prev => ({ ...prev, price: v }))}
                         />
 
                         <div className="flex flex-col gap-3">
