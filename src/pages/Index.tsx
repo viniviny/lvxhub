@@ -727,6 +727,27 @@ const Index = () => {
                     <ImageGenerationStep
                       images={generatedImages}
                       onImagesChange={(imgs) => {
+                        // Detect removed images and delete from backend
+                        const removedImages = generatedImages.filter(
+                          old => !imgs.some(n => n.id === old.id)
+                        );
+                        if (removedImages.length > 0) {
+                          // Delete from project_images
+                          removedImages.forEach(img => removeProjectImage(img.id));
+                          // Delete from image_library by URL
+                          supabase.auth.getUser().then(({ data: { user: u } }) => {
+                            if (!u) return;
+                            removedImages.forEach(img => {
+                              if (img.url && !img.url.startsWith('data:')) {
+                                supabase.from('image_library').delete()
+                                  .eq('user_id', u.id)
+                                  .eq('url', img.url)
+                                  .then(() => {});
+                              }
+                            });
+                          });
+                        }
+
                         setGeneratedImages(imgs);
                         // Auto-save new images to library
                         const newImgs = imgs.filter(i => i.url && !i.url.startsWith('data:') && !savedToLibraryRef.current.has(i.id));
