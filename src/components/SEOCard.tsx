@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -135,14 +136,25 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
               </div>
             </div>
 
-            <button
-              onClick={handleOptimize}
-              disabled={isOptimizing || !productTitle || aiDisabled}
-              className="flex items-center justify-center gap-1.5 w-full h-[30px] rounded-md text-[10px] font-medium border border-border text-muted-foreground hover:border-primary/50 hover:text-[hsl(213,97%,67%)] disabled:opacity-40 transition-all"
-            >
-              {isOptimizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-              Otimizar SEO com IA
-            </button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleOptimize}
+                    disabled={isOptimizing || !productTitle || aiDisabled}
+                    className="flex items-center justify-center gap-1.5 w-full h-[30px] rounded-md text-[10px] font-medium border border-border text-muted-foreground hover:border-primary/50 hover:text-[hsl(213,97%,67%)] disabled:opacity-40 transition-all"
+                  >
+                    {isOptimizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                    Otimizar SEO com IA
+                  </button>
+                </TooltipTrigger>
+                {aiDisabled && (
+                  <TooltipContent side="bottom" className="text-[10px]">
+                    Adicione uma imagem primeiro
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </CollapsibleContent>
         </div>
       </Collapsible>
