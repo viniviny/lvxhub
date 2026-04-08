@@ -64,7 +64,7 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
       ]);
       if (titleRes.data?.content) onTitleChange(titleRes.data.content.replace(/^["']|["']$/g, '').slice(0, 70));
       if (descRes.data?.content) onDescriptionChange(descRes.data.content.replace(/^["']|["']$/g, '').slice(0, 160));
-      logUsage({ service: 'text-generation', action: 'Gerar SEO (título + descrição)' });
+      logUsage({ service: 'text-generation', action: 'Gerar SEO (título + descrição)', metadata: { model: 'gpt-4o-mini', provider: 'OpenAI' } });
       toast.success('SEO otimizado com IA!');
     } catch (e: any) {
       toast.error(e.message || 'Erro ao otimizar SEO');
