@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Sparkles, Loader2, Check, X, BookOpen, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useApiUsage } from '@/hooks/useApiUsage';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUserPrompts } from '@/hooks/useUserPrompts';
 import type { ProductAIContext } from '@/types/productUnderstanding';
