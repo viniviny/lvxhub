@@ -129,48 +129,41 @@ export function UsageDashboard() {
             </div>
           </div>
 
-          {/* Breakdown by service */}
-          {stats.sortedServices.length > 0 ? (
-            <div className="rounded-lg border border-border bg-secondary/20 p-3 space-y-2.5">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Consumo por API</p>
-              {stats.sortedServices.map(([service, data]) => {
-                const Icon = SERVICE_ICONS[service] || Activity;
-                const color = SERVICE_COLORS[service] || 'text-muted-foreground';
-                const pct = (data.count / maxCount) * 100;
-                return (
-                  <div key={service} className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <Icon className={`w-3.5 h-3.5 ${color}`} />
-                        <span className="text-xs text-foreground font-medium">
-                          {SERVICE_LABELS[service as ApiService] || service}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-[9px] h-4 px-1.5">
-                          {data.count}x
-                        </Badge>
-                        <span className="text-[10px] text-muted-foreground w-14 text-right">
-                          ${data.cost.toFixed(3)}
-                        </span>
-                      </div>
+          {/* Breakdown by service — always visible */}
+          <div className="rounded-lg border border-border bg-secondary/20 p-3 space-y-2.5">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Consumo por API</p>
+            {stats.sortedServices.map(([service, data]) => {
+              const Icon = SERVICE_ICONS[service] || Activity;
+              const color = SERVICE_COLORS[service] || 'text-muted-foreground';
+              const pct = maxCount > 0 ? (data.count / maxCount) * 100 : 0;
+              return (
+                <div key={service} className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Icon className={`w-3.5 h-3.5 ${color}`} />
+                      <span className="text-xs text-foreground font-medium">
+                        {SERVICE_LABELS[service as ApiService] || service}
+                      </span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-primary/60 transition-all duration-500"
-                        style={{ width: `${pct}%` }}
-                      />
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-[9px] h-4 px-1.5">
+                        {data.count}x
+                      </Badge>
+                      <span className="text-[10px] text-muted-foreground w-14 text-right">
+                        ${data.cost.toFixed(3)}
+                      </span>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <TrendingUp className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-xs text-muted-foreground">Nenhum uso registrado neste período.</p>
-            </div>
-          )}
+                  <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary/60 transition-all duration-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
           {/* Recent activity */}
           {logs.length > 0 && (
