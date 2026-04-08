@@ -18,60 +18,64 @@ export function PriceSection({ price, compareAtPrice, cost, currencySymbol, onPr
   const marginInfo = calculateMargin(price, cost);
 
   return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-3 gap-3">
+    <div className="space-y-2.5">
+      <div className="space-y-2">
         <div>
-          <Label className="text-sm font-medium text-muted-foreground">Preço de venda</Label>
-          <div className="relative mt-1.5">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{currencySymbol}</span>
+          <Label className="text-[10px] text-muted-foreground mb-1 block">Preço de venda</Label>
+          <div className="relative">
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">{currencySymbol}</span>
             <Input
               type="number" min={0} step={0.01}
               value={price || ''}
               onChange={e => onPriceChange(parseFloat(e.target.value) || 0)}
               placeholder="89.99"
-              className="pl-8 bg-secondary border-border"
+              className="h-8 text-xs pl-7 bg-secondary border-border"
             />
           </div>
         </div>
-        <div>
-          <Label className="text-sm font-medium text-muted-foreground">Preço original <span className="text-xs text-muted-foreground/60">(riscado)</span></Label>
-          <div className="relative mt-1.5">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{currencySymbol}</span>
-            <Input
-              type="number" min={0} step={0.01}
-              value={compareAtPrice ?? ''}
-              onChange={e => { const v = parseFloat(e.target.value); onCompareAtPriceChange(isNaN(v) ? null : v); }}
-              placeholder="129.99"
-              className="pl-8 bg-secondary border-border"
-            />
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label className="text-[10px] text-muted-foreground mb-1 block">Preço original</Label>
+            <div className="relative">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">{currencySymbol}</span>
+              <Input
+                type="number" min={0} step={0.01}
+                value={compareAtPrice ?? ''}
+                onChange={e => { const v = parseFloat(e.target.value); onCompareAtPriceChange(isNaN(v) ? null : v); }}
+                placeholder="129.99"
+                className="h-8 text-xs pl-7 bg-secondary border-border"
+              />
+            </div>
           </div>
-        </div>
-        <div>
-          <Label className="text-sm font-medium text-muted-foreground">Seu custo <span className="text-xs text-muted-foreground/60">(não visível)</span></Label>
-          <div className="relative mt-1.5">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{currencySymbol}</span>
-            <Input
-              type="number" min={0} step={0.01}
-              value={cost ?? ''}
-              onChange={e => { const v = parseFloat(e.target.value); onCostChange(isNaN(v) ? null : v); }}
-              placeholder="25.00"
-              className="pl-8 bg-secondary border-border"
-            />
+          <div>
+            <Label className="text-[10px] text-muted-foreground mb-1 block">Seu custo</Label>
+            <div className="relative">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">{currencySymbol}</span>
+              <Input
+                type="number" min={0} step={0.01}
+                value={cost ?? ''}
+                onChange={e => { const v = parseFloat(e.target.value); onCostChange(isNaN(v) ? null : v); }}
+                placeholder="25.00"
+                className="h-8 text-xs pl-7 bg-secondary border-border"
+              />
+            </div>
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-3 flex-wrap">
-        {discount !== null && (
-          <Badge className="bg-[hsl(var(--success))]/15 text-[hsl(var(--success))] border-[hsl(var(--success))]/30 hover:bg-[hsl(var(--success))]/20">
-            {discount}% off
-          </Badge>
-        )}
-        {marginInfo && (
-          <span className={`text-sm font-medium ${marginInfo.color}`}>
-            Margem: {currencySymbol}{marginInfo.margin.toFixed(2)} ({marginInfo.percent.toFixed(0)}%)
-          </span>
-        )}
-      </div>
+      {(discount !== null || marginInfo) && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {discount !== null && (
+            <Badge className="h-5 text-[10px] bg-[hsl(var(--success))]/15 text-[hsl(var(--success))] border-[hsl(var(--success))]/30 hover:bg-[hsl(var(--success))]/20">
+              {discount}% off
+            </Badge>
+          )}
+          {marginInfo && (
+            <span className={`text-[10px] font-medium ${marginInfo.color}`}>
+              Margem: {currencySymbol}{marginInfo.margin.toFixed(2)} ({marginInfo.percent.toFixed(0)}%)
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
