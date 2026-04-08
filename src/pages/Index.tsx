@@ -829,8 +829,34 @@ const Index = () => {
 
                       {/* RIGHT — Product Details (main) */}
                       <div className="glass-card p-5 space-y-4">
-                        <div>
+                        <div className="flex items-center justify-between">
                           <h3 className="font-display font-semibold text-[13px] text-foreground">Detalhes do produto</h3>
+                          <button
+                            onClick={() => {
+                              setFormWithSave(prev => ({
+                                ...prev,
+                                title: '',
+                                description: '',
+                                collection: '',
+                                productType: '',
+                                gender: '',
+                                tags: '',
+                              }));
+                              setManualField('manualMaterial', '');
+                              setManualField('manualStyle', '');
+                              setManualField('manualFit', '');
+                              setManualField('manualColor', '');
+                              setManualField('useCase', '');
+                              setManualProductType('');
+                              clearSpecs();
+                              setSeoTitleWithSave('');
+                              setSeoDescriptionWithSave('');
+                            }}
+                            className="text-[10px] text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
+                          >
+                            <X className="w-3 h-3" />
+                            Limpar campos
+                          </button>
                         </div>
 
                         <div>
