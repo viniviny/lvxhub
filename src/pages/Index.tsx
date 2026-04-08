@@ -74,6 +74,11 @@ const initialForm: ProductFormData = {
   tags: '',
   productType: '',
   gender: '',
+  pricingCurrency: 'USD',
+  pricingCpa: 5,
+  pricingMargin: 60,
+  pricingShipping: 0,
+  pricingPlatform: 'shopify',
 };
 
 const PUBLISH_STEPS = [
@@ -171,6 +176,11 @@ const Index = () => {
       tags: pd.tags || '',
       productType: pd.productType || '',
       gender: (pd.gender || '') as ProductGender,
+      pricingCurrency: (pd as any).pricingCurrency || 'USD',
+      pricingCpa: (pd as any).pricingCpa ?? 5,
+      pricingMargin: (pd as any).pricingMargin ?? 60,
+      pricingShipping: (pd as any).pricingShipping ?? 0,
+      pricingPlatform: (pd as any).pricingPlatform || 'shopify',
     });
 
     setSeoTitle(project.seoData?.seoTitle || '');
@@ -991,7 +1001,19 @@ const Index = () => {
                             onCostChange={v => setFormWithSave(prev => ({ ...prev, cost: v }))}
                           />
                         </div>
-                        <PricingEngine cost={form.cost} />
+                        <PricingEngine
+                          cost={form.cost}
+                          currency={form.pricingCurrency}
+                          cpa={form.pricingCpa}
+                          marginTarget={form.pricingMargin}
+                          shippingCost={form.pricingShipping}
+                          platform={form.pricingPlatform}
+                          onCurrencyChange={v => setFormWithSave(prev => ({ ...prev, pricingCurrency: v }))}
+                          onCpaChange={v => setFormWithSave(prev => ({ ...prev, pricingCpa: v }))}
+                          onMarginChange={v => setFormWithSave(prev => ({ ...prev, pricingMargin: v }))}
+                          onShippingChange={v => setFormWithSave(prev => ({ ...prev, pricingShipping: v }))}
+                          onPlatformChange={v => setFormWithSave(prev => ({ ...prev, pricingPlatform: v }))}
+                        />
 
                         <div className="flex flex-col gap-3">
                           <ShippingCard

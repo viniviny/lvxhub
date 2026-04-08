@@ -32,6 +32,11 @@ const initialForm: ProductFormData = {
   tags: '',
   productType: '',
   gender: '',
+  pricingCurrency: 'USD',
+  pricingCpa: 5,
+  pricingMargin: 60,
+  pricingShipping: 0,
+  pricingPlatform: 'shopify',
 };
 
 export function ProductForm({ onGenerateImage, isGenerating, hasImage }: ProductFormProps) {

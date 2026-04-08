@@ -22,6 +22,11 @@ export interface ProjectProductData {
   tags: string;
   productType: string;
   gender: string;
+  pricingCurrency: string;
+  pricingCpa: number;
+  pricingMargin: number;
+  pricingShipping: number;
+  pricingPlatform: string;
 }
 
 export interface ProjectAIData {
@@ -84,6 +89,11 @@ export const EMPTY_PRODUCT_DATA: ProjectProductData = {
   tags: '',
   productType: '',
   gender: '',
+  pricingCurrency: 'USD',
+  pricingCpa: 5,
+  pricingMargin: 60,
+  pricingShipping: 0,
+  pricingPlatform: 'shopify',
 };
 
 export const EMPTY_AI_DATA: ProjectAIData = {
