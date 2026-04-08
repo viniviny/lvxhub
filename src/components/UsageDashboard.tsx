@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { SERVICE_LABELS, type ApiService } from '@/hooks/useApiUsage';
+import { SERVICE_LABELS, SERVICE_MODELS, type ApiService } from '@/hooks/useApiUsage';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Image, FileText, Search, Upload, DollarSign, Activity, TrendingUp, BarChart3 } from 'lucide-react';
