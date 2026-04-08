@@ -745,8 +745,15 @@ const Index = () => {
                           old => !imgs.some(n => n.id === old.id)
                         );
                         if (removedImages.length > 0) {
-                          // Delete from project_images
-                          removedImages.forEach(img => removeProjectImage(img.id));
+                          // Delete from project_images by matching URL (IDs differ between client and DB)
+                          if (project) {
+                            removedImages.forEach(img => {
+                              const dbImage = project.images.find(pi => pi.url === img.url);
+                              if (dbImage) {
+                                removeProjectImage(dbImage.id);
+                              }
+                            });
+                          }
                           // Delete from image_library by URL
                           supabase.auth.getUser().then(({ data: { user: u } }) => {
                             if (!u) return;
