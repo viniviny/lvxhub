@@ -11,6 +11,7 @@ interface UsageRow {
   tokens_used: number;
   estimated_cost: number;
   created_at: string;
+  metadata: { model?: string; provider?: string } | null;
 }
 
 const SERVICE_ICONS: Record<string, typeof Image> = {
@@ -43,7 +44,7 @@ export function UsageDashboard() {
       if (!user) { setLoading(false); return; }
 
       let query = (supabase as any).from('api_usage_logs')
-        .select('service, action, tokens_used, estimated_cost, created_at')
+        .select('service, action, tokens_used, estimated_cost, created_at, metadata')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
@@ -175,13 +176,19 @@ export function UsageDashboard() {
                   const color = SERVICE_COLORS[log.service] || 'text-muted-foreground';
                   const date = new Date(log.created_at);
                   const timeStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                  const modelName = (log.metadata as any)?.model;
                   return (
                     <div key={i} className="flex items-center justify-between py-1 border-b border-border/30 last:border-0">
-                      <div className="flex items-center gap-1.5">
-                        <Icon className={`w-3 h-3 ${color}`} />
-                        <span className="text-[11px] text-foreground">{log.action}</span>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <Icon className={`w-3 h-3 ${color} shrink-0`} />
+                        <span className="text-[11px] text-foreground truncate">{log.action}</span>
+                        {modelName && (
+                          <Badge variant="outline" className="text-[8px] h-3.5 px-1 shrink-0 text-muted-foreground">
+                            {modelName}
+                          </Badge>
+                        )}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         <span className="text-[10px] text-muted-foreground">${Number(log.estimated_cost).toFixed(4)}</span>
                         <span className="text-[9px] text-muted-foreground/60">{timeStr}</span>
                       </div>
