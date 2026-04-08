@@ -50,7 +50,7 @@ export function useProductSpecs() {
       if (error) throw error;
       if (data?.specs) {
         setSpecs(data.specs);
-        logUsage({ service: 'specs-generation', action: 'Gerar especificações' });
+        logUsage({ service: 'specs-generation', action: 'Gerar especificações', metadata: { model: 'gemini-2.5-flash', provider: 'Google AI' } });
         return data.specs;
       }
       return null;

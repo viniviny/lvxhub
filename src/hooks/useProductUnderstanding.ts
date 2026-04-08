@@ -62,7 +62,7 @@ export function useProductUnderstanding() {
           imageInsights: insights,
           finalProductType: resolveFinalProductType(prev.manualProductType, aiType, undefined, insights),
         }));
-        logUsage({ service: 'image-analysis', action: 'Análise de imagem' });
+        logUsage({ service: 'image-analysis', action: 'Análise de imagem', metadata: { model: 'gemini-2.5-flash', provider: 'Google AI' } });
       }
     } catch (e) {
       console.warn('[ProductUnderstanding] Image analysis failed:', e);

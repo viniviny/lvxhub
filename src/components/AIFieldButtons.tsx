@@ -100,7 +100,7 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
       if (data?.content) {
         setGeneratedLang(data.language || language);
         applyContent(data.content);
-        logUsage({ service: 'text-generation', action: `Gerar ${type === 'title' ? 'título' : 'descrição'}` });
+        logUsage({ service: 'text-generation', action: `Gerar ${type === 'title' ? 'título' : 'descrição'}`, metadata: { model: 'gpt-4o-mini', provider: 'OpenAI' } });
       }
     } catch (e: any) {
       toast.error(e.message || 'Erro ao gerar conteúdo');
@@ -137,7 +137,7 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
         setGeneratedLang(data.language || language);
         applyContent(data.content);
         setShowPopover(false);
-        logUsage({ service: 'text-generation', action: `Gerar ${type} (prompt customizado)` });
+        logUsage({ service: 'text-generation', action: `Gerar ${type} (prompt customizado)`, metadata: { model: 'gpt-4o-mini', provider: 'OpenAI' } });
       }
     } catch (e: any) {
       toast.error(e.message || 'Erro ao gerar conteúdo');
