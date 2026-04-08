@@ -984,81 +984,85 @@ const Index = () => {
                     </div>
                   )}
 
-                  {/* ═══ STEP 3: VARIANTS & SHIPPING ═══ */}
+                  {/* ═══ STEP 3: PRICING, VARIANTS & SHIPPING ═══ */}
                   {wizardStep === 3 && (
-                    <div className="space-y-3">
-                      {/* TOP ROW — Price + Shipping side by side */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="glass-card p-4 space-y-3">
-                          <h3 className="font-display font-semibold text-[13px] text-foreground">Preço</h3>
-                          <PriceSection
-                            price={form.price}
-                            compareAtPrice={form.compareAtPrice}
+                    <div className="grid grid-cols-[1fr_320px] gap-3">
+                      {/* LEFT COLUMN — Main content */}
+                      <div className="space-y-3">
+                        {/* Pricing row */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="glass-card p-4 space-y-3">
+                            <h3 className="font-display font-semibold text-[13px] text-foreground">Preço</h3>
+                            <PriceSection
+                              price={form.price}
+                              compareAtPrice={form.compareAtPrice}
+                              cost={form.cost}
+                              currencySymbol={currencySymbol}
+                              onPriceChange={v => setFormWithSave(prev => ({ ...prev, price: v }))}
+                              onCompareAtPriceChange={v => setFormWithSave(prev => ({ ...prev, compareAtPrice: v }))}
+                              onCostChange={v => setFormWithSave(prev => ({ ...prev, cost: v }))}
+                            />
+                          </div>
+                          <PricingEngine
                             cost={form.cost}
-                            currencySymbol={currencySymbol}
-                            onPriceChange={v => setFormWithSave(prev => ({ ...prev, price: v }))}
-                            onCompareAtPriceChange={v => setFormWithSave(prev => ({ ...prev, compareAtPrice: v }))}
-                            onCostChange={v => setFormWithSave(prev => ({ ...prev, cost: v }))}
+                            currency={form.pricingCurrency}
+                            cpa={form.pricingCpa}
+                            marginTarget={form.pricingMargin}
+                            shippingCost={form.pricingShipping}
+                            platform={form.pricingPlatform}
+                            onCurrencyChange={v => setFormWithSave(prev => ({ ...prev, pricingCurrency: v }))}
+                            onCpaChange={v => setFormWithSave(prev => ({ ...prev, pricingCpa: v }))}
+                            onMarginChange={v => setFormWithSave(prev => ({ ...prev, pricingMargin: v }))}
+                            onShippingChange={v => setFormWithSave(prev => ({ ...prev, pricingShipping: v }))}
+                            onPlatformChange={v => setFormWithSave(prev => ({ ...prev, pricingPlatform: v }))}
+                            onApplyPrice={v => setFormWithSave(prev => ({ ...prev, price: v }))}
                           />
                         </div>
-                        <PricingEngine
-                          cost={form.cost}
-                          currency={form.pricingCurrency}
-                          cpa={form.pricingCpa}
-                          marginTarget={form.pricingMargin}
-                          shippingCost={form.pricingShipping}
-                          platform={form.pricingPlatform}
-                          onCurrencyChange={v => setFormWithSave(prev => ({ ...prev, pricingCurrency: v }))}
-                          onCpaChange={v => setFormWithSave(prev => ({ ...prev, pricingCpa: v }))}
-                          onMarginChange={v => setFormWithSave(prev => ({ ...prev, pricingMargin: v }))}
-                          onShippingChange={v => setFormWithSave(prev => ({ ...prev, pricingShipping: v }))}
-                          onPlatformChange={v => setFormWithSave(prev => ({ ...prev, pricingPlatform: v }))}
-                          onApplyPrice={v => setFormWithSave(prev => ({ ...prev, price: v }))}
-                        />
 
-                        <div className="flex flex-col gap-3">
-                          <ShippingCard
-                            requiresShipping={form.requiresShipping}
-                            onRequiresShippingChange={v => setFormWithSave(prev => ({ ...prev, requiresShipping: v }))}
-                            weight={form.weight}
-                            onWeightChange={v => setFormWithSave(prev => ({ ...prev, weight: v }))}
-                            weightUnit={form.weightUnit}
-                            onWeightUnitChange={v => setFormWithSave(prev => ({ ...prev, weightUnit: v }))}
-                            countryOfOrigin={form.countryOfOrigin}
-                            onCountryOfOriginChange={v => setFormWithSave(prev => ({ ...prev, countryOfOrigin: v }))}
+                        {/* Sizes & Variants */}
+                        <div className="glass-card p-4 space-y-3">
+                          <h3 className="font-display font-semibold text-[13px] text-foreground">Sizes & Variants</h3>
+                          <div className="flex flex-wrap gap-1.5 items-center">
+                            {AVAILABLE_SIZES.map(size => (
+                              <button key={size} type="button" onClick={() => toggleSize(size)} className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${form.sizes.includes(size) ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>{size}</button>
+                            ))}
+                            {form.sizes.filter(s => !AVAILABLE_SIZES.includes(s)).map(size => (
+                              <button key={size} type="button" onClick={() => toggleSize(size)} className="px-2.5 py-1 rounded-md text-xs font-medium bg-primary text-primary-foreground flex items-center gap-1">
+                                {size}
+                                <XCircle className="w-3 h-3" />
+                              </button>
+                            ))}
+                            <AddCustomSize onAdd={(s) => {
+                              if (!form.sizes.includes(s)) {
+                                toggleSize(s);
+                              }
+                            }} />
+                          </div>
+
+                          <VariantsTable
+                            variants={form.variants}
+                            onChange={v => setFormWithSave(prev => ({ ...prev, variants: v }))}
+                            inventoryPolicy={form.inventoryPolicy}
+                            onInventoryPolicyChange={p => setFormWithSave(prev => ({ ...prev, inventoryPolicy: p }))}
+                            productType={form.collection || form.title}
+                            currencySymbol={currencySymbol}
                           />
-                          <ColorManager colors={colors} onColorsChange={setColors} generatedImages={generatedImages} />
                         </div>
                       </div>
 
-                      {/* BOTTOM — Sizes + Variants full width */}
-                      <div className="glass-card p-4 space-y-3">
-                        <h3 className="font-display font-semibold text-[13px] text-foreground">Sizes & Variants</h3>
-                        <div className="flex flex-wrap gap-1.5 items-center">
-                          {AVAILABLE_SIZES.map(size => (
-                            <button key={size} type="button" onClick={() => toggleSize(size)} className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${form.sizes.includes(size) ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>{size}</button>
-                          ))}
-                          {form.sizes.filter(s => !AVAILABLE_SIZES.includes(s)).map(size => (
-                            <button key={size} type="button" onClick={() => toggleSize(size)} className="px-2.5 py-1 rounded-md text-xs font-medium bg-primary text-primary-foreground flex items-center gap-1">
-                              {size}
-                              <XCircle className="w-3 h-3" />
-                            </button>
-                          ))}
-                          <AddCustomSize onAdd={(s) => {
-                            if (!form.sizes.includes(s)) {
-                              toggleSize(s);
-                            }
-                          }} />
-                        </div>
-
-                        <VariantsTable
-                          variants={form.variants}
-                          onChange={v => setFormWithSave(prev => ({ ...prev, variants: v }))}
-                          inventoryPolicy={form.inventoryPolicy}
-                          onInventoryPolicyChange={p => setFormWithSave(prev => ({ ...prev, inventoryPolicy: p }))}
-                          productType={form.collection || form.title}
-                          currencySymbol={currencySymbol}
+                      {/* RIGHT COLUMN — Shipping + Colors */}
+                      <div className="space-y-3">
+                        <ShippingCard
+                          requiresShipping={form.requiresShipping}
+                          onRequiresShippingChange={v => setFormWithSave(prev => ({ ...prev, requiresShipping: v }))}
+                          weight={form.weight}
+                          onWeightChange={v => setFormWithSave(prev => ({ ...prev, weight: v }))}
+                          weightUnit={form.weightUnit}
+                          onWeightUnitChange={v => setFormWithSave(prev => ({ ...prev, weightUnit: v }))}
+                          countryOfOrigin={form.countryOfOrigin}
+                          onCountryOfOriginChange={v => setFormWithSave(prev => ({ ...prev, countryOfOrigin: v }))}
                         />
+                        <ColorManager colors={colors} onColorsChange={setColors} generatedImages={generatedImages} />
                       </div>
                     </div>
                   )}
