@@ -42,6 +42,7 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
   const popoverRef = useRef<HTMLDivElement>(null);
 
   const { prompts, incrementUsage } = useUserPrompts();
+  const { logUsage } = useApiUsage();
   const categoryKey = CATEGORY_MAP[type] || type;
   const filteredPrompts = prompts.filter(p => p.category === categoryKey);
 
