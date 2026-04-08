@@ -60,6 +60,7 @@ type PromptMode = 'simple' | 'custom';
 export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange }: ImageGenerationStepProps) {
   const navigate = useNavigate();
   const { prompts: allPrompts, recentPrompts: allRecentPrompts, incrementUsage } = useUserPrompts();
+  const { logUsage } = useApiUsage();
   const savedPrompts = allPrompts.filter(p => p.category === 'imagem');
   const recentPrompts = allRecentPrompts.filter(p => p.category === 'imagem');
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
