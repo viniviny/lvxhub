@@ -5,7 +5,8 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, TrendingUp, Receipt, Flame, HelpCircle, ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
+import { DollarSign, TrendingUp, Receipt, Flame, HelpCircle, ShieldCheck, AlertTriangle, Loader2, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
 
 interface PricingEngineProps {
@@ -20,6 +21,7 @@ interface PricingEngineProps {
   onMarginChange: (v: number) => void;
   onShippingChange: (v: number) => void;
   onPlatformChange: (v: string) => void;
+  onApplyPrice?: (price: number) => void;
 }
 
 const CURRENCIES = [
@@ -46,7 +48,7 @@ function getMarginHealth(percent: number) {
 
 export function PricingEngine({
   cost, currency, cpa, marginTarget, shippingCost, platform,
-  onCurrencyChange, onCpaChange, onMarginChange, onShippingChange, onPlatformChange,
+  onCurrencyChange, onCpaChange, onMarginChange, onShippingChange, onPlatformChange, onApplyPrice,
 }: PricingEngineProps) {
   const { rates, loading: ratesLoading, convert } = useExchangeRates('USD');
 
@@ -170,7 +172,20 @@ export function PricingEngine({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[10px] text-muted-foreground">Preço sugerido</p>
-                <p className="text-lg font-bold text-foreground">{cs}{calc.priceLocal.toFixed(2)}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-lg font-bold text-foreground">{cs}{calc.priceLocal.toFixed(2)}</p>
+                  {onApplyPrice && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-6 px-2 text-[10px]"
+                      onClick={() => onApplyPrice(parseFloat(calc.priceLocal.toFixed(2)))}
+                    >
+                      <Check className="w-3 h-3 mr-1" />
+                      Aplicar
+                    </Button>
+                  )}
+                </div>
               </div>
               <div className="text-right">
                 <div className="flex items-center gap-1">
