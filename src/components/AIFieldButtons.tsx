@@ -23,6 +23,7 @@ interface AIFieldButtonsProps {
   gender?: string;
   productSpecs?: Record<string, any> | null;
   onBeforeGenerate?: () => Promise<void>;
+  disabled?: boolean;
 }
 
 const CATEGORY_MAP: Record<string, string> = {
@@ -30,7 +31,7 @@ const CATEGORY_MAP: Record<string, string> = {
   description: 'descricao',
 };
 
-export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated, tone, usedNames, productContext, gender, productSpecs, onBeforeGenerate }: AIFieldButtonsProps) {
+export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated, tone, usedNames, productContext, gender, productSpecs, onBeforeGenerate, disabled }: AIFieldButtonsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [generatedLang, setGeneratedLang] = useState('');
@@ -187,11 +188,13 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
           <TooltipTrigger asChild>
             <button
               onClick={handleGenerate}
-              disabled={isGenerating}
+              disabled={isGenerating || disabled}
               className={`flex items-center gap-1 h-[22px] px-2 rounded text-[10px] font-medium transition-all border ${
-                showSuccess
-                  ? 'border-[hsl(var(--chart-2))] bg-[hsl(var(--chart-2))]/15 text-[hsl(var(--chart-2))]'
-                  : 'border-primary/50 bg-primary/15 text-[hsl(213,97%,67%)] hover:bg-primary/25'
+                disabled
+                  ? 'border-border bg-secondary/50 text-muted-foreground/40 cursor-not-allowed'
+                  : showSuccess
+                    ? 'border-[hsl(var(--chart-2))] bg-[hsl(var(--chart-2))]/15 text-[hsl(var(--chart-2))]'
+                    : 'border-primary/50 bg-primary/15 text-[hsl(213,97%,67%)] hover:bg-primary/25'
               }`}
             >
               {isGenerating ? (
@@ -216,8 +219,9 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
       </TooltipProvider>
 
       <button
-        onClick={() => setShowPopover(!showPopover)}
-        className="flex items-center gap-1 h-[22px] px-2 rounded text-[10px] font-medium transition-all border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30"
+        onClick={() => !disabled && setShowPopover(!showPopover)}
+        disabled={disabled}
+        className={`flex items-center gap-1 h-[22px] px-2 rounded text-[10px] font-medium transition-all border ${disabled ? 'border-border bg-secondary/50 text-muted-foreground/40 cursor-not-allowed' : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30'}`}
       >
         <BookOpen className="w-3 h-3" />
         Prompts

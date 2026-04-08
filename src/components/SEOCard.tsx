@@ -22,9 +22,10 @@ interface SEOCardProps {
   languageCode?: string;
   countryName?: string;
   productContext?: ProductAIContext;
+  aiDisabled?: boolean;
 }
 
-export function SEOCard({ title, description, storeDomain, productTitle, onTitleChange, onDescriptionChange, compact, language, languageCode, countryName, productContext }: SEOCardProps) {
+export function SEOCard({ title, description, storeDomain, productTitle, onTitleChange, onDescriptionChange, compact, language, languageCode, countryName, productContext, aiDisabled }: SEOCardProps) {
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
   const { logUsage } = useApiUsage();
@@ -136,7 +137,7 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
 
             <button
               onClick={handleOptimize}
-              disabled={isOptimizing || !productTitle}
+              disabled={isOptimizing || !productTitle || aiDisabled}
               className="flex items-center justify-center gap-1.5 w-full h-[30px] rounded-md text-[10px] font-medium border border-border text-muted-foreground hover:border-primary/50 hover:text-[hsl(213,97%,67%)] disabled:opacity-40 transition-all"
             >
               {isOptimizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}

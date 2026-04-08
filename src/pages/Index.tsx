@@ -573,7 +573,9 @@ const Index = () => {
 
   const activeStoreLang = activeStore?.marketConfig?.language ? getAILanguageByCode(activeStore.marketConfig.language) : null;
   const aiContext = useMemo(() => buildProductAIContext(understanding, form.gender, form.tags, activeStoreLang?.label || 'English'), [understanding, form.gender, form.tags, activeStoreLang]);
-  const canPublish = getCanPublish(form, !!imageFile || generatedImages.some(i => i.url));
+  const hasImage = !!imageFile || generatedImages.some(i => i.url);
+  const canPublish = getCanPublish(form, hasImage);
+  const aiDisabled = !hasImage;
 
   // ─── Specs: ensure generated before text generation ───────
   const ensureSpecs = useCallback(async () => {
@@ -825,6 +827,7 @@ const Index = () => {
                         languageCode={activeStore?.marketConfig?.language || 'en-US'}
                         countryName={activeStore?.marketConfig?.marketName || ''}
                         productContext={aiContext}
+                        aiDisabled={aiDisabled}
                       />
 
                       {/* RIGHT — Product Details (main) */}
@@ -881,6 +884,7 @@ const Index = () => {
                               gender={form.gender}
                               productSpecs={specs}
                               onBeforeGenerate={ensureSpecs}
+                              disabled={aiDisabled}
                             />
                           </div>
                           <Input value={form.title} onChange={e => {
@@ -908,6 +912,7 @@ const Index = () => {
                               gender={form.gender}
                               productSpecs={specs}
                               onBeforeGenerate={ensureSpecs}
+                              disabled={aiDisabled}
                             />
                           </div>
                           <div className="[&_.ProseMirror]:min-h-[160px]">
