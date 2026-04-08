@@ -21,11 +21,11 @@ export const SERVICE_COSTS: Record<ApiService, number> = {
 };
 
 export const SERVICE_LABELS: Record<ApiService, string> = {
-  'image-generation': 'Geração de Imagem',
-  'text-generation': 'Geração de Texto',
-  'specs-generation': 'Geração de Specs',
-  'image-analysis': 'Análise de Imagem',
-  'shopify-publish': 'Publicação Shopify',
+  'image-generation': 'Gemini Imagen 3 (Imagem)',
+  'text-generation': 'Gemini 2.5 Flash (Texto)',
+  'specs-generation': 'Gemini 2.5 Flash (Specs)',
+  'image-analysis': 'Gemini 2.5 Flash (Análise)',
+  'shopify-publish': 'Shopify Admin API',
 };
 
 export function useApiUsage() {
