@@ -219,8 +219,9 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
       </TooltipProvider>
 
       <button
-        onClick={() => setShowPopover(!showPopover)}
-        className="flex items-center gap-1 h-[22px] px-2 rounded text-[10px] font-medium transition-all border border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30"
+        onClick={() => !disabled && setShowPopover(!showPopover)}
+        disabled={disabled}
+        className={`flex items-center gap-1 h-[22px] px-2 rounded text-[10px] font-medium transition-all border ${disabled ? 'border-border bg-secondary/50 text-muted-foreground/40 cursor-not-allowed' : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30'}`}
       >
         <BookOpen className="w-3 h-3" />
         Prompts
