@@ -60,29 +60,26 @@ export function UsageDashboard() {
     fetchLogs();
   }, [period]);
 
+  const ALL_SERVICES: ApiService[] = ['image-generation', 'text-generation', 'specs-generation', 'image-analysis', 'shopify-publish'];
+
   const stats = useMemo(() => {
     const totalCalls = logs.length;
     const totalCost = logs.reduce((sum, l) => sum + Number(l.estimated_cost || 0), 0);
     const totalTokens = logs.reduce((sum, l) => sum + (l.tokens_used || 0), 0);
 
     const byService: Record<string, { count: number; cost: number }> = {};
+    // Initialize all services so they always appear
+    ALL_SERVICES.forEach(s => { byService[s] = { count: 0, cost: 0 }; });
     logs.forEach(l => {
       if (!byService[l.service]) byService[l.service] = { count: 0, cost: 0 };
       byService[l.service].count++;
       byService[l.service].cost += Number(l.estimated_cost || 0);
     });
 
-    // Daily trend (last 7 entries by date)
-    const byDate: Record<string, number> = {};
-    logs.forEach(l => {
-      const day = l.created_at.slice(0, 10);
-      byDate[day] = (byDate[day] || 0) + 1;
-    });
-
     const sortedServices = Object.entries(byService)
       .sort(([, a], [, b]) => b.cost - a.cost);
 
-    return { totalCalls, totalCost, totalTokens, sortedServices, byDate };
+    return { totalCalls, totalCost, totalTokens, sortedServices };
   }, [logs]);
 
   const maxCount = Math.max(...stats.sortedServices.map(([, s]) => s.count), 1);
