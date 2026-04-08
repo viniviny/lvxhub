@@ -22,6 +22,7 @@ import { GlobalPublishFlow } from '@/components/GlobalPublishFlow';
 import { DashboardSidebar, DashboardView } from '@/components/DashboardSidebar';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { PriceSection } from '@/components/PriceSection';
+import { PricingEngine } from '@/components/PricingEngine';
 import { VariantsTable } from '@/components/VariantsTable';
 import { ShippingCard } from '@/components/ShippingCard';
 import { SalesChannels } from '@/components/SalesChannels';

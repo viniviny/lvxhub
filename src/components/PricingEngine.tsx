@@ -72,7 +72,7 @@ export function PricingEngine({ cost }: PricingEngineProps) {
             max={0.99}
             step={0.05}
             value={margin}
-            onChange={e => setCpa(Number(e.target.value) || 0)}
+            onChange={e => setMargin(Number(e.target.value) || 0)}
             className="h-8 text-xs bg-secondary border-border"
           />
         </div>
