@@ -37,6 +37,7 @@ import { AIFieldButtons } from '@/components/AIFieldButtons';
 import { AIUnderstandingCard } from '@/components/AIUnderstandingCard';
 import { buildProductAIContext } from '@/types/productUnderstanding';
 import { ProductTypeCombobox } from '@/components/ProductTypeCombobox';
+import { UsageDashboard } from '@/components/UsageDashboard';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -1379,16 +1380,22 @@ const Index = () => {
               <div className="animate-fade-in">
                 <h2 className="font-display text-2xl font-bold text-foreground mb-2">Configurações</h2>
                 <p className="text-muted-foreground text-sm mb-6">Preferências do aplicativo.</p>
-                <div className="glass-card p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div><p className="text-sm font-medium text-foreground">Versão</p><p className="text-xs text-muted-foreground">Publify Beta v0.3.0</p></div>
+                <div className="grid grid-cols-[1fr_1fr] gap-4">
+                  <div className="glass-card p-5 space-y-4">
+                    <h3 className="font-display font-semibold text-[13px] text-foreground">Geral</h3>
+                    <div className="flex items-center justify-between">
+                      <div><p className="text-xs font-medium text-foreground">Versão</p><p className="text-[10px] text-muted-foreground">Publify Beta v0.3.0</p></div>
+                    </div>
+                    <div className="border-t border-border/50 pt-3 flex items-center justify-between">
+                      <div><p className="text-xs font-medium text-foreground">Lojas conectadas</p><p className="text-[10px] text-muted-foreground">{stores.filter(s => s.connected).length} ativa{stores.filter(s => s.connected).length !== 1 ? 's' : ''}</p></div>
+                      <Button variant="secondary" size="sm" onClick={() => setCurrentView('stores')} className="font-display text-[10px] h-7">Gerenciar</Button>
+                    </div>
+                    <div className="border-t border-border/50 pt-3 flex items-center justify-between">
+                      <div><p className="text-xs font-medium text-foreground">Produtos publicados</p><p className="text-[10px] text-muted-foreground">{publishedCount} produto{publishedCount !== 1 ? 's' : ''}</p></div>
+                    </div>
                   </div>
-                  <div className="border-t border-border/50 pt-4 flex items-center justify-between">
-                    <div><p className="text-sm font-medium text-foreground">Lojas conectadas</p><p className="text-xs text-muted-foreground">{stores.filter(s => s.connected).length} ativa{stores.filter(s => s.connected).length !== 1 ? 's' : ''}</p></div>
-                    <Button variant="secondary" size="sm" onClick={() => setCurrentView('stores')} className="font-display text-xs">Gerenciar</Button>
-                  </div>
-                  <div className="border-t border-border/50 pt-4 flex items-center justify-between">
-                    <div><p className="text-sm font-medium text-foreground">Produtos publicados</p><p className="text-xs text-muted-foreground">{publishedCount} produto{publishedCount !== 1 ? 's' : ''}</p></div>
+                  <div className="glass-card p-5">
+                    <UsageDashboard />
                   </div>
                 </div>
               </div>
