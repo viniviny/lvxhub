@@ -733,7 +733,7 @@ const Index = () => {
                         );
                         if (removedImages.length > 0) {
                           // Delete from project_images
-                          removedImages.forEach(img => removeImage(img.id));
+                          removedImages.forEach(img => removeProjectImage(img.id));
                           // Delete from image_library by URL
                           supabase.auth.getUser().then(({ data: { user: u } }) => {
                             if (!u) return;
