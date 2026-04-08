@@ -1003,16 +1003,16 @@ const Index = () => {
                         </div>
                         <PricingEngine
                           cost={form.cost}
-                          currency={(form as any).pricingCurrency ?? 'USD'}
-                          cpa={(form as any).pricingCpa ?? 5}
-                          marginTarget={(form as any).pricingMargin ?? 60}
-                          shippingCost={(form as any).pricingShipping ?? 0}
-                          platform={(form as any).pricingPlatform ?? 'shopify'}
-                          onCurrencyChange={v => setFormWithSave(prev => ({ ...prev, pricingCurrency: v } as any))}
-                          onCpaChange={v => setFormWithSave(prev => ({ ...prev, pricingCpa: v } as any))}
-                          onMarginChange={v => setFormWithSave(prev => ({ ...prev, pricingMargin: v } as any))}
-                          onShippingChange={v => setFormWithSave(prev => ({ ...prev, pricingShipping: v } as any))}
-                          onPlatformChange={v => setFormWithSave(prev => ({ ...prev, pricingPlatform: v } as any))}
+                          currency={form.pricingCurrency}
+                          cpa={form.pricingCpa}
+                          marginTarget={form.pricingMargin}
+                          shippingCost={form.pricingShipping}
+                          platform={form.pricingPlatform}
+                          onCurrencyChange={v => setFormWithSave(prev => ({ ...prev, pricingCurrency: v }))}
+                          onCpaChange={v => setFormWithSave(prev => ({ ...prev, pricingCpa: v }))}
+                          onMarginChange={v => setFormWithSave(prev => ({ ...prev, pricingMargin: v }))}
+                          onShippingChange={v => setFormWithSave(prev => ({ ...prev, pricingShipping: v }))}
+                          onPlatformChange={v => setFormWithSave(prev => ({ ...prev, pricingPlatform: v }))}
                         />
 
                         <div className="flex flex-col gap-3">
