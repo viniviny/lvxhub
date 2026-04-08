@@ -23,6 +23,7 @@ interface AIFieldButtonsProps {
   gender?: string;
   productSpecs?: Record<string, any> | null;
   onBeforeGenerate?: () => Promise<void>;
+  disabled?: boolean;
 }
 
 const CATEGORY_MAP: Record<string, string> = {
@@ -30,7 +31,7 @@ const CATEGORY_MAP: Record<string, string> = {
   description: 'descricao',
 };
 
-export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated, tone, usedNames, productContext, gender, productSpecs, onBeforeGenerate }: AIFieldButtonsProps) {
+export function AIFieldButtons({ type, brief, title, language, languageCode, countryName, countryFlag, currentValue, onGenerated, tone, usedNames, productContext, gender, productSpecs, onBeforeGenerate, disabled }: AIFieldButtonsProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [generatedLang, setGeneratedLang] = useState('');
