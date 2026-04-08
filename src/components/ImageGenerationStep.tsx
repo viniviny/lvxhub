@@ -8,6 +8,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserPrompts } from '@/hooks/useUserPrompts';
 import { toast } from 'sonner';
+import { useApiUsage } from '@/hooks/useApiUsage';
 import {
   Sparkles, Loader2, Upload, Plus, RefreshCw, Trash2, Star,
   ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical,
