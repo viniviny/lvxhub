@@ -94,10 +94,10 @@ serve(async (req) => {
   try {
     const { type, brief, title, language, languageCode, countryName, customPrompt, tone, usedNames, gender, productContext, productSpecs } = await req.json();
 
-    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
-    if (!GOOGLE_API_KEY) {
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) {
       return new Response(
-        JSON.stringify({ error: "GOOGLE_API_KEY não configurada." }),
+        JSON.stringify({ error: "OPENAI_API_KEY não configurada." }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -151,18 +151,22 @@ RULES: Premium, calm, confident tone. No exaggeration. No emojis. No filler text
       );
     }
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            { role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] },
-          ],
-        }),
-      }
-    );
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 1024,
+      }),
+    });
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -171,14 +175,14 @@ RULES: Premium, calm, confident tone. No exaggeration. No emojis. No filler text
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      if (response.status === 402 || response.status === 403) {
+      if (response.status === 401 || response.status === 403) {
         return new Response(
-          JSON.stringify({ error: "API key inválida ou sem cota. Verifique sua GOOGLE_API_KEY." }),
+          JSON.stringify({ error: "API key inválida ou sem cota. Verifique sua OPENAI_API_KEY." }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       const errorText = await response.text();
-      console.error("Google AI error:", response.status, errorText);
+      console.error("OpenAI error:", response.status, errorText);
       return new Response(
         JSON.stringify({ error: "Erro ao gerar conteúdo." }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -186,7 +190,7 @@ RULES: Premium, calm, confident tone. No exaggeration. No emojis. No filler text
     }
 
     const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const content = data.choices?.[0]?.message?.content?.trim() || '';
 
     return new Response(
       JSON.stringify({ content, language: config.name }),
