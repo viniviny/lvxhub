@@ -137,16 +137,22 @@ export function UsageDashboard() {
               const Icon = SERVICE_ICONS[service] || Activity;
               const color = SERVICE_COLORS[service] || 'text-muted-foreground';
               const pct = maxCount > 0 ? (data.count / maxCount) * 100 : 0;
+              const modelName = SERVICE_MODELS[service as ApiService] || '';
               return (
                 <div key={service} className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <Icon className={`w-3.5 h-3.5 ${color}`} />
-                      <span className="text-xs text-foreground font-medium">
-                        {SERVICE_LABELS[service as ApiService] || service}
-                      </span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Icon className={`w-3.5 h-3.5 ${color} shrink-0`} />
+                      <div className="min-w-0">
+                        <span className="text-xs text-foreground font-medium block">
+                          {SERVICE_LABELS[service as ApiService] || service}
+                        </span>
+                        <span className="text-[9px] text-muted-foreground/70 block truncate">
+                          {modelName}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <Badge variant="outline" className="text-[9px] h-4 px-1.5">
                         {data.count}x
                       </Badge>
