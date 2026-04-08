@@ -20,10 +20,10 @@ serve(async (req) => {
       );
     }
 
-    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
-    if (!GOOGLE_API_KEY) {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
       return new Response(
-        JSON.stringify({ error: "GOOGLE_API_KEY não configurada." }),
+        JSON.stringify({ error: "LOVABLE_API_KEY não configurada." }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -58,47 +58,21 @@ STYLE: ${style || 'Not specified'}
 MAIN COLOR: ${mainColor || 'Not specified'}
 VISUAL DETAILS: ${visualDetails || 'Not specified'}`;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [
-            { role: "user", parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }] },
-          ],
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: "OBJECT",
-              properties: {
-                material: { type: "STRING" },
-                fabric_composition: { type: "STRING" },
-                style: { type: "STRING" },
-                fit: { type: "STRING" },
-                thickness: { type: "STRING" },
-                craft: { type: "STRING" },
-                collar_type: { type: "STRING" },
-                sleeve_type: { type: "STRING" },
-                length: { type: "STRING" },
-                season: { type: "STRING" },
-                use_case: { type: "STRING" },
-                target_audience: { type: "STRING" },
-                available_colors: { type: "ARRAY", items: { type: "STRING" } },
-                available_sizes: { type: "ARRAY", items: { type: "STRING" } },
-                additional_features: { type: "ARRAY", items: { type: "STRING" } },
-              },
-              required: [
-                "material", "fabric_composition", "style", "fit", "thickness",
-                "craft", "collar_type", "sleeve_type", "length", "season",
-                "use_case", "target_audience", "available_colors", "available_sizes",
-                "additional_features"
-              ],
-            },
-          },
-        }),
-      }
-    );
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-lite',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        response_format: { type: 'json_object' },
+      }),
+    });
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -107,16 +81,22 @@ VISUAL DETAILS: ${visualDetails || 'Not specified'}`;
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "Créditos esgotados. Adicione fundos ao workspace." }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       const errorText = await response.text();
-      console.error("Google AI error:", response.status, errorText);
+      console.error("Lovable AI Gateway error:", response.status, errorText);
       return new Response(
-        JSON.stringify({ error: "Erro na API do Google AI." }),
+        JSON.stringify({ error: "Erro na API de IA." }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const content = data.choices?.[0]?.message?.content;
 
     if (content) {
       const specs = JSON.parse(content);

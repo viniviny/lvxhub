@@ -46,7 +46,6 @@ const TONE_MAP: Record<string, string> = {
   editorial: 'Editorial, storytelling, atmospheric. Inspired by Vogue, SSENSE, Mr Porter. Evocative prose, rich imagery, cultural references.',
 };
 
-/** Build a structured product context block from the resolved productContext */
 function buildContextBlock(ctx: Record<string, string> | undefined): string {
   if (!ctx || typeof ctx !== 'object') return '';
   const lines: string[] = [];
@@ -63,7 +62,6 @@ function buildContextBlock(ctx: Record<string, string> | undefined): string {
   return `\n\nPRODUCT CONTEXT (resolved from user inputs + image analysis):\n${lines.join('\n')}`;
 }
 
-/** Build specs context block from generated product specifications */
 function buildSpecsBlock(specs: Record<string, any> | undefined): string {
   if (!specs || typeof specs !== 'object') return '';
   const lines: string[] = [];
@@ -94,10 +92,10 @@ serve(async (req) => {
   try {
     const { type, brief, title, language, languageCode, countryName, customPrompt, tone, usedNames, gender, productContext, productSpecs } = await req.json();
 
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
       return new Response(
-        JSON.stringify({ error: "OPENAI_API_KEY não configurada." }),
+        JSON.stringify({ error: "LOVABLE_API_KEY não configurada." }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -151,14 +149,14 @@ RULES: Premium, calm, confident tone. No exaggeration. No emojis. No filler text
       );
     }
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'openai/gpt-5-nano',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
@@ -175,14 +173,14 @@ RULES: Premium, calm, confident tone. No exaggeration. No emojis. No filler text
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      if (response.status === 401 || response.status === 403) {
+      if (response.status === 402) {
         return new Response(
-          JSON.stringify({ error: "API key inválida ou sem cota. Verifique sua OPENAI_API_KEY." }),
+          JSON.stringify({ error: "Créditos esgotados. Adicione fundos ao workspace." }),
           { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       const errorText = await response.text();
-      console.error("OpenAI error:", response.status, errorText);
+      console.error("Lovable AI Gateway error:", response.status, errorText);
       return new Response(
         JSON.stringify({ error: "Erro ao gerar conteúdo." }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

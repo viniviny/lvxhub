@@ -13,10 +13,10 @@ interface LogUsageParams {
 
 // Estimated costs per call (rough averages in USD)
 export const SERVICE_COSTS: Record<ApiService, number> = {
-  'image-generation': 0.04,
-  'text-generation': 0.005,
-  'specs-generation': 0.003,
-  'image-analysis': 0.01,
+  'image-generation': 0,
+  'text-generation': 0,
+  'specs-generation': 0,
+  'image-analysis': 0,
   'shopify-publish': 0,
 };
 
@@ -29,10 +29,10 @@ export const SERVICE_LABELS: Record<ApiService, string> = {
 };
 
 export const SERVICE_MODELS: Record<ApiService, string> = {
-  'image-generation': 'gemini-3-pro-image-preview',
-  'text-generation': 'gpt-4o-mini',
-  'specs-generation': 'gemini-2.5-flash',
-  'image-analysis': 'gemini-2.5-flash',
+  'image-generation': 'gemini-3-pro-image-preview (Gateway)',
+  'text-generation': 'gpt-5-nano (Gateway)',
+  'specs-generation': 'gemini-2.5-flash-lite (Gateway)',
+  'image-analysis': 'gemini-2.5-flash (Gateway)',
   'shopify-publish': 'Shopify Admin API',
 };
 
