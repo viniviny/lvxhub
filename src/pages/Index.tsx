@@ -991,7 +991,19 @@ const Index = () => {
                             onCostChange={v => setFormWithSave(prev => ({ ...prev, cost: v }))}
                           />
                         </div>
-                        <PricingEngine cost={form.cost} />
+                        <PricingEngine
+                          cost={form.cost}
+                          currency={(form as any).pricingCurrency ?? 'USD'}
+                          cpa={(form as any).pricingCpa ?? 5}
+                          marginTarget={(form as any).pricingMargin ?? 60}
+                          shippingCost={(form as any).pricingShipping ?? 0}
+                          platform={(form as any).pricingPlatform ?? 'shopify'}
+                          onCurrencyChange={v => setFormWithSave(prev => ({ ...prev, pricingCurrency: v } as any))}
+                          onCpaChange={v => setFormWithSave(prev => ({ ...prev, pricingCpa: v } as any))}
+                          onMarginChange={v => setFormWithSave(prev => ({ ...prev, pricingMargin: v } as any))}
+                          onShippingChange={v => setFormWithSave(prev => ({ ...prev, pricingShipping: v } as any))}
+                          onPlatformChange={v => setFormWithSave(prev => ({ ...prev, pricingPlatform: v } as any))}
+                        />
 
                         <div className="flex flex-col gap-3">
                           <ShippingCard
