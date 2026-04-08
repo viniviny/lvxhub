@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { SERVICE_LABELS, SERVICE_MODELS, type ApiService } from '@/hooks/useApiUsage';
+import { SERVICE_LABELS, SERVICE_MODELS, SERVICE_COSTS, type ApiService } from '@/hooks/useApiUsage';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Image, FileText, Search, Upload, DollarSign, Activity, TrendingUp, BarChart3 } from 'lucide-react';
@@ -61,7 +61,8 @@ export function UsageDashboard() {
     fetchLogs();
   }, [period]);
 
-  const ALL_SERVICES: ApiService[] = ['image-generation', 'text-generation', 'specs-generation', 'image-analysis', 'shopify-publish'];
+  const ALL_SERVICES: ApiService[] = ['image-generation', 'text-generation', 'specs-generation', 'image-analysis', 'shopify-publish']
+    .filter(s => (SERVICE_COSTS[s as ApiService] ?? 0) > 0) as ApiService[];
 
   const stats = useMemo(() => {
     const totalCalls = logs.length;
