@@ -22,6 +22,7 @@ import { GlobalPublishFlow } from '@/components/GlobalPublishFlow';
 import { DashboardSidebar, DashboardView } from '@/components/DashboardSidebar';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import { PriceSection } from '@/components/PriceSection';
+import { PricingEngine } from '@/components/PricingEngine';
 import { VariantsTable } from '@/components/VariantsTable';
 import { ShippingCard } from '@/components/ShippingCard';
 import { SalesChannels } from '@/components/SalesChannels';
@@ -990,6 +991,7 @@ const Index = () => {
                             onCostChange={v => setFormWithSave(prev => ({ ...prev, cost: v }))}
                           />
                         </div>
+                        <PricingEngine cost={form.cost} />
 
                         <div className="flex flex-col gap-3">
                           <ShippingCard
