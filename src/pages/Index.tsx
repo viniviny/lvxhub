@@ -31,6 +31,7 @@ import { convertBase64ToWebP } from '@/lib/imageOptimization';
 import { ShopifyProductPreview } from '@/components/ShopifyProductPreview';
 import { SEOCard } from '@/components/SEOCard';
 import { ColorManager, ProductColor } from '@/components/ColorManager';
+import { AddCustomSize } from '@/components/AddCustomSize';
 import { AIFieldButtons } from '@/components/AIFieldButtons';
 import { AIUnderstandingCard } from '@/components/AIUnderstandingCard';
 import { buildProductAIContext } from '@/types/productUnderstanding';
@@ -1007,11 +1008,22 @@ const Index = () => {
 
                       {/* BOTTOM — Sizes + Variants full width */}
                       <div className="glass-card p-4 space-y-3">
-                        <h3 className="font-display font-semibold text-[13px] text-foreground">Tamanhos e variantes</h3>
-                        <div className="flex flex-wrap gap-1.5">
+                        <h3 className="font-display font-semibold text-[13px] text-foreground">Sizes & Variants</h3>
+                        <div className="flex flex-wrap gap-1.5 items-center">
                           {AVAILABLE_SIZES.map(size => (
                             <button key={size} type="button" onClick={() => toggleSize(size)} className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${form.sizes.includes(size) ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>{size}</button>
                           ))}
+                          {form.sizes.filter(s => !AVAILABLE_SIZES.includes(s)).map(size => (
+                            <button key={size} type="button" onClick={() => toggleSize(size)} className="px-2.5 py-1 rounded-md text-xs font-medium bg-primary text-primary-foreground flex items-center gap-1">
+                              {size}
+                              <XCircle className="w-3 h-3" />
+                            </button>
+                          ))}
+                          <AddCustomSize onAdd={(s) => {
+                            if (!form.sizes.includes(s)) {
+                              toggleSize(s);
+                            }
+                          }} />
                         </div>
 
                         <VariantsTable

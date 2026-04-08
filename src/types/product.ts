@@ -1,6 +1,6 @@
 export type ProductGender = 'masculino' | 'feminino' | 'unissex' | 'infantil' | '';
 
-export type ProductSize = 'PP' | 'P' | 'M' | 'G' | 'GG';
+export type ProductSize = string;
 
 export type ProductStatus = 'rascunho' | 'publicado';
 
@@ -54,7 +54,7 @@ export interface ProductFormData {
   gender: ProductGender;
 }
 
-export const AVAILABLE_SIZES: ProductSize[] = ['PP', 'P', 'M', 'G', 'GG'];
+export const AVAILABLE_SIZES: ProductSize[] = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
 export const COLLECTIONS = [
   'Casual',
