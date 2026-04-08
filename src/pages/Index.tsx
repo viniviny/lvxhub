@@ -31,6 +31,7 @@ import { convertBase64ToWebP } from '@/lib/imageOptimization';
 import { ShopifyProductPreview } from '@/components/ShopifyProductPreview';
 import { SEOCard } from '@/components/SEOCard';
 import { ColorManager, ProductColor } from '@/components/ColorManager';
+import { AddCustomSize } from '@/components/AddCustomSize';
 import { AIFieldButtons } from '@/components/AIFieldButtons';
 import { AIUnderstandingCard } from '@/components/AIUnderstandingCard';
 import { buildProductAIContext } from '@/types/productUnderstanding';
@@ -1020,9 +1021,7 @@ const Index = () => {
                           ))}
                           <AddCustomSize onAdd={(s) => {
                             if (!form.sizes.includes(s)) {
-                              const newSizes = [...form.sizes, s];
-                              setFormWithSave(prev => ({ ...prev, sizes: newSizes }));
-                              generateVariantsFromSizesAndColors(newSizes, colors);
+                              toggleSize(s);
                             }
                           }} />
                         </div>
