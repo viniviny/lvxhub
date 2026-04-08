@@ -991,6 +991,7 @@ const Index = () => {
                             onCostChange={v => setFormWithSave(prev => ({ ...prev, cost: v }))}
                           />
                         </div>
+                        <PricingEngine cost={form.cost} />
 
                         <div className="flex flex-col gap-3">
                           <ShippingCard
