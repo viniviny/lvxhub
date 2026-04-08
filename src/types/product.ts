@@ -52,6 +52,11 @@ export interface ProductFormData {
   tags: string;
   productType: string;
   gender: ProductGender;
+  pricingCurrency: string;
+  pricingCpa: number;
+  pricingMargin: number;
+  pricingShipping: number;
+  pricingPlatform: string;
 }
 
 export const AVAILABLE_SIZES: ProductSize[] = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
