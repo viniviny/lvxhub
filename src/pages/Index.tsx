@@ -573,7 +573,9 @@ const Index = () => {
 
   const activeStoreLang = activeStore?.marketConfig?.language ? getAILanguageByCode(activeStore.marketConfig.language) : null;
   const aiContext = useMemo(() => buildProductAIContext(understanding, form.gender, form.tags, activeStoreLang?.label || 'English'), [understanding, form.gender, form.tags, activeStoreLang]);
-  const canPublish = getCanPublish(form, !!imageFile || generatedImages.some(i => i.url));
+  const hasImage = !!imageFile || generatedImages.some(i => i.url);
+  const canPublish = getCanPublish(form, hasImage);
+  const aiDisabled = !hasImage;
 
   // ─── Specs: ensure generated before text generation ───────
   const ensureSpecs = useCallback(async () => {
