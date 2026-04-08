@@ -827,6 +827,7 @@ const Index = () => {
                         languageCode={activeStore?.marketConfig?.language || 'en-US'}
                         countryName={activeStore?.marketConfig?.marketName || ''}
                         productContext={aiContext}
+                        aiDisabled={aiDisabled}
                       />
 
                       {/* RIGHT — Product Details (main) */}
