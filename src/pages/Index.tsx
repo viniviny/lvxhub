@@ -777,10 +777,12 @@ const Index = () => {
                         if (project) {
                           const newImgs = imgs.filter(i =>
                             i.url && !i.url.startsWith('data:') &&
+                            !savedToProjectRef.current.has(i.url!) &&
                             !project.images.some(pi => pi.url === i.url)
                           );
-                          newImgs.forEach((i, idx) => {
+                          newImgs.forEach((i) => {
                             const isCover = !imageFile && (imgs.indexOf(i) === 0 || i.isCover);
+                            savedToProjectRef.current.add(i.url!);
                             addImage(i.url!, null, isCover);
                           });
                         }
