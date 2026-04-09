@@ -747,7 +747,7 @@ const Index = () => {
                           old => !imgs.some(n => n.id === old.id)
                         );
                         if (removedImages.length > 0) {
-                          // Delete from project_images by matching URL (IDs differ between client and DB)
+                          // Delete from project_images by matching URL
                           if (project) {
                             removedImages.forEach(img => {
                               const dbImage = project.images.find(pi => pi.url === img.url);
@@ -771,6 +771,19 @@ const Index = () => {
                         }
 
                         setGeneratedImages(imgs);
+
+                        // Auto-save ALL new images to project_images (not just cover)
+                        if (project) {
+                          const newImgs = imgs.filter(i =>
+                            i.url && !i.url.startsWith('data:') &&
+                            !project.images.some(pi => pi.url === i.url)
+                          );
+                          newImgs.forEach((i, idx) => {
+                            const isCover = !imageFile && (imgs.indexOf(i) === 0 || i.isCover);
+                            addImage(i.url!, null, isCover);
+                          });
+                        }
+
                         // Auto-save new images to library
                         const newImgs = imgs.filter(i => i.url && !i.url.startsWith('data:') && !savedToLibraryRef.current.has(i.id));
                         if (newImgs.length > 0) {
@@ -789,14 +802,12 @@ const Index = () => {
                             });
                           });
                         }
+
                         const cover = imgs.find(i => i.isCover) || imgs[0];
                         if (cover) {
                           setImagePreview(cover.url);
                           if (cover.url && !cover.url.startsWith('data:')) {
                             analyzeImage(cover.url);
-                            if (project) {
-                              addImage(cover.url, null, true);
-                            }
                           }
                           if (cover.url.startsWith('data:')) {
                             fetch(cover.url).then(r => r.blob()).then(blob => {
