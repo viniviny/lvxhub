@@ -203,6 +203,10 @@ const Index = () => {
         angle: 'frente' as ImageAngle,
       }));
       setGeneratedImages(restored);
+      // Pre-populate savedToProjectRef to prevent re-inserting existing images
+      project.images.forEach(img => {
+        if (img.url) savedToProjectRef.current.add(img.url);
+      });
       const cover = restored.find(i => i.isCover) || restored[0];
       if (cover) setImagePreview(cover.url);
     }
