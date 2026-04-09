@@ -513,6 +513,8 @@ const Index = () => {
     setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setEditingShopifyProductId(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced'); resetUnderstanding(); setUsedTitleNames([]); clearSpecs();
     if (fileInputRef.current) fileInputRef.current.value = '';
     projectRestoredRef.current = false;
+    savedToProjectRef.current = new Set();
+    savedToLibraryRef.current = new Set();
     await createNewProject();
   };
 
@@ -755,6 +757,8 @@ const Index = () => {
                           // Delete from project_images by matching URL
                           if (project) {
                             removedImages.forEach(img => {
+                              // Clear from savedToProjectRef so it won't block future re-adds
+                              if (img.url) savedToProjectRef.current.delete(img.url);
                               const dbImage = project.images.find(pi => pi.url === img.url);
                               if (dbImage) {
                                 removeProjectImage(dbImage.id);
