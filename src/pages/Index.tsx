@@ -757,6 +757,8 @@ const Index = () => {
                           // Delete from project_images by matching URL
                           if (project) {
                             removedImages.forEach(img => {
+                              // Clear from savedToProjectRef so it won't block future re-adds
+                              if (img.url) savedToProjectRef.current.delete(img.url);
                               const dbImage = project.images.find(pi => pi.url === img.url);
                               if (dbImage) {
                                 removeProjectImage(dbImage.id);
