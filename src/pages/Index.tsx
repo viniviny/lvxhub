@@ -513,6 +513,8 @@ const Index = () => {
     setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setEditingShopifyProductId(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced'); resetUnderstanding(); setUsedTitleNames([]); clearSpecs();
     if (fileInputRef.current) fileInputRef.current.value = '';
     projectRestoredRef.current = false;
+    savedToProjectRef.current = new Set();
+    savedToLibraryRef.current = new Set();
     await createNewProject();
   };
 
