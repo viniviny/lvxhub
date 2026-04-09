@@ -143,6 +143,7 @@ const Index = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const projectRestoredRef = useRef(false);
   const savedToLibraryRef = useRef<Set<string>>(new Set());
+  const savedToProjectRef = useRef<Set<string>>(new Set());
 
   // Product understanding engine
   const {
@@ -202,6 +203,10 @@ const Index = () => {
         angle: 'frente' as ImageAngle,
       }));
       setGeneratedImages(restored);
+      // Pre-populate savedToProjectRef to prevent re-inserting existing images
+      project.images.forEach(img => {
+        if (img.url) savedToProjectRef.current.add(img.url);
+      });
       const cover = restored.find(i => i.isCover) || restored[0];
       if (cover) setImagePreview(cover.url);
     }
@@ -776,10 +781,12 @@ const Index = () => {
                         if (project) {
                           const newImgs = imgs.filter(i =>
                             i.url && !i.url.startsWith('data:') &&
+                            !savedToProjectRef.current.has(i.url!) &&
                             !project.images.some(pi => pi.url === i.url)
                           );
-                          newImgs.forEach((i, idx) => {
+                          newImgs.forEach((i) => {
                             const isCover = !imageFile && (imgs.indexOf(i) === 0 || i.isCover);
+                            savedToProjectRef.current.add(i.url!);
                             addImage(i.url!, null, isCover);
                           });
                         }
