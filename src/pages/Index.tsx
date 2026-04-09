@@ -143,6 +143,7 @@ const Index = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const projectRestoredRef = useRef(false);
   const savedToLibraryRef = useRef<Set<string>>(new Set());
+  const savedToProjectRef = useRef<Set<string>>(new Set());
 
   // Product understanding engine
   const {
