@@ -1,0 +1,1 @@
+ALTER TABLE public.project_images ADD CONSTRAINT project_images_project_id_url_unique UNIQUE (project_id, url);
