@@ -831,7 +831,7 @@ const Index = () => {
                           if (cover.url && !cover.url.startsWith('data:')) {
                             analyzeImage(cover.url);
                           }
-                          if (cover.url.startsWith('data:')) {
+                          if (cover.url && cover.url.startsWith('data:')) {
                             fetch(cover.url).then(r => r.blob()).then(blob => {
                               const file = new File([blob], 'product-image.png', { type: 'image/png' });
                               setImageFile(file);
