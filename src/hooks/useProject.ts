@@ -27,15 +27,20 @@ function getImageSignature(project: Project | null): string {
 function resolveInitialProject(localProject: Project, backendProject: Project | null): Project {
   if (!backendProject) return localProject;
 
+  const newestProject = new Date(backendProject.updatedAt) > new Date(localProject.updatedAt)
+    ? backendProject
+    : localProject;
+
   // project_images lives outside the projects row, so backend image state must win
   // whenever local storage and backend drift apart.
   if (getImageSignature(localProject) !== getImageSignature(backendProject)) {
-    return backendProject;
+    return {
+      ...newestProject,
+      images: backendProject.images,
+    };
   }
 
-  return new Date(backendProject.updatedAt) > new Date(localProject.updatedAt)
-    ? backendProject
-    : localProject;
+  return newestProject;
 }
 
 export function useProject() {
