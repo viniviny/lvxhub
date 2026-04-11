@@ -144,6 +144,7 @@ const Index = () => {
   const projectRestoredRef = useRef(false);
   const savedToLibraryRef = useRef<Set<string>>(new Set());
   const savedToProjectRef = useRef<Set<string>>(new Set());
+  const deletedProjectImageUrlsRef = useRef<Set<string>>(new Set());
 
   // Product understanding engine
   const {
@@ -209,6 +210,10 @@ const Index = () => {
       });
       const cover = restored.find(i => i.isCover) || restored[0];
       if (cover) setImagePreview(cover.url);
+    } else {
+      setGeneratedImages([]);
+      setImagePreview(null);
+      deletedProjectImageUrlsRef.current = new Set();
     }
   }, [project]);
 
@@ -515,6 +520,7 @@ const Index = () => {
     projectRestoredRef.current = false;
     savedToProjectRef.current = new Set();
     savedToLibraryRef.current = new Set();
+    deletedProjectImageUrlsRef.current = new Set();
     await createNewProject();
   };
 
@@ -759,6 +765,9 @@ const Index = () => {
                             removedImages.forEach(img => {
                               // Clear from savedToProjectRef so it won't block future re-adds
                               if (img.url) savedToProjectRef.current.delete(img.url);
+                              if (img.url && !img.url.startsWith('data:')) {
+                                deletedProjectImageUrlsRef.current.add(img.url);
+                              }
                               const dbImage = project.images.find(pi => pi.url === img.url);
                               if (dbImage) {
                                 removeProjectImage(dbImage.id);
@@ -786,10 +795,12 @@ const Index = () => {
                           const newImgs = imgs.filter(i =>
                             i.url && !i.url.startsWith('data:') &&
                             !savedToProjectRef.current.has(i.url!) &&
+                            !deletedProjectImageUrlsRef.current.has(i.url!) &&
                             !project.images.some(pi => pi.url === i.url)
                           );
                           newImgs.forEach((i) => {
                             const isCover = !imageFile && (imgs.indexOf(i) === 0 || i.isCover);
+                            deletedProjectImageUrlsRef.current.delete(i.url!);
                             savedToProjectRef.current.add(i.url!);
                             addImage(i.url!, null, isCover);
                           });
