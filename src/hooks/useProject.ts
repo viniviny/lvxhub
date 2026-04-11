@@ -18,6 +18,26 @@ import {
 
 const DEBOUNCE_MS = 1000;
 
+function getImageSignature(project: Project | null): string {
+  return (project?.images ?? [])
+    .map((image) => `${image.id}:${image.url}:${image.isCover ? 1 : 0}:${image.sortOrder}`)
+    .join('|');
+}
+
+function resolveInitialProject(localProject: Project, backendProject: Project | null): Project {
+  if (!backendProject) return localProject;
+
+  // project_images lives outside the projects row, so backend image state must win
+  // whenever local storage and backend drift apart.
+  if (getImageSignature(localProject) !== getImageSignature(backendProject)) {
+    return backendProject;
+  }
+
+  return new Date(backendProject.updatedAt) > new Date(localProject.updatedAt)
+    ? backendProject
+    : localProject;
+}
+
 export function useProject() {
   const { user } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
@@ -42,18 +62,15 @@ export function useProject() {
           loaded = loadProjectLocally(lastId);
         }
 
-        // 2) If local version exists, use it immediately, then sync from backend
+        // 2) If local version exists, reconcile it with backend before restoring UI
         if (loaded && loaded.status === 'draft') {
-          setProject(loaded);
-          setIsLoading(false);
-
-          // Background: check backend for potentially newer version
           const backendVersion = await loadProjectFromBackend(loaded.id).catch(() => null);
-          if (backendVersion && new Date(backendVersion.updatedAt) > new Date(loaded.updatedAt)) {
-            // Backend is newer - merge images and use backend
-            setProject(backendVersion);
-            saveProjectLocally(backendVersion);
-          }
+          const resolvedProject = resolveInitialProject(loaded, backendVersion);
+
+          setProject(resolvedProject);
+          saveProjectLocally(resolvedProject);
+          setLastOpenedProjectId(resolvedProject.id);
+          setIsLoading(false);
           return;
         }
 
