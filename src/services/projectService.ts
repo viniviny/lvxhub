@@ -135,7 +135,15 @@ export async function addProjectImage(
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    // Ignore duplicate key violations (UNIQUE constraint on project_id + url)
+    if (error.code === '23505') {
+      console.warn('[ProjectService] Duplicate image ignored:', url);
+      // Return a minimal image object so callers don't crash
+      return { id: crypto.randomUUID(), url, storagePath, isCover, sortOrder, createdAt: new Date().toISOString() };
+    }
+    throw error;
+  }
   return mapImageRow(data);
 }
 
