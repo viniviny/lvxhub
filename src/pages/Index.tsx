@@ -754,7 +754,8 @@ const Index = () => {
                   {wizardStep === 1 && (
                     <ImageGenerationStep
                       images={generatedImages}
-                      onImagesChange={(imgs) => {
+                    onImagesChange={(imgs) => {
+                        try {
                         // Detect removed images and delete from backend
                         const removedImages = generatedImages.filter(
                           old => !imgs.some(n => n.id === old.id)
@@ -835,8 +836,11 @@ const Index = () => {
                             fetch(cover.url).then(r => r.blob()).then(blob => {
                               const file = new File([blob], 'product-image.png', { type: 'image/png' });
                               setImageFile(file);
-                            });
+                            }).catch(e => console.error('Fetch cover error:', e));
                           }
+                        }
+                        } catch (err) {
+                          console.error('onImagesChange crashed:', err);
                         }
                       }}
                       onNext={() => { markStepComplete(1); setWizardStep(2); updateStep(2); }}
