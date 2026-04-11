@@ -54,7 +54,7 @@ export default function Login() {
             <Zap className="w-7 h-7 text-primary" />
             <span className="font-display text-2xl font-bold gradient-text">Publify</span>
           </div>
-          <p className="text-muted-foreground text-sm text-center">
+          <p className="text-muted-foreground text-sm text-center" title="v1.1">
             Publique produtos na Shopify em segundos
           </p>
         </div>
