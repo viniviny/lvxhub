@@ -38,7 +38,9 @@ function AnimatedRoutes() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <PageTransition><Dashboard /></PageTransition>
+              <ErrorBoundary>
+                <PageTransition><Dashboard /></PageTransition>
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
