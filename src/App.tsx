@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { StoreProvider } from "@/hooks/useStoreContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PageTransition } from "@/components/PageTransition";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AnimatePresence } from "framer-motion";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -37,7 +38,9 @@ function AnimatedRoutes() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <PageTransition><Dashboard /></PageTransition>
+              <ErrorBoundary>
+                <PageTransition><Dashboard /></PageTransition>
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />

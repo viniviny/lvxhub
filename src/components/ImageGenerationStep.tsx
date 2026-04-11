@@ -194,6 +194,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     setAngleStartTimes(Object.fromEntries(angles.map(a => [a, now])));
     const newImages: GeneratedImage[] = [];
     const isCustomPrompt = promptMode === 'custom';
+    
+    // Use a ref-like approach: accumulate results safely and only call onImagesChange once per completion
     const promises = angles.map(async (angle) => {
       try {
         let refBase64: string | undefined;
@@ -205,25 +207,47 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         const { data, error } = await supabase.functions.invoke('generate-image', {
           body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt, referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
         });
-        if (error || data?.error) { toast.error(`Erro ao gerar imagem (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`); return null; }
-        const imageUrl = data.imageUrl;
+        if (error) { 
+          console.error('Edge function error:', error); 
+          toast.error(`Erro ao gerar imagem (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`); 
+          return null; 
+        }
+        if (data?.error) { 
+          toast.error(data.error); 
+          return null; 
+        }
+        const imageUrl = data?.imageUrl;
+        if (!imageUrl) {
+          toast.error(`Nenhuma imagem retornada (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`);
+          return null;
+        }
         const newImage: GeneratedImage = { id: crypto.randomUUID(), angle, url: imageUrl, isCover: false, justCompleted: true };
         newImages.push(newImage);
         logUsage({ service: 'image-generation', action: `Gerar imagem (${angle})`, metadata: { model: 'gemini-3-pro-image-preview', provider: 'Google AI' } });
         setGeneratedCount(prev => prev + 1);
         setCompletedAngles(prev => new Set(prev).add(angle));
         setGeneratingAngles(prev => { const next = new Set(prev); next.delete(angle); return next; });
-        // Update parent with partial results — append to existing
-        const allImgs = [...images, ...newImages];
-        if (allImgs.length > 0 && !allImgs.some(r => r.isCover)) allImgs[0].isCover = true;
-        onImagesChange(allImgs);
+        // Update parent with partial results — use functional pattern to avoid stale closure
+        const snapshot = [...images, ...newImages];
+        if (snapshot.length > 0 && !snapshot.some(r => r.isCover)) snapshot[0].isCover = true;
+        try { onImagesChange(snapshot); } catch (e) { console.error('onImagesChange error:', e); }
         return newImage;
-      } catch { toast.error(`Erro ao gerar imagem (${angle})`); return null; }
+      } catch (err) { 
+        console.error('Image generation error:', err);
+        toast.error(`Erro ao gerar imagem (${angle})`); 
+        return null; 
+      }
     });
-    await Promise.all(promises);
+    
+    try {
+      await Promise.all(promises);
+    } catch (err) {
+      console.error('Promise.all error:', err);
+    }
+    
     const allFinal = [...images, ...newImages];
     if (allFinal.length > 0 && !allFinal.some(r => r.isCover)) allFinal[0].isCover = true;
-    onImagesChange(allFinal.map(r => ({ ...r, justCompleted: false })));
+    try { onImagesChange(allFinal.map(r => ({ ...r, justCompleted: false }))); } catch (e) { console.error('Final onImagesChange error:', e); }
     setIsGenerating(false);
     setGeneratingAngles(new Set());
     setGenStartTime(null);
