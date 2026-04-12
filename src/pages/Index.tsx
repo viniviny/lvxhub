@@ -695,6 +695,7 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-2">
             <SaveStatusIndicator status={saveStatus} />
+            <DraftSavedIndicator status={draftStatus} />
             {publishedCount > 0 && (
               <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-[hsl(var(--sidebar-primary)/0.1)] text-[hsl(var(--info))]">
                 <Zap className="w-3 h-3" />{publishedCount}
