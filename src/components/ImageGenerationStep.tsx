@@ -1167,3 +1167,13 @@ function GeneratingProgressBar({ startTime }: { startTime: number }) {
     </div>
   );
 }
+
+/* ─── Mini Timer for skeleton cards ─── */
+function MiniTimer({ startTime }: { startTime: number }) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - startTime) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [startTime]);
+  return <span className="text-[8px] text-muted-foreground/60">{elapsed}s</span>;
+}
