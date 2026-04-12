@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserPrompts, UserPrompt, UserPromptInsert } from '@/hooks/useUserPrompts';
-import { BookOpen, Plus, Search, Pencil, Trash2, ArrowLeft, SortAsc, Image, Type, FileText } from 'lucide-react';
+import { BookOpen, Plus, Search, Pencil, Trash2, ArrowLeft, SortAsc, Image, Type, FileText, Sparkles, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DashboardSidebar, DashboardView } from '@/components/DashboardSidebar';
 import { useStoreContext } from '@/hooks/useStoreContext';
 import { UserMenu } from '@/components/UserMenu';
+import { PROMPT_TEMPLATES, PromptTemplate } from '@/data/promptTemplates';
+import { toast } from 'sonner';
 
 type SortMode = 'recent' | 'most_used' | 'az';
 
@@ -27,6 +29,7 @@ export default function PromptsPage() {
   const [sort, setSort] = useState<SortMode>('recent');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [showTemplates, setShowTemplates] = useState(true);
 
   const handleSidebarNav = (view: DashboardView) => {
     if (view === 'prompts') return;
@@ -78,6 +81,22 @@ export default function PromptsPage() {
     setConfirmDeleteId(null);
   };
 
+  const handleAddTemplate = async (tpl: PromptTemplate) => {
+    const exists = prompts.some(p => p.name === tpl.name);
+    if (exists) {
+      toast.info('Esse prompt já está na sua biblioteca');
+      return;
+    }
+    await createPrompt.mutateAsync({
+      name: tpl.name,
+      category: tpl.category,
+      prompt_text: tpl.prompt_text,
+      default_angles: [],
+      default_ratio: '4:5',
+      personal_notes: null,
+    });
+  };
+
   const sidebarProps = {
     stores, activeStoreId, onSelectStore: setActiveStore, onAddStore: () => {},
     currentView: 'prompts' as DashboardView, onViewChange: handleSidebarNav,
@@ -120,7 +139,10 @@ export default function PromptsPage() {
               <div>
                 <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">Prompt *</label>
                 <Textarea value={promptText} onChange={e => setPromptText(e.target.value.slice(0, 2000))} placeholder="Escreva o prompt em inglês para melhores resultados com a IA..." rows={8} className="bg-card border-border resize-none" />
-                <span className="text-[10px] text-muted-foreground mt-1 block text-right">{promptText.length}/2000</span>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-[10px] text-muted-foreground">Use {'{product_name}'} e {'{color}'} para variáveis dinâmicas</span>
+                  <span className="text-[10px] text-muted-foreground">{promptText.length}/2000</span>
+                </div>
               </div>
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
                 <Button variant="ghost" onClick={() => setEditing(null)} className="text-muted-foreground">Cancelar</Button>
@@ -134,6 +156,9 @@ export default function PromptsPage() {
       </div>
     );
   }
+
+  // Check which templates are already added
+  const addedTemplateNames = new Set(prompts.map(p => p.name));
 
   // List view
   return (
@@ -156,15 +181,71 @@ export default function PromptsPage() {
             </Button>
           </div>
 
+          {/* Templates section */}
+          {showTemplates && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <h2 className="text-[13px] font-semibold text-foreground">Prompts pré-configurados</h2>
+                  <span className="text-[10px] text-muted-foreground">Otimizados para moda masculina</span>
+                </div>
+                <button onClick={() => setShowTemplates(false)} className="text-[10px] text-muted-foreground hover:text-foreground transition-colors">
+                  Ocultar
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                {PROMPT_TEMPLATES.map(tpl => {
+                  const TplIcon = tpl.icon;
+                  const alreadyAdded = addedTemplateNames.has(tpl.name);
+                  return (
+                    <div key={tpl.id} className="bg-card border border-border rounded-lg p-3.5 transition-all hover:border-primary/20 group">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <TplIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        <h3 className="text-[12px] font-semibold text-foreground truncate">{tpl.name}</h3>
+                      </div>
+                      <div className="mb-2">
+                        <span className={`inline-flex items-center text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded ${tpl.badgeColor}`}>
+                          {tpl.badge}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground line-clamp-2 mb-3 leading-relaxed">{tpl.prompt_text}</p>
+                      <button
+                        onClick={() => handleAddTemplate(tpl)}
+                        disabled={alreadyAdded || createPrompt.isPending}
+                        className={`flex items-center gap-1 text-[11px] font-medium transition-colors ${
+                          alreadyAdded
+                            ? 'text-muted-foreground/50 cursor-default'
+                            : 'text-primary hover:text-primary/80'
+                        }`}
+                      >
+                        {alreadyAdded ? (
+                          <><Copy className="w-3 h-3" /> Já adicionado</>
+                        ) : (
+                          <><Plus className="w-3 h-3" /> Adicionar à minha biblioteca</>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Empty state */}
-          {!isLoading && prompts.length === 0 && (
+          {!isLoading && prompts.length === 0 && !showTemplates && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <BookOpen className="w-12 h-12 text-muted-foreground/30 mb-4" />
               <p className="text-[14px] text-foreground font-medium mb-1">Nenhum prompt criado ainda</p>
               <p className="text-[12px] text-muted-foreground mb-5 max-w-xs">Crie seu primeiro prompt para acelerar a geração de imagens</p>
-              <Button onClick={openCreate} className="bg-primary text-primary-foreground gap-1.5">
-                <Plus className="w-3.5 h-3.5" /> Criar meu primeiro prompt
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => setShowTemplates(true)} variant="outline" className="gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" /> Ver templates
+                </Button>
+                <Button onClick={openCreate} className="bg-primary text-primary-foreground gap-1.5">
+                  <Plus className="w-3.5 h-3.5" /> Criar meu primeiro prompt
+                </Button>
+              </div>
             </div>
           )}
 
