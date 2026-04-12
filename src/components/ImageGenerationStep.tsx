@@ -46,6 +46,37 @@ export interface GeneratedImage {
   justCompleted?: boolean;
 }
 
+const VALID_IMAGE_ANGLES = new Set<ImageAngle>(ANGLE_OPTIONS.map((option) => option.id));
+
+function sanitizeGeneratedImages(images: GeneratedImage[]): GeneratedImage[] {
+  const seen = new Set<string>();
+
+  return (images ?? [])
+    .map((image, index) => {
+      if (!image || typeof image.url !== 'string' || !image.url.trim()) return null;
+
+      const angle = typeof image.angle === 'string' && VALID_IMAGE_ANGLES.has(image.angle as ImageAngle)
+        ? image.angle as ImageAngle
+        : 'frente';
+      const id = typeof image.id === 'string' && image.id.trim()
+        ? image.id
+        : `generated-${angle}-${index}`;
+      const signature = `${id}:${image.url}`;
+
+      if (seen.has(signature)) return null;
+      seen.add(signature);
+
+      return {
+        id,
+        angle,
+        url: image.url,
+        isCover: Boolean(image.isCover),
+        justCompleted: Boolean(image.justCompleted),
+      };
+    })
+    .filter((image): image is NonNullable<typeof image> => image !== null);
+}
+
 interface ImageGenerationStepProps {
   images: GeneratedImage[];
   onImagesChange: (images: GeneratedImage[]) => void;
@@ -61,6 +92,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const navigate = useNavigate();
   const { prompts: allPrompts, recentPrompts: allRecentPrompts, incrementUsage } = useUserPrompts();
   const { logUsage } = useApiUsage();
+  const safeImages = sanitizeGeneratedImages(images);
   const savedPrompts = allPrompts.filter(p => p.category === 'imagem');
   const recentPrompts = allRecentPrompts.filter(p => p.category === 'imagem');
   const [activePromptId, setActivePromptId] = useState<string | null>(null);
@@ -158,7 +190,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   };
 
   const selectedCount = selectedAngles.size;
-  const hasAtLeastOneImage = images.length > 0;
+  const hasAtLeastOneImage = safeImages.length > 0;
 
   const toggleAngle = (angle: ImageAngle) => {
     setSelectedAngles(prev => {
@@ -184,6 +216,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const generateImages = useCallback(async () => {
     if (!prompt.trim() || selectedAngles.size === 0) return;
     const angles = Array.from(selectedAngles);
+    const existingImages = sanitizeGeneratedImages(images);
     const now = Date.now();
     setIsGenerating(true);
     setGeneratingAngles(new Set(angles));
@@ -228,7 +261,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         setCompletedAngles(prev => new Set(prev).add(angle));
         setGeneratingAngles(prev => { const next = new Set(prev); next.delete(angle); return next; });
         // Update parent with partial results — use functional pattern to avoid stale closure
-        const snapshot = [...images, ...newImages];
+        const snapshot = [...existingImages, ...newImages];
         if (snapshot.length > 0 && !snapshot.some(r => r.isCover)) snapshot[0].isCover = true;
         try { onImagesChange(snapshot); } catch (e) { console.error('onImagesChange error:', e); }
         return newImage;
@@ -245,7 +278,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
       console.error('Promise.all error:', err);
     }
     
-    const allFinal = [...images, ...newImages];
+    const allFinal = [...existingImages, ...newImages];
     if (allFinal.length > 0 && !allFinal.some(r => r.isCover)) allFinal[0].isCover = true;
     try { onImagesChange(allFinal.map(r => ({ ...r, justCompleted: false }))); } catch (e) { console.error('Final onImagesChange error:', e); }
     setIsGenerating(false);
@@ -258,7 +291,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   }, [prompt, promptMode, selectedAngles, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
 
   const regenerateImage = useCallback(async (imageId: string) => {
-    const target = images.find(i => i.id === imageId);
+    const existingImages = sanitizeGeneratedImages(images);
+    const target = existingImages.find(i => i.id === imageId);
     if (!target || !prompt.trim()) return;
     setGeneratingAngles(new Set([target.angle]));
     try {
@@ -272,25 +306,25 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         body: { prompt, angle: target.angle, customAngleText: target.angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
       });
       if (error || data?.error) { toast.error('Erro ao regenerar imagem'); return; }
-      const updated = images.map(img => img.id === imageId ? { ...img, url: data.imageUrl } : img);
+      const updated = existingImages.map(img => img.id === imageId ? { ...img, url: data.imageUrl } : img);
       onImagesChange(updated);
       toast.success('Imagem regenerada!');
     } catch { toast.error('Erro ao regenerar imagem'); } finally { setGeneratingAngles(new Set()); }
   }, [prompt, promptMode, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
 
   const removeImage = (imageId: string) => {
-    const updated = images.filter(img => img.id !== imageId);
+    const updated = sanitizeGeneratedImages(images).filter(img => img.id !== imageId);
     if (updated.length > 0 && !updated.some(i => i.isCover)) updated[0].isCover = true;
     onImagesChange(updated);
   };
 
   const setCover = (imageId: string) => {
-    const updated = images.map(img => ({ ...img, isCover: img.id === imageId }));
+    const updated = sanitizeGeneratedImages(images).map(img => ({ ...img, isCover: img.id === imageId }));
     onImagesChange(updated);
   };
 
   const bulkRemove = (imageIds: string[]) => {
-    const updated = images.filter(img => !imageIds.includes(img.id));
+    const updated = sanitizeGeneratedImages(images).filter(img => !imageIds.includes(img.id));
     if (updated.length > 0 && !updated.some(i => i.isCover)) updated[0].isCover = true;
     onImagesChange(updated);
   };
@@ -300,11 +334,12 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     if (!file) return;
     const validTypes = ['image/png', 'image/jpeg', 'image/webp'];
     if (!validTypes.includes(file.type)) { toast.error('Formato inválido. Use PNG, JPG ou WEBP.'); return; }
+    const existingImages = sanitizeGeneratedImages(images);
     const reader = new FileReader();
     reader.onload = () => {
       const url = reader.result as string;
-      const newImage: GeneratedImage = { id: crypto.randomUUID(), angle: 'frente', url, isCover: images.length === 0 };
-      onImagesChange([...images, newImage]);
+      const newImage: GeneratedImage = { id: crypto.randomUUID(), angle: 'frente', url, isCover: existingImages.length === 0 };
+      onImagesChange([...existingImages, newImage]);
     };
     reader.readAsDataURL(file);
   };
@@ -436,7 +471,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
                               setPrompt(p.prompt_text);
                               setPromptMode('custom');
                               setActivePromptId(p.id);
-                              if (p.default_angles.length > 0) setSelectedAngles(new Set(p.default_angles as ImageAngle[]));
+                              if ((p.default_angles ?? []).length > 0) setSelectedAngles(new Set((p.default_angles ?? []) as ImageAngle[]));
                               if (p.default_ratio && onAspectRatioChange) onAspectRatioChange(p.default_ratio as AspectRatio);
                               incrementUsage.mutate(p.id);
                               setPromptDropdownOpen(false);
@@ -449,9 +484,9 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
                             <div className="min-w-0">
                               <div className="text-[12px] text-foreground font-medium truncate">{p.name}</div>
                               <div className="text-[10px] text-muted-foreground truncate">{p.prompt_text.slice(0, 50)}{p.prompt_text.length > 50 ? '...' : ''}</div>
-                              {p.default_angles.length > 0 && (
+                              {(p.default_angles ?? []).length > 0 && (
                                 <div className="flex gap-1 mt-0.5">
-                                  {p.default_angles.slice(0, 4).map(a => (
+                                  {(p.default_angles ?? []).slice(0, 4).map(a => (
                                     <span key={a} className="text-[8px] text-muted-foreground/50">{ANGLE_OPTIONS.find(o => o.id === a)?.label?.[0] || a[0]}</span>
                                   ))}
                                 </div>
@@ -560,8 +595,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         {isGenerating && genStartTime && <GenerationCountdown startTime={genStartTime} totalImages={totalToGenerate} completedCount={generatedCount} />}
 
         {/* 6. Generate button */}
-        <Button onClick={isGenerating && images.length > 0 ? undefined : generateImages} disabled={isGenerating || !prompt.trim() || selectedAngles.size === 0} className="w-full font-display font-semibold h-11 text-xs">
-          {isGenerating ? (<><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Gerando {generatedCount}/{totalToGenerate}...</>) : images.length > 0 ? (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Regenerar tudo</>) : (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Gerar {selectedCount} {selectedCount === 1 ? 'imagem' : 'imagens'}</>)}
+        <Button onClick={isGenerating && safeImages.length > 0 ? undefined : generateImages} disabled={isGenerating || !prompt.trim() || selectedAngles.size === 0} className="w-full font-display font-semibold h-11 text-xs">
+          {isGenerating ? (<><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Gerando {generatedCount}/{totalToGenerate}...</>) : safeImages.length > 0 ? (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Regenerar tudo</>) : (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Gerar {selectedCount} {selectedCount === 1 ? 'imagem' : 'imagens'}</>)}
         </Button>
         <p className="text-[10px] text-muted-foreground text-center -mt-1">~30s por imagem · Nano Banana Pro</p>
 
@@ -584,12 +619,12 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         <div className="flex items-center justify-between mb-2 w-full">
           <h3 className="font-display font-semibold text-foreground text-[13px]">Imagens do produto</h3>
           <span className="text-[10px] text-muted-foreground">
-            {images.length > 0 ? `${images.length} ${images.length === 1 ? 'imagem' : 'imagens'}` : 'Nenhuma imagem'}
+            {safeImages.length > 0 ? `${safeImages.length} ${safeImages.length === 1 ? 'imagem' : 'imagens'}` : 'Nenhuma imagem'}
           </span>
         </div>
 
         <ImageGallery
-          images={images}
+          images={safeImages}
           generatingAngles={generatingAngles}
           completedAngles={completedAngles}
           angleStartTimes={angleStartTimes}
@@ -695,8 +730,9 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
 
   const currentItem = displayList[clampedIdx];
   const currentImage = currentItem && !('empty' in currentItem) ? currentItem as GeneratedImage : null;
-  const isCurrentGenerating = currentItem ? generatingAngles.has(currentItem.angle) : false;
-  const currentLabel = ANGLE_OPTIONS.find(a => a.id === currentItem?.angle)?.label || currentItem?.angle || '';
+  const currentAngle = currentItem?.angle;
+  const isCurrentGenerating = currentAngle ? generatingAngles.has(currentAngle) : false;
+  const currentLabel = currentAngle ? ANGLE_OPTIONS.find(a => a.id === currentAngle)?.label || currentAngle : '';
 
   const goTo = (idx: number) => {
     if (idx < 0) idx = displayList.length - 1;
@@ -918,7 +954,7 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
             {/* Generating state (no image yet) */}
             {displayList.length > 0 && !currentImage && isCurrentGenerating && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 skeleton-shimmer" style={{ animation: 'pulse-border 1.5s infinite' }}>
-                {angleStartTimes[currentItem.angle] ? <SlotTimer startTime={angleStartTimes[currentItem.angle]} /> : (
+                {currentAngle && angleStartTimes[currentAngle] ? <SlotTimer startTime={angleStartTimes[currentAngle]} /> : (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin text-primary" />
                     <span className="text-[11px] text-muted-foreground">Gerando…</span>
