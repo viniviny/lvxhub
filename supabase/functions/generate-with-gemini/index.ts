@@ -1,3 +1,45 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * Edge Function: generate-with-gemini
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * Função unificada que conecta diretamente à API do Google Gemini
+ * para geração de imagens, textos, especificações e análise visual.
+ *
+ * ─── CONFIGURAÇÃO OBRIGATÓRIA ───
+ *
+ * Esta função requer a variável de ambiente GEMINI_API_KEY.
+ *
+ * Para configurar:
+ *   1. Acesse o Supabase Dashboard do seu projeto
+ *   2. Vá em: Settings > Edge Functions > Secrets
+ *   3. Clique em "Add new secret"
+ *   4. Nome: GEMINI_API_KEY
+ *   5. Valor: Cole sua chave da API do Google Gemini
+ *
+ * Para obter sua chave:
+ *   1. Acesse https://aistudio.google.com/apikey
+ *   2. Clique em "Create API key"
+ *   3. Copie a chave gerada
+ *
+ * ─── MODELOS UTILIZADOS ───
+ *
+ * • Geração de imagens: gemini-2.5-flash-preview-05-20
+ *   (geração nativa de imagens com qualidade profissional)
+ *
+ * • Geração de texto/SEO/specs/análise: gemini-2.5-flash
+ *   (modelo rápido e eficiente para tarefas de texto)
+ *
+ * ─── MODOS DISPONÍVEIS (campo "mode" no body) ───
+ *
+ * • "generate-image"  → Gera imagem de produto a partir de prompt
+ * • "generate-text"   → Gera título, descrição ou SEO
+ * • "generate-specs"  → Gera especificações técnicas do produto
+ * • "analyze-image"   → Analisa imagem e classifica o produto
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ */
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
