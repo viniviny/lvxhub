@@ -21,6 +21,7 @@ import { OnboardingGuide } from '@/components/OnboardingGuide';
 import { StoreManagementDialog } from '@/components/StoreManagementDialog';
 import { ShopifyConnectDialog } from '@/components/ShopifyConnectDialog';
 import { RegionGroupManager } from '@/components/RegionGroupManager';
+import { HomePage } from '@/components/HomePage';
 import { GlobalPublishFlow } from '@/components/GlobalPublishFlow';
 import { DashboardSidebar, DashboardView } from '@/components/DashboardSidebar';
 import { RichTextEditor } from '@/components/RichTextEditor';
@@ -124,7 +125,7 @@ const Index = () => {
   const [showManagement, setShowManagement] = useState(false);
   const [showRegions, setShowRegions] = useState(false);
   const [showGlobalPublish, setShowGlobalPublish] = useState(false);
-  const [currentView, setCurrentView] = useState<DashboardView>('publish');
+  const [currentView, setCurrentView] = useState<DashboardView>('home');
   const [form, setForm] = useState<ProductFormData>(initialForm);
   const [seoTitle, setSeoTitle] = useState('');
   const [seoDescription, setSeoDescription] = useState('');
@@ -737,6 +738,11 @@ const Index = () => {
 
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto px-4 py-3">
+
+            {/* HOME VIEW */}
+            {currentView === 'home' && (
+              <HomePage onNavigate={(view) => setCurrentView(view as DashboardView)} />
+            )}
 
             {/* PUBLISH VIEW — No store connected */}
             {currentView === 'publish' && !publishResult && !isPublishing && !hasConnectedStore && (
