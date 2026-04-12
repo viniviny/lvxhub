@@ -24,8 +24,8 @@
  *
  * ─── MODELOS UTILIZADOS ───
  *
- * • Geração de imagens: gemini-2.5-flash-preview-05-20
- *   (geração nativa de imagens com qualidade profissional)
+ * • Geração de imagens: gemini-3.1-flash-image-preview (Nano Banana 2)
+ *   (geração nativa de imagens rápida com qualidade profissional)
  *
  * • Geração de texto/SEO/specs/análise: gemini-2.5-flash
  *   (modelo rápido e eficiente para tarefas de texto)
@@ -49,7 +49,7 @@ const corsHeaders = {
 };
 
 const GEMINI_TEXT_MODEL = 'gemini-2.5-flash';
-const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-preview-05-20';
+const GEMINI_IMAGE_MODEL = 'gemini-3.1-flash-image-preview';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 // ─── Prompt templates ───
