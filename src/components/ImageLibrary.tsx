@@ -420,9 +420,20 @@ export function ImageLibrary() {
                     </div>
                   ) : (
                     <>
-                      <p className="text-xs font-medium text-foreground truncate">
-                        {img.name || img.angle || 'Sem nome'}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-medium text-foreground truncate flex-1">
+                          {img.name || img.angle || 'Sem nome'}
+                        </p>
+                        {(img.status || 'rascunho') === 'publicado' && (
+                          <span className="shrink-0 text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]">Publicado</span>
+                        )}
+                        {(img.status || 'rascunho') === 'erro' && (
+                          <span className="shrink-0 text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive">Erro</span>
+                        )}
+                        {(img.status || 'rascunho') === 'rascunho' && (
+                          <span className="shrink-0 text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">Rascunho</span>
+                        )}
+                      </div>
                       {img.product_name && (
                         <p className="text-[10px] text-muted-foreground truncate">{img.product_name}</p>
                       )}
