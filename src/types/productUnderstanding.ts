@@ -71,6 +71,18 @@ function resolveField(manual: string, imageValue: string | null): string {
   return '';
 }
 
+function normalizeStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    return [value.trim()];
+  }
+
+  return [];
+}
+
 export interface ProductAIContext {
   product_type: string;
   gender: string;
@@ -92,6 +104,9 @@ export function buildProductAIContext(
   language: string
 ): ProductAIContext {
   const ins = understanding.imageInsights;
+  const visualDetails = normalizeStringArray(ins?.visualDetails);
+  const tagsFromImage = normalizeStringArray(ins?.tagsFromImage);
+
   return {
     product_type: understanding.finalProductType || '',
     gender: gender || '',
@@ -100,8 +115,8 @@ export function buildProductAIContext(
     material_look: resolveField(understanding.manualMaterial, ins.materialLook),
     fit: resolveField(understanding.manualFit, ins.silhouette),
     use_case: understanding.useCase || '',
-    visual_details: ins.visualDetails.length > 0 ? ins.visualDetails.join(', ') : '',
-    tags: [tags, ...(ins.tagsFromImage || [])].filter(Boolean).join(', '),
+    visual_details: visualDetails.join(', '),
+    tags: [tags, ...tagsFromImage].filter(Boolean).join(', '),
     language,
   };
 }
