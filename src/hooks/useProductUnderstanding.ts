@@ -6,6 +6,26 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useApiUsage } from '@/hooks/useApiUsage';
 
+function toNullableString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function toStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    return [value.trim()];
+  }
+
+  return [];
+}
+
+function toNullableNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
 export function useProductUnderstanding() {
   const [understanding, setUnderstanding] = useState<ProductUnderstanding>(EMPTY_UNDERSTANDING);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -45,15 +65,15 @@ export function useProductUnderstanding() {
       if (error) throw error;
       if (data) {
         const insights: ImageInsights = {
-          style: data.style || null,
-          mainColor: data.mainColor || null,
-          secondaryColor: data.secondaryColor || null,
-          materialLook: data.materialLook || null,
-          silhouette: data.silhouette || null,
-          visualDetails: data.visualDetails || [],
-          tagsFromImage: data.tagsFromImage || [],
-          confidence: data.confidence ?? null,
-          reason: data.reason || null,
+          style: toNullableString(data.style),
+          mainColor: toNullableString(data.mainColor),
+          secondaryColor: toNullableString(data.secondaryColor),
+          materialLook: toNullableString(data.materialLook),
+          silhouette: toNullableString(data.silhouette),
+          visualDetails: toStringArray(data.visualDetails),
+          tagsFromImage: toStringArray(data.tagsFromImage),
+          confidence: toNullableNumber(data.confidence),
+          reason: toNullableString(data.reason),
         };
         const aiType = cleanProductType(data.productType || null, insights);
         setUnderstanding(prev => ({
