@@ -149,7 +149,12 @@ const Index = () => {
   const savedToProjectRef = useRef<Set<string>>(new Set());
   const deletedProjectImageUrlsRef = useRef<Set<string>>(new Set());
 
-  // Product understanding engine
+  // ─── Draft save (localStorage) ────────────────────────────
+  const { draftStatus, saveDraft, loadDraft, clearDraft } = useDraftSave();
+  const [showDraftResume, setShowDraftResume] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState<ReturnType<typeof loadDraft>>(null);
+  const draftCheckedRef = useRef(false);
+
   const {
     understanding, isAnalyzing, setManualProductType, setManualField,
     analyzeImage, updateFinalFromTitle, reset: resetUnderstanding,
