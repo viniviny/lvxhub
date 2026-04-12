@@ -225,6 +225,54 @@ const Index = () => {
     }
   }, [project]);
 
+  // ─── Check for existing draft on mount ────────────────────
+  useEffect(() => {
+    if (draftCheckedRef.current) return;
+    draftCheckedRef.current = true;
+    const draft = loadDraft();
+    if (draft) {
+      setPendingDraft(draft);
+      setShowDraftResume(true);
+    }
+  }, [loadDraft]);
+
+  // ─── Auto-save draft to localStorage on changes ──────────
+  useEffect(() => {
+    if (!draftCheckedRef.current) return;
+    saveDraft({
+      form,
+      seoTitle,
+      seoDescription,
+      wizardStep,
+      completedSteps: Array.from(completedSteps),
+      colors,
+      generatedImages,
+      imagePreview,
+    });
+  }, [form, seoTitle, seoDescription, wizardStep, completedSteps, colors, generatedImages, imagePreview, saveDraft]);
+
+  const handleResumeDraft = useCallback(() => {
+    if (!pendingDraft) return;
+    setForm(prev => ({ ...prev, ...pendingDraft.form }));
+    setSeoTitle(pendingDraft.seoTitle || '');
+    setSeoDescription(pendingDraft.seoDescription || '');
+    setWizardStep(pendingDraft.wizardStep || 1);
+    setCompletedSteps(new Set(pendingDraft.completedSteps || []));
+    setColors(pendingDraft.colors || []);
+    if (pendingDraft.generatedImages?.length) {
+      setGeneratedImages(pendingDraft.generatedImages);
+      setImagePreview(pendingDraft.imagePreview || pendingDraft.generatedImages[0]?.url || null);
+    }
+    setShowDraftResume(false);
+    setPendingDraft(null);
+  }, [pendingDraft]);
+
+  const handleDiscardDraft = useCallback(() => {
+    clearDraft();
+    setShowDraftResume(false);
+    setPendingDraft(null);
+  }, [clearDraft]);
+
   // ─── Sync form changes to project (autosave) ─────────────
   const syncFormToProject = useCallback((updatedForm: ProductFormData) => {
     updateProductData({
