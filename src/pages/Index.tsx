@@ -739,6 +739,11 @@ const Index = () => {
         <main className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto px-4 py-3">
 
+            {/* HOME VIEW */}
+            {currentView === 'home' && (
+              <HomePage onNavigate={(view) => setCurrentView(view as DashboardView)} />
+            )}
+
             {/* PUBLISH VIEW — No store connected */}
             {currentView === 'publish' && !publishResult && !isPublishing && !hasConnectedStore && (
               <div className="animate-fade-in py-10">
