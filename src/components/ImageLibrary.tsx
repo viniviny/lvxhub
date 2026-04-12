@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Search, Download, Trash2, Tag, Pencil, Check, X, Image as ImageIcon,
-  CheckSquare, Square, Grid3X3, LayoutGrid, Eye
+  CheckSquare, Square, Grid3X3, LayoutGrid, Eye, ArrowUpDown, Store, Filter
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -21,9 +22,13 @@ interface LibraryImage {
   product_name: string | null;
   angle: string | null;
   created_at: string;
+  status: string | null;
+  store_domain: string | null;
 }
 
 type ViewSize = 'small' | 'large';
+type SortOrder = 'newest' | 'oldest';
+type StatusFilter = 'all' | 'rascunho' | 'publicado' | 'erro';
 
 export function ImageLibrary() {
   const { user } = useAuth();
@@ -31,6 +36,9 @@ export function ImageLibrary() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterTag, setFilterTag] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<StatusFilter>('all');
+  const [filterStore, setFilterStore] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -45,8 +53,8 @@ export function ImageLibrary() {
     setLoading(true);
     const { data, error } = await supabase
       .from('image_library')
-      .select('id, name, url, storage_path, tags, product_name, angle, created_at')
-      .order('created_at', { ascending: false });
+      .select('id, name, url, storage_path, tags, product_name, angle, created_at, status, store_domain')
+      .order('created_at', { ascending: sortOrder === 'oldest' });
 
     if (error) {
       console.error('Error fetching library:', error);
@@ -55,12 +63,13 @@ export function ImageLibrary() {
       setImages((data as LibraryImage[]) || []);
     }
     setLoading(false);
-  }, [user]);
+  }, [user, sortOrder]);
 
   useEffect(() => { fetchImages(); }, [fetchImages]);
 
-  // Get all unique tags
+  // Get all unique tags and stores
   const allTags = Array.from(new Set(images.flatMap(i => i.tags || [])));
+  const allStores = Array.from(new Set(images.map(i => i.store_domain).filter(Boolean))) as string[];
 
   // Filter images
   const filtered = images.filter(img => {
@@ -68,7 +77,9 @@ export function ImageLibrary() {
       img.product_name?.toLowerCase().includes(search.toLowerCase()) ||
       img.angle?.toLowerCase().includes(search.toLowerCase());
     const matchTag = !filterTag || img.tags?.includes(filterTag);
-    return matchSearch && matchTag;
+    const matchStatus = filterStatus === 'all' || (img.status || 'rascunho') === filterStatus;
+    const matchStore = filterStore === 'all' || img.store_domain === filterStore;
+    return matchSearch && matchTag && matchStatus && matchStore;
   });
 
   const toggleSelect = (id: string) => {

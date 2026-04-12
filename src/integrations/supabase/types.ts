@@ -56,7 +56,9 @@ export type Database = {
           name: string
           product_name: string | null
           size_bytes: number | null
+          status: string | null
           storage_path: string | null
+          store_domain: string | null
           tags: string[] | null
           updated_at: string
           url: string
@@ -71,7 +73,9 @@ export type Database = {
           name?: string
           product_name?: string | null
           size_bytes?: number | null
+          status?: string | null
           storage_path?: string | null
+          store_domain?: string | null
           tags?: string[] | null
           updated_at?: string
           url: string
@@ -86,7 +90,9 @@ export type Database = {
           name?: string
           product_name?: string | null
           size_bytes?: number | null
+          status?: string | null
           storage_path?: string | null
+          store_domain?: string | null
           tags?: string[] | null
           updated_at?: string
           url?: string
