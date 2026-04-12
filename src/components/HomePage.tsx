@@ -186,17 +186,99 @@ export function HomePage({ onNavigate }: HomePageProps) {
         </div>
       )}
 
-      {/* Empty state */}
-      {!loading && metrics.totalProducts === 0 && (
-        <div className="glass-card p-8 text-center">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-4">
-            <Zap className="w-7 h-7 text-primary" />
+      {/* Onboarding checklist for new users */}
+      {!loading && metrics.connectedStores === 0 && metrics.totalProducts === 0 && (
+        <div className="glass-card p-6 max-w-lg mx-auto">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <Zap className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-display text-base font-bold text-foreground">Primeiros passos</h3>
+              <p className="text-[11px] text-muted-foreground">Complete os passos abaixo para começar</p>
+            </div>
           </div>
-          <h3 className="font-display text-lg font-bold text-foreground mb-1">Nenhum produto ainda</h3>
-          <p className="text-sm text-muted-foreground mb-4">Comece publicando seu primeiro produto no Shopify.</p>
-          <Button onClick={() => onNavigate('publish')} className="font-display">
-            <Plus className="w-4 h-4 mr-2" />Criar primeiro produto
-          </Button>
+
+          <div className="space-y-1">
+            {/* Step 1: Connect store */}
+            <button
+              onClick={() => onNavigate('stores')}
+              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/60 transition-colors text-left group"
+            >
+              {metrics.connectedStores > 0 ? (
+                <CheckCircle2 className="w-5 h-5 text-[hsl(var(--success))] flex-shrink-0" />
+              ) : (
+                <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center flex-shrink-0">
+                  <span className="text-[10px] font-bold text-primary">1</span>
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <span className={`text-sm font-medium block ${metrics.connectedStores > 0 ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                  Conectar sua loja
+                </span>
+                <span className="text-[11px] text-muted-foreground">Vincule sua loja Shopify para publicar produtos</span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+            </button>
+
+            {/* Step 2: Create prompt */}
+            <button
+              onClick={() => onNavigate('prompts')}
+              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/60 transition-colors text-left group"
+            >
+              {metrics.totalPrompts > 0 ? (
+                <CheckCircle2 className="w-5 h-5 text-[hsl(var(--success))] flex-shrink-0" />
+              ) : (
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${metrics.connectedStores > 0 ? 'border-primary' : 'border-border'}`}>
+                  <span className={`text-[10px] font-bold ${metrics.connectedStores > 0 ? 'text-primary' : 'text-muted-foreground'}`}>2</span>
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <span className={`text-sm font-medium block ${metrics.totalPrompts > 0 ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                  Criar seu primeiro prompt
+                </span>
+                <span className="text-[11px] text-muted-foreground">Configure prompts de imagem para gerar fotos de produtos</span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+            </button>
+
+            {/* Step 3: Publish product */}
+            <button
+              onClick={() => onNavigate('publish')}
+              className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-secondary/60 transition-colors text-left group"
+            >
+              {metrics.totalProducts > 0 ? (
+                <CheckCircle2 className="w-5 h-5 text-[hsl(var(--success))] flex-shrink-0" />
+              ) : (
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${metrics.totalPrompts > 0 ? 'border-primary' : 'border-border'}`}>
+                  <span className={`text-[10px] font-bold ${metrics.totalPrompts > 0 ? 'text-primary' : 'text-muted-foreground'}`}>3</span>
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <span className={`text-sm font-medium block ${metrics.totalProducts > 0 ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
+                  Publicar seu primeiro produto
+                </span>
+                <span className="text-[11px] text-muted-foreground">Gere imagens e publique direto no Shopify</span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+            </button>
+          </div>
+
+          {/* Progress indicator */}
+          <div className="mt-4 pt-3 border-t border-border">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] text-muted-foreground">Progresso</span>
+              <span className="text-[10px] font-semibold text-foreground">
+                {[metrics.connectedStores > 0, metrics.totalPrompts > 0, metrics.totalProducts > 0].filter(Boolean).length}/3
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-500"
+                style={{ width: `${([metrics.connectedStores > 0, metrics.totalPrompts > 0, metrics.totalProducts > 0].filter(Boolean).length / 3) * 100}%` }}
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>
