@@ -74,7 +74,7 @@ function sanitizeGeneratedImages(images: GeneratedImage[]): GeneratedImage[] {
         justCompleted: Boolean(image.justCompleted),
       };
     })
-    .filter((image): image is GeneratedImage => image !== null);
+    .filter((image): image is NonNullable<typeof image> => image !== null);
 }
 
 interface ImageGenerationStepProps {
