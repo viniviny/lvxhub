@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.generate-specs]
 verify_jwt = false
+
+[functions.generate-with-gemini]
+verify_jwt = false

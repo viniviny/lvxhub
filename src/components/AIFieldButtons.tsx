@@ -96,12 +96,12 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
       if (productSpecs) {
         body.productSpecs = productSpecs;
       }
-      const { data, error } = await supabase.functions.invoke('generate-text', { body });
+      const { data, error } = await supabase.functions.invoke('generate-with-gemini', { body: { ...body, mode: 'generate-text' } });
       if (error) throw error;
       if (data?.content) {
         setGeneratedLang(data.language || language);
         applyContent(data.content);
-        logUsage({ service: 'text-generation', action: `Gerar ${type === 'title' ? 'título' : 'descrição'}`, metadata: { model: 'gpt-4o-mini', provider: 'OpenAI' } });
+        logUsage({ service: 'text-generation', action: `Gerar ${type === 'title' ? 'título' : 'descrição'}`, metadata: { model: 'gemini-2.5-flash', provider: 'Google Gemini Direct' } });
       }
     } catch (e: any) {
       toast.error(e.message || 'Erro ao gerar conteúdo');
@@ -132,7 +132,7 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
       if (productSpecs) {
         body.productSpecs = productSpecs;
       }
-      const { data, error } = await supabase.functions.invoke('generate-text', { body });
+      const { data, error } = await supabase.functions.invoke('generate-with-gemini', { body: { ...body, mode: 'generate-text' } });
       if (error) throw error;
       if (data?.content) {
         setGeneratedLang(data.language || language);

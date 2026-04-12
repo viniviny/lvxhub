@@ -38,8 +38,9 @@ export function useProductSpecs() {
     if (!context.productType) return null;
     setIsGeneratingSpecs(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-specs', {
+      const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
         body: {
+          mode: 'generate-specs',
           productType: context.productType,
           gender: context.gender || '',
           style: context.style || '',
@@ -50,7 +51,7 @@ export function useProductSpecs() {
       if (error) throw error;
       if (data?.specs) {
         setSpecs(data.specs);
-        logUsage({ service: 'specs-generation', action: 'Gerar especificações', metadata: { model: 'gemini-2.5-flash', provider: 'Google AI' } });
+        logUsage({ service: 'specs-generation', action: 'Gerar especificações', metadata: { model: 'gemini-2.5-flash', provider: 'Google Gemini Direct' } });
         return data.specs;
       }
       return null;

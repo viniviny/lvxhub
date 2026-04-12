@@ -237,8 +237,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           const match = referenceImage.match(/^data:([^;]+);base64,(.+)$/);
           if (match) { refMimeType = match[1]; refBase64 = match[2]; }
         }
-        const { data, error } = await supabase.functions.invoke('generate-image', {
-          body: { prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt, referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
+        const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
+          body: { mode: 'generate-image', prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt, referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
         });
         if (error) { 
           console.error('Edge function error:', error); 
@@ -256,7 +256,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         }
         const newImage: GeneratedImage = { id: crypto.randomUUID(), angle, url: imageUrl, isCover: false, justCompleted: true };
         newImages.push(newImage);
-        logUsage({ service: 'image-generation', action: `Gerar imagem (${angle})`, metadata: { model: 'gemini-3-pro-image-preview', provider: 'Google AI' } });
+        logUsage({ service: 'image-generation', action: `Gerar imagem (${angle})`, metadata: { model: 'gemini-2.5-flash-preview-05-20', provider: 'Google Gemini Direct' } });
         setGeneratedCount(prev => prev + 1);
         setCompletedAngles(prev => new Set(prev).add(angle));
         setGeneratingAngles(prev => { const next = new Set(prev); next.delete(angle); return next; });
@@ -302,8 +302,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         const match = referenceImage.match(/^data:([^;]+);base64,(.+)$/);
         if (match) { refMimeType = match[1]; refBase64 = match[2]; }
       }
-      const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: { prompt, angle: target.angle, customAngleText: target.angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
+      const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
+        body: { mode: 'generate-image', prompt, angle: target.angle, customAngleText: target.angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
       });
       if (error || data?.error) { toast.error('Erro ao regenerar imagem'); return; }
       const updated = existingImages.map(img => img.id === imageId ? { ...img, url: data.imageUrl } : img);

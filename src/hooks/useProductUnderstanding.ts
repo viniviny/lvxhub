@@ -59,8 +59,8 @@ export function useProductUnderstanding() {
     lastAnalyzedUrl.current = imageUrl;
     setIsAnalyzing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('analyze-product-image', {
-        body: { imageUrl },
+      const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
+        body: { mode: 'analyze-image', imageUrl },
       });
       if (error) throw error;
       if (data) {
@@ -82,7 +82,7 @@ export function useProductUnderstanding() {
           imageInsights: insights,
           finalProductType: resolveFinalProductType(prev.manualProductType, aiType, undefined, insights),
         }));
-        logUsage({ service: 'image-analysis', action: 'Análise de imagem', metadata: { model: 'gemini-2.5-flash', provider: 'Google AI' } });
+        logUsage({ service: 'image-analysis', action: 'Análise de imagem', metadata: { model: 'gemini-2.5-flash', provider: 'Google Gemini Direct' } });
       }
     } catch (e) {
       console.warn('[ProductUnderstanding] Image analysis failed:', e);

@@ -13,8 +13,8 @@ export function useProducts() {
     setIsGenerating(true);
     setGeneratedImageUrl(null);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-image', {
-        body: { prompt },
+      const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
+        body: { mode: 'generate-image', prompt },
       });
       if (error) throw error;
       if (data?.error) {

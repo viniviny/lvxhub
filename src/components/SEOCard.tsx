@@ -57,16 +57,16 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
         ...(productContext ? { productContext } : {}),
       };
       const [titleRes, descRes] = await Promise.all([
-        supabase.functions.invoke('generate-text', {
-          body: { ...seoBody, type: 'seo-title' },
+        supabase.functions.invoke('generate-with-gemini', {
+          body: { ...seoBody, mode: 'generate-text', type: 'seo-title' },
         }),
-        supabase.functions.invoke('generate-text', {
-          body: { ...seoBody, type: 'seo-description' },
+        supabase.functions.invoke('generate-with-gemini', {
+          body: { ...seoBody, mode: 'generate-text', type: 'seo-description' },
         }),
       ]);
       if (titleRes.data?.content) onTitleChange(titleRes.data.content.replace(/^["']|["']$/g, '').slice(0, 70));
       if (descRes.data?.content) onDescriptionChange(descRes.data.content.replace(/^["']|["']$/g, '').slice(0, 160));
-      logUsage({ service: 'text-generation', action: 'Gerar SEO (título + descrição)', metadata: { model: 'gpt-4o-mini', provider: 'OpenAI' } });
+      logUsage({ service: 'text-generation', action: 'Gerar SEO (título + descrição)', metadata: { model: 'gemini-2.5-flash', provider: 'Google Gemini Direct' } });
       toast.success('SEO otimizado com IA!');
     } catch (e: any) {
       toast.error(e.message || 'Erro ao otimizar SEO');
