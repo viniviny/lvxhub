@@ -545,6 +545,7 @@ const Index = () => {
 
       incrementPublished();
       setPublishResult({ title: data.title, shopifyUrl: data.shopifyUrl, imageUrl: data.imageUrl });
+      clearDraft();
       setEditingShopifyProductId(null);
       toast.success(editingShopifyProductId ? `Produto atualizado em ${activeStore.domain}!` : `Produto publicado em ${activeStore.domain}!`);
       // Mark project as published
