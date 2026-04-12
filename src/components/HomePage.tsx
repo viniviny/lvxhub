@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Package, Store, TrendingUp, Clock, Plus, ClipboardList, Zap, ArrowRight } from 'lucide-react';
+import { Package, Store, TrendingUp, Clock, Plus, ClipboardList, Zap, ArrowRight, CheckCircle2, Circle, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface HomeMetrics {
   totalProducts: number;
   connectedStores: number;
   weeklyPublications: number;
+  totalPrompts: number;
   recentProducts: { title: string; store_domain: string; created_at: string }[];
 }
 
@@ -21,6 +22,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
     totalProducts: 0,
     connectedStores: 0,
     weeklyPublications: 0,
+    totalPrompts: 0,
     recentProducts: [],
   });
   const [loading, setLoading] = useState(true);
@@ -33,17 +35,19 @@ export function HomePage({ onNavigate }: HomePageProps) {
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-        const [productsRes, storesRes, weeklyRes, recentRes] = await Promise.all([
+        const [productsRes, storesRes, weeklyRes, recentRes, promptsRes] = await Promise.all([
           supabase.from('published_products').select('id', { count: 'exact', head: true }),
           supabase.from('shopify_connections').select('id', { count: 'exact', head: true }).eq('is_active', true),
           supabase.from('published_products').select('id', { count: 'exact', head: true }).gte('created_at', oneWeekAgo.toISOString()),
           supabase.from('published_products').select('title, store_domain, created_at').order('created_at', { ascending: false }).limit(5),
+          supabase.from('user_prompts').select('id', { count: 'exact', head: true }),
         ]);
 
         setMetrics({
           totalProducts: productsRes.count || 0,
           connectedStores: storesRes.count || 0,
           weeklyPublications: weeklyRes.count || 0,
+          totalPrompts: promptsRes.count || 0,
           recentProducts: (recentRes.data as any[]) || [],
         });
       } catch (err) {
