@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Search, Download, Trash2, Tag, Pencil, Check, X, Image as ImageIcon,
-  CheckSquare, Square, Grid3X3, LayoutGrid, Eye
+  CheckSquare, Square, Grid3X3, LayoutGrid, Eye, ArrowUpDown, Store, Filter
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -21,9 +22,13 @@ interface LibraryImage {
   product_name: string | null;
   angle: string | null;
   created_at: string;
+  status: string | null;
+  store_domain: string | null;
 }
 
 type ViewSize = 'small' | 'large';
+type SortOrder = 'newest' | 'oldest';
+type StatusFilter = 'all' | 'rascunho' | 'publicado' | 'erro';
 
 export function ImageLibrary() {
   const { user } = useAuth();
@@ -31,6 +36,9 @@ export function ImageLibrary() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterTag, setFilterTag] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<StatusFilter>('all');
+  const [filterStore, setFilterStore] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -45,8 +53,8 @@ export function ImageLibrary() {
     setLoading(true);
     const { data, error } = await supabase
       .from('image_library')
-      .select('id, name, url, storage_path, tags, product_name, angle, created_at')
-      .order('created_at', { ascending: false });
+      .select('id, name, url, storage_path, tags, product_name, angle, created_at, status, store_domain')
+      .order('created_at', { ascending: sortOrder === 'oldest' });
 
     if (error) {
       console.error('Error fetching library:', error);
@@ -55,12 +63,13 @@ export function ImageLibrary() {
       setImages((data as LibraryImage[]) || []);
     }
     setLoading(false);
-  }, [user]);
+  }, [user, sortOrder]);
 
   useEffect(() => { fetchImages(); }, [fetchImages]);
 
-  // Get all unique tags
+  // Get all unique tags and stores
   const allTags = Array.from(new Set(images.flatMap(i => i.tags || [])));
+  const allStores = Array.from(new Set(images.map(i => i.store_domain).filter(Boolean))) as string[];
 
   // Filter images
   const filtered = images.filter(img => {
@@ -68,7 +77,9 @@ export function ImageLibrary() {
       img.product_name?.toLowerCase().includes(search.toLowerCase()) ||
       img.angle?.toLowerCase().includes(search.toLowerCase());
     const matchTag = !filterTag || img.tags?.includes(filterTag);
-    return matchSearch && matchTag;
+    const matchStatus = filterStatus === 'all' || (img.status || 'rascunho') === filterStatus;
+    const matchStore = filterStore === 'all' || img.store_domain === filterStore;
+    return matchSearch && matchTag && matchStatus && matchStore;
   });
 
   const toggleSelect = (id: string) => {
@@ -179,55 +190,113 @@ export function ImageLibrary() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-3 mb-4 flex-wrap">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome, produto ou ângulo..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9 h-9 text-sm bg-secondary border-border"
-          />
+      <div className="flex flex-col gap-3 mb-4">
+        {/* Row 1: Search + Sort + View toggle */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome do produto..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9 h-9 text-sm bg-secondary border-border"
+            />
+          </div>
+
+          {/* Status filter */}
+          <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as StatusFilter)}>
+            <SelectTrigger className="w-[140px] h-9 text-xs bg-secondary border-border">
+              <Filter className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              <SelectItem value="rascunho">Rascunho</SelectItem>
+              <SelectItem value="publicado">Publicado</SelectItem>
+              <SelectItem value="erro">Erro</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Store filter */}
+          {allStores.length > 0 && (
+            <Select value={filterStore} onValueChange={setFilterStore}>
+              <SelectTrigger className="w-[160px] h-9 text-xs bg-secondary border-border">
+                <Store className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                <SelectValue placeholder="Loja" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as lojas</SelectItem>
+                {allStores.map(store => (
+                  <SelectItem key={store} value={store}>{store}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Sort order */}
+          <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as SortOrder)}>
+            <SelectTrigger className="w-[140px] h-9 text-xs bg-secondary border-border">
+              <ArrowUpDown className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Mais recentes</SelectItem>
+              <SelectItem value="oldest">Mais antigos</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center gap-1 ml-auto">
+            <button
+              onClick={() => setViewSize('large')}
+              className={`p-1.5 rounded-md transition-colors ${viewSize === 'large' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewSize('small')}
+              className={`p-1.5 rounded-md transition-colors ${viewSize === 'small' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              <Grid3X3 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        {/* Tag filter */}
-        {allTags.length > 0 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto">
+        {/* Row 2: Tag filter chips + active filter count */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {(filterStatus !== 'all' || filterStore !== 'all' || filterTag) && (
             <button
-              onClick={() => setFilterTag(null)}
-              className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
-                !filterTag ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
-              }`}
+              onClick={() => { setFilterStatus('all'); setFilterStore('all'); setFilterTag(null); setSearch(''); }}
+              className="text-[11px] text-destructive hover:text-destructive/80 transition-colors"
             >
-              Todas
+              Limpar filtros
             </button>
-            {allTags.slice(0, 8).map(tag => (
+          )}
+          {allTags.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto">
               <button
-                key={tag}
-                onClick={() => setFilterTag(filterTag === tag ? null : tag)}
+                onClick={() => setFilterTag(null)}
                 className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
-                  filterTag === tag ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
+                  !filterTag ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {tag}
+                Todas
               </button>
-            ))}
-          </div>
-        )}
-
-        <div className="flex items-center gap-1 ml-auto">
-          <button
-            onClick={() => setViewSize('large')}
-            className={`p-1.5 rounded-md transition-colors ${viewSize === 'large' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            <LayoutGrid className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setViewSize('small')}
-            className={`p-1.5 rounded-md transition-colors ${viewSize === 'small' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            <Grid3X3 className="w-4 h-4" />
-          </button>
+              {allTags.slice(0, 8).map(tag => (
+                <button
+                  key={tag}
+                  onClick={() => setFilterTag(filterTag === tag ? null : tag)}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
+                    filterTag === tag ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
+          <span className="text-[10px] text-muted-foreground ml-auto">
+            {filtered.length} de {images.length} imagens
+          </span>
         </div>
       </div>
 
@@ -351,9 +420,20 @@ export function ImageLibrary() {
                     </div>
                   ) : (
                     <>
-                      <p className="text-xs font-medium text-foreground truncate">
-                        {img.name || img.angle || 'Sem nome'}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs font-medium text-foreground truncate flex-1">
+                          {img.name || img.angle || 'Sem nome'}
+                        </p>
+                        {(img.status || 'rascunho') === 'publicado' && (
+                          <span className="shrink-0 text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]">Publicado</span>
+                        )}
+                        {(img.status || 'rascunho') === 'erro' && (
+                          <span className="shrink-0 text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive">Erro</span>
+                        )}
+                        {(img.status || 'rascunho') === 'rascunho' && (
+                          <span className="shrink-0 text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">Rascunho</span>
+                        )}
+                      </div>
                       {img.product_name && (
                         <p className="text-[10px] text-muted-foreground truncate">{img.product_name}</p>
                       )}
