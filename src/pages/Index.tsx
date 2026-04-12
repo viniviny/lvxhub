@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { ImageGenerationStep, GeneratedImage, ImageAngle } from '@/components/ImageGenerationStep';
 import { useProject } from '@/hooks/useProject';
 import { SaveStatusIndicator } from '@/components/SaveStatusIndicator';
+import { useDraftSave } from '@/hooks/useDraftSave';
+import { DraftResumeDialog } from '@/components/DraftResumeDialog';
+import { DraftSavedIndicator } from '@/components/DraftSavedIndicator';
 import { ProductFormData, ProductSize, ProductGender, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
 import { useProductUnderstanding } from '@/hooks/useProductUnderstanding';
 import { useProductSpecs } from '@/hooks/useProductSpecs';
@@ -146,7 +149,12 @@ const Index = () => {
   const savedToProjectRef = useRef<Set<string>>(new Set());
   const deletedProjectImageUrlsRef = useRef<Set<string>>(new Set());
 
-  // Product understanding engine
+  // ─── Draft save (localStorage) ────────────────────────────
+  const { draftStatus, saveDraft, loadDraft, clearDraft } = useDraftSave();
+  const [showDraftResume, setShowDraftResume] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState<ReturnType<typeof loadDraft>>(null);
+  const draftCheckedRef = useRef(false);
+
   const {
     understanding, isAnalyzing, setManualProductType, setManualField,
     analyzeImage, updateFinalFromTitle, reset: resetUnderstanding,
@@ -216,6 +224,54 @@ const Index = () => {
       deletedProjectImageUrlsRef.current = new Set();
     }
   }, [project]);
+
+  // ─── Check for existing draft on mount ────────────────────
+  useEffect(() => {
+    if (draftCheckedRef.current) return;
+    draftCheckedRef.current = true;
+    const draft = loadDraft();
+    if (draft) {
+      setPendingDraft(draft);
+      setShowDraftResume(true);
+    }
+  }, [loadDraft]);
+
+  // ─── Auto-save draft to localStorage on changes ──────────
+  useEffect(() => {
+    if (!draftCheckedRef.current) return;
+    saveDraft({
+      form,
+      seoTitle,
+      seoDescription,
+      wizardStep,
+      completedSteps: Array.from(completedSteps),
+      colors,
+      generatedImages,
+      imagePreview,
+    });
+  }, [form, seoTitle, seoDescription, wizardStep, completedSteps, colors, generatedImages, imagePreview, saveDraft]);
+
+  const handleResumeDraft = useCallback(() => {
+    if (!pendingDraft) return;
+    setForm(prev => ({ ...prev, ...pendingDraft.form }));
+    setSeoTitle(pendingDraft.seoTitle || '');
+    setSeoDescription(pendingDraft.seoDescription || '');
+    setWizardStep(pendingDraft.wizardStep || 1);
+    setCompletedSteps(new Set(pendingDraft.completedSteps || []));
+    setColors(pendingDraft.colors || []);
+    if (pendingDraft.generatedImages?.length) {
+      setGeneratedImages(pendingDraft.generatedImages);
+      setImagePreview(pendingDraft.imagePreview || pendingDraft.generatedImages[0]?.url || null);
+    }
+    setShowDraftResume(false);
+    setPendingDraft(null);
+  }, [pendingDraft]);
+
+  const handleDiscardDraft = useCallback(() => {
+    clearDraft();
+    setShowDraftResume(false);
+    setPendingDraft(null);
+  }, [clearDraft]);
 
   // ─── Sync form changes to project (autosave) ─────────────
   const syncFormToProject = useCallback((updatedForm: ProductFormData) => {
@@ -489,6 +545,7 @@ const Index = () => {
 
       incrementPublished();
       setPublishResult({ title: data.title, shopifyUrl: data.shopifyUrl, imageUrl: data.imageUrl });
+      clearDraft();
       setEditingShopifyProductId(null);
       toast.success(editingShopifyProductId ? `Produto atualizado em ${activeStore.domain}!` : `Produto publicado em ${activeStore.domain}!`);
       // Mark project as published
@@ -515,7 +572,7 @@ const Index = () => {
   };
 
   const handleNewProduct = async () => {
-    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setEditingShopifyProductId(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced'); resetUnderstanding(); setUsedTitleNames([]); clearSpecs();
+    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setEditingShopifyProductId(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced'); resetUnderstanding(); setUsedTitleNames([]); clearSpecs(); clearDraft();
     if (fileInputRef.current) fileInputRef.current.value = '';
     projectRestoredRef.current = false;
     savedToProjectRef.current = new Set();
@@ -638,6 +695,7 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-2">
             <SaveStatusIndicator status={saveStatus} />
+            <DraftSavedIndicator status={draftStatus} />
             {publishedCount > 0 && (
               <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-[hsl(var(--sidebar-primary)/0.1)] text-[hsl(var(--info))]">
                 <Zap className="w-3 h-3" />{publishedCount}
@@ -666,8 +724,14 @@ const Index = () => {
       <StoreManagementDialog open={showManagement} onOpenChange={setShowManagement} stores={stores} onRemove={removeStore} onReconnect={handleReconnect} onSetDefault={setDefault} onUpdateMarket={updateStoreMarket} />
       <RegionGroupManager open={showRegions} onOpenChange={setShowRegions} groups={groups} stores={stores} onAddGroup={addGroup} onUpdateGroup={updateGroup} onRemoveGroup={removeGroup} />
       <GlobalPublishFlow open={showGlobalPublish} onOpenChange={setShowGlobalPublish} stores={stores} groups={groups} activeStore={activeStore} basePrice={form.price} productTitle={form.title} convert={convert} onPublish={handlePublishToStore} />
+      <DraftResumeDialog
+        open={showDraftResume}
+        draftTitle={pendingDraft?.form?.title}
+        draftDate={pendingDraft?.savedAt ? new Date(pendingDraft.savedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : undefined}
+        onResume={handleResumeDraft}
+        onDiscard={handleDiscardDraft}
+      />
 
-      {/* DASHBOARD */}
       <div className="flex-1 flex">
         <DashboardSidebar currentView={currentView} onViewChange={handleViewChange} />
 
