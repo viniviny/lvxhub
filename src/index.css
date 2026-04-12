@@ -6,53 +6,53 @@
 
 @layer base {
   :root {
-    --background: 216 28% 7%;
-    --foreground: 210 29% 90%;
+    --background: 210 20% 96%;
+    --foreground: 216 28% 12%;
 
-    --card: 220 27% 15%;
-    --card-foreground: 210 29% 90%;
+    --card: 0 0% 100%;
+    --card-foreground: 216 28% 12%;
 
-    --popover: 220 27% 15%;
-    --popover-foreground: 210 29% 90%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 216 28% 12%;
 
     --primary: 215 84% 52%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 215 14% 17%;
-    --secondary-foreground: 212 11% 58%;
+    --secondary: 214 14% 90%;
+    --secondary-foreground: 216 20% 40%;
 
-    --muted: 215 14% 17%;
-    --muted-foreground: 212 11% 58%;
+    --muted: 214 14% 90%;
+    --muted-foreground: 216 12% 50%;
 
-    --accent: 213 97% 61%;
+    --accent: 213 97% 52%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 2 93% 63%;
+    --destructive: 2 93% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 14% 21%;
-    --input: 215 14% 21%;
+    --border: 214 14% 82%;
+    --input: 214 14% 82%;
     --ring: 215 84% 52%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 216 28% 11%;
-    --sidebar-foreground: 215 14% 58%;
+    --sidebar-background: 210 18% 93%;
+    --sidebar-foreground: 216 14% 45%;
     --sidebar-primary: 215 84% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 27% 15%;
-    --sidebar-accent-foreground: 210 29% 90%;
-    --sidebar-border: 215 14% 21%;
+    --sidebar-accent: 214 14% 88%;
+    --sidebar-accent-foreground: 216 28% 12%;
+    --sidebar-border: 214 14% 82%;
     --sidebar-ring: 215 84% 52%;
-    --sidebar-card: 220 30% 16%;
-    --sidebar-card-border: 215 14% 24%;
+    --sidebar-card: 0 0% 100%;
+    --sidebar-card-border: 214 14% 82%;
     --sidebar-card-hover: 215 84% 52%;
 
-    --success: 140 64% 48%;
+    --success: 140 64% 42%;
     --success-foreground: 0 0% 100%;
     --warning: 39 73% 49%;
     --warning-foreground: 0 0% 100%;
-    --info: 213 97% 67%;
+    --info: 213 97% 52%;
 
     --font-display: 'Space Grotesk', sans-serif;
     --font-body: 'Inter', sans-serif;
