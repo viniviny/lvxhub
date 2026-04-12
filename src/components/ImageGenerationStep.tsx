@@ -619,10 +619,73 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         <div className="flex items-center justify-between mb-2 w-full">
           <h3 className="font-display font-semibold text-foreground text-[13px]">Imagens do produto</h3>
           <span className="text-[10px] text-muted-foreground">
-            {safeImages.length > 0 ? `${safeImages.length} ${safeImages.length === 1 ? 'imagem' : 'imagens'}` : 'Nenhuma imagem'}
+            {isGenerating && safeImages.length === 0
+              ? `Gerando imagem ${generatedCount + 1} de ${totalToGenerate}...`
+              : safeImages.length > 0 ? `${safeImages.length} ${safeImages.length === 1 ? 'imagem' : 'imagens'}` : 'Nenhuma imagem'}
           </span>
         </div>
 
+        {/* Skeleton loader while generating with no images yet */}
+        {isGenerating && safeImages.length === 0 ? (
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              {Array.from(selectedAngles).slice(0, Math.min(totalToGenerate, 6)).map((angle, i) => {
+                const isDone = completedAngles.has(angle);
+                const isActive = generatingAngles.has(angle);
+                const label = ANGLE_OPTIONS.find(a => a.id === angle)?.label || angle;
+                return (
+                  <div
+                    key={angle}
+                    className={`rounded-lg overflow-hidden border transition-all duration-300 ${
+                      isDone ? 'border-[hsl(var(--success)/0.5)] bg-[hsl(var(--success)/0.05)]' 
+                      : isActive ? 'border-primary/50' 
+                      : 'border-border'
+                    }`}
+                    style={{ aspectRatio: activeRatio === '4:5' ? '4/5' : '1/1', animationDelay: `${i * 100}ms` }}
+                  >
+                    <div className={`w-full h-full flex flex-col items-center justify-center gap-2 ${
+                      isActive ? 'skeleton-shimmer' : isDone ? '' : 'bg-card'
+                    }`}>
+                      {isActive && (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                          <span className="text-[10px] text-muted-foreground font-medium">{label}</span>
+                          {angleStartTimes[angle] && <MiniTimer startTime={angleStartTimes[angle]} />}
+                        </>
+                      )}
+                      {isDone && (
+                        <>
+                          <Check className="w-5 h-5 text-[hsl(var(--success))]" />
+                          <span className="text-[10px] text-[hsl(var(--success))] font-medium">{label} ✓</span>
+                        </>
+                      )}
+                      {!isActive && !isDone && (
+                        <>
+                          <Clock className="w-4 h-4 text-muted-foreground/30" />
+                          <span className="text-[10px] text-muted-foreground/50">{label}</span>
+                          <span className="text-[8px] text-muted-foreground/30">Aguardando</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Progress bar */}
+            <div className="mt-auto">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] text-muted-foreground">Progresso</span>
+                <span className="text-[10px] font-semibold text-foreground">{generatedCount}/{totalToGenerate}</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+                  style={{ width: `${totalToGenerate > 0 ? (generatedCount / totalToGenerate) * 100 : 0}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
         <ImageGallery
           images={safeImages}
           generatingAngles={generatingAngles}
@@ -655,6 +718,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           aspectRatio={activeRatio}
           onAddUpload={() => fileInputRef.current?.click()}
         />
+        )}
 
         {/* Bottom navigation */}
         <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
@@ -1102,4 +1166,14 @@ function GeneratingProgressBar({ startTime }: { startTime: number }) {
       <div className="h-full bg-primary transition-all duration-1000 ease-linear" style={{ width: `${progress}%` }} />
     </div>
   );
+}
+
+/* ─── Mini Timer for skeleton cards ─── */
+function MiniTimer({ startTime }: { startTime: number }) {
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - startTime) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [startTime]);
+  return <span className="text-[8px] text-muted-foreground/60">{elapsed}s</span>;
 }
