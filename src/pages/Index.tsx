@@ -724,8 +724,14 @@ const Index = () => {
       <StoreManagementDialog open={showManagement} onOpenChange={setShowManagement} stores={stores} onRemove={removeStore} onReconnect={handleReconnect} onSetDefault={setDefault} onUpdateMarket={updateStoreMarket} />
       <RegionGroupManager open={showRegions} onOpenChange={setShowRegions} groups={groups} stores={stores} onAddGroup={addGroup} onUpdateGroup={updateGroup} onRemoveGroup={removeGroup} />
       <GlobalPublishFlow open={showGlobalPublish} onOpenChange={setShowGlobalPublish} stores={stores} groups={groups} activeStore={activeStore} basePrice={form.price} productTitle={form.title} convert={convert} onPublish={handlePublishToStore} />
+      <DraftResumeDialog
+        open={showDraftResume}
+        draftTitle={pendingDraft?.form?.title}
+        draftDate={pendingDraft?.savedAt ? new Date(pendingDraft.savedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : undefined}
+        onResume={handleResumeDraft}
+        onDiscard={handleDiscardDraft}
+      />
 
-      {/* DASHBOARD */}
       <div className="flex-1 flex">
         <DashboardSidebar currentView={currentView} onViewChange={handleViewChange} />
 
