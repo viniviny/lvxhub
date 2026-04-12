@@ -190,55 +190,113 @@ export function ImageLibrary() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-3 mb-4 flex-wrap">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome, produto ou ângulo..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9 h-9 text-sm bg-secondary border-border"
-          />
+      <div className="flex flex-col gap-3 mb-4">
+        {/* Row 1: Search + Sort + View toggle */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome do produto..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9 h-9 text-sm bg-secondary border-border"
+            />
+          </div>
+
+          {/* Status filter */}
+          <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as StatusFilter)}>
+            <SelectTrigger className="w-[140px] h-9 text-xs bg-secondary border-border">
+              <Filter className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              <SelectItem value="rascunho">Rascunho</SelectItem>
+              <SelectItem value="publicado">Publicado</SelectItem>
+              <SelectItem value="erro">Erro</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Store filter */}
+          {allStores.length > 0 && (
+            <Select value={filterStore} onValueChange={setFilterStore}>
+              <SelectTrigger className="w-[160px] h-9 text-xs bg-secondary border-border">
+                <Store className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+                <SelectValue placeholder="Loja" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as lojas</SelectItem>
+                {allStores.map(store => (
+                  <SelectItem key={store} value={store}>{store}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Sort order */}
+          <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as SortOrder)}>
+            <SelectTrigger className="w-[140px] h-9 text-xs bg-secondary border-border">
+              <ArrowUpDown className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Mais recentes</SelectItem>
+              <SelectItem value="oldest">Mais antigos</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center gap-1 ml-auto">
+            <button
+              onClick={() => setViewSize('large')}
+              className={`p-1.5 rounded-md transition-colors ${viewSize === 'large' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewSize('small')}
+              className={`p-1.5 rounded-md transition-colors ${viewSize === 'small' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              <Grid3X3 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        {/* Tag filter */}
-        {allTags.length > 0 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto">
+        {/* Row 2: Tag filter chips + active filter count */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {(filterStatus !== 'all' || filterStore !== 'all' || filterTag) && (
             <button
-              onClick={() => setFilterTag(null)}
-              className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
-                !filterTag ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
-              }`}
+              onClick={() => { setFilterStatus('all'); setFilterStore('all'); setFilterTag(null); setSearch(''); }}
+              className="text-[11px] text-destructive hover:text-destructive/80 transition-colors"
             >
-              Todas
+              Limpar filtros
             </button>
-            {allTags.slice(0, 8).map(tag => (
+          )}
+          {allTags.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto">
               <button
-                key={tag}
-                onClick={() => setFilterTag(filterTag === tag ? null : tag)}
+                onClick={() => setFilterTag(null)}
                 className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
-                  filterTag === tag ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
+                  !filterTag ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {tag}
+                Todas
               </button>
-            ))}
-          </div>
-        )}
-
-        <div className="flex items-center gap-1 ml-auto">
-          <button
-            onClick={() => setViewSize('large')}
-            className={`p-1.5 rounded-md transition-colors ${viewSize === 'large' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            <LayoutGrid className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setViewSize('small')}
-            className={`p-1.5 rounded-md transition-colors ${viewSize === 'small' ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-          >
-            <Grid3X3 className="w-4 h-4" />
-          </button>
+              {allTags.slice(0, 8).map(tag => (
+                <button
+                  key={tag}
+                  onClick={() => setFilterTag(filterTag === tag ? null : tag)}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition-colors ${
+                    filterTag === tag ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          )}
+          <span className="text-[10px] text-muted-foreground ml-auto">
+            {filtered.length} de {images.length} imagens
+          </span>
         </div>
       </div>
 
