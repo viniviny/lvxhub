@@ -1154,11 +1154,6 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
                       {isFirst ? 'Capa' : label}
                     </span>
                   )}
-                  {!selectMode && isFirst && img && !img && (
-                    <span className="absolute bottom-0.5 left-0.5 text-[7px] font-semibold px-1 py-0.5 rounded bg-black/70 text-white/90">
-                      Capa
-                    </span>
-                  )}
                 </div>
               );
             })}
