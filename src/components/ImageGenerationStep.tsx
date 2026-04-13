@@ -891,7 +891,7 @@ interface ImageGalleryProps {
   completedAngles: Set<ImageAngle>;
   angleStartTimes: Record<string, number>;
   onImagesChange: (images: GeneratedImage[]) => void;
-  onRegenerate: (imageId: string) => void;
+  onRegenerate: (imageId: string) => Promise<void>;
   onRemove: (imageId: string) => void;
   onSetCover: (imageId: string) => void;
   onBulkRemove: (imageIds: string[]) => void;
@@ -912,6 +912,16 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [regeneratingIds, setRegeneratingIds] = useState<Set<string>>(new Set());
+
+  const handleThumbRegenerate = useCallback(async (imageId: string) => {
+    setRegeneratingIds(prev => new Set(prev).add(imageId));
+    try {
+      await onRegenerate(imageId);
+    } finally {
+      setRegeneratingIds(prev => { const next = new Set(prev); next.delete(imageId); return next; });
+    }
+  }, [onRegenerate]);
 
   // Build display list: all images + generating slots for angles not yet done
   const generatingSlots = Array.from(generatingAngles)
@@ -1084,7 +1094,7 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
               return (
                 <div
                   key={`thumb-${img?.id || angle}-${i}`}
-                  className={`relative shrink-0 cursor-pointer rounded-md overflow-hidden transition-all duration-150
+                  className={`group/thumb relative shrink-0 cursor-pointer rounded-md overflow-hidden transition-all duration-150
                     ${isActive && !selectMode ? 'border-2 border-primary opacity-100' : 'border-2 border-transparent opacity-60 hover:opacity-100 hover:border-primary/40'}
                     ${selectMode && img && selectedIds.has(img.id) ? 'border-2 border-primary opacity-100 ring-1 ring-primary' : ''}
                     ${dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-primary' : ''}
@@ -1099,7 +1109,25 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
                   onDragEnd={handleThumbDragEnd}
                 >
                   {img && (
-                    <img src={img.url} alt={label} className="w-full h-full object-cover" />
+                    <>
+                      <img src={img.url} alt={label} className="w-full h-full object-cover" />
+                      {/* Regenerating overlay */}
+                      {regeneratingIds.has(img.id) && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        </div>
+                      )}
+                      {/* Hover refresh button */}
+                      {!selectMode && !regeneratingIds.has(img.id) && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleThumbRegenerate(img.id); }}
+                          className="absolute top-0.5 right-0.5 w-5 h-5 rounded-sm bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 hover:bg-primary transition-all z-10"
+                          title="Regenerar este ângulo"
+                        >
+                          <RefreshCw className="w-2.5 h-2.5" />
+                        </button>
+                      )}
+                    </>
                   )}
                   {!img && isGen && (
                     <div className="w-full h-full bg-card flex items-center justify-center" style={{ animation: 'pulse-border 1.5s infinite' }}>
@@ -1120,9 +1148,10 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
                       {selectedIds.has(img.id) && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
                     </div>
                   )}
-                  {!selectMode && isFirst && img && (
-                    <span className="absolute bottom-0.5 left-0.5 text-[7px] font-semibold px-1 py-0.5 rounded bg-black/70 text-white/90">
-                      Capa
+                  {/* Angle badge */}
+                  {img && (
+                    <span className="absolute bottom-0.5 left-0.5 text-[7px] font-semibold px-1 py-0.5 rounded bg-black/70 text-white/90 leading-tight z-10">
+                      {isFirst ? 'Capa' : label}
                     </span>
                   )}
                 </div>
