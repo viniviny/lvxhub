@@ -166,6 +166,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   );
   const [generatingAngles, setGeneratingAngles] = useState<Set<ImageAngle>>(new Set());
   const [isGenerating, setIsGenerating] = useState(false);
+  const lastUsedPromptRef = useRef<string>('');
   const [generatedCount, setGeneratedCount] = useState(0);
   const [totalToGenerate, setTotalToGenerate] = useState(0);
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
@@ -288,6 +289,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
 
   const generateImages = useCallback(async () => {
     if (!prompt.trim() || selectedAngles.size === 0) return;
+    lastUsedPromptRef.current = prompt.trim();
     const angles = Array.from(selectedAngles);
     const existingImages = sanitizeGeneratedImages(images);
     const now = Date.now();
@@ -394,11 +396,13 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const regenerateImage = useCallback(async (imageId: string) => {
     const existingImages = sanitizeGeneratedImages(images);
     const target = existingImages.find(i => i.id === imageId);
-    if (!target || !prompt.trim()) return;
+    if (!target) return;
+    const effectivePrompt = prompt.trim() || lastUsedPromptRef.current;
+    if (!effectivePrompt) { toast.error('Nenhum prompt disponível para regenerar. Preencha a descrição do produto.'); return; }
     const modelDesc = getModelDescriptor(selectedModel, customPresets);
     const bgDesc = getBackgroundDescriptor(selectedBackground, customPresets);
     const hasPresets = !!(modelDesc || bgDesc);
-    const enrichedPrompt = buildPremiumPrompt(prompt, modelDesc, bgDesc);
+    const enrichedPrompt = buildPremiumPrompt(effectivePrompt, modelDesc, bgDesc);
     
     const modelImgUrl = getModelImage(selectedModel, customPresets);
     const bgImgUrl = getBackgroundImage(selectedBackground, customPresets);
