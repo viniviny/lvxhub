@@ -302,6 +302,11 @@ serve(async (req) => {
 
 You are an elite fashion photographer with TOTAL CREATIVE FREEDOM to create a premium editorial e-commerce image.
 
+NON-NEGOTIABLE FOUNDATIONS (these override everything else):
+- The MANDATORY ANGLE specified above is the EXACT camera angle you MUST use. It defines where the camera is positioned relative to the subject. Do NOT change it.
+- The MANDATORY FORMAT specified above is the EXACT aspect ratio. Compose and frame accordingly. Do NOT crop differently.
+- These are the technical base — your creative freedom applies to pose, expression, lighting mood, and interaction with the product WITHIN these constraints.
+
 VISUAL QUALITY REQUIREMENTS:
 - Ultra high resolution, 8K detail, razor sharp focus throughout
 - Professional studio-grade lighting: soft key light with subtle rim light for depth and dimension
