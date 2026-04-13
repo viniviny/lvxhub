@@ -196,7 +196,7 @@ async function callGeminiImage(
   // Add preset reference images first so the model sees them before the text instruction
   if (presetImages && presetImages.length > 0) {
     for (const pi of presetImages) {
-      parts.push({ text: `[VISUAL REFERENCE — ${pi.label}] Study this image carefully. The generated photo MUST match this reference exactly.` });
+      parts.push({ text: `[VISUAL REFERENCE — ${pi.label}] Study this reference image carefully. Match the same type/style but ELEVATE the quality to premium fashion photography level. Better lighting, richer detail, more cinematic presence.` });
       parts.push({ inlineData: { mimeType: pi.mimeType, data: pi.base64 } });
     }
   }
@@ -296,18 +296,29 @@ serve(async (req) => {
         presetImages.push({ base64: bgPresetImage, mimeType: bgPresetMimeType, label: 'BACKGROUND STYLE' });
       }
 
-      // When presets are selected, enforce strict adherence
+      // When presets are selected, enforce adherence + premium quality
       if (hasPresets) {
-        fullPrompt += ` High resolution, commercial quality.
+        fullPrompt += `
 
-CRITICAL INSTRUCTIONS — YOU MUST FOLLOW THESE EXACTLY:
-- The VISUAL REFERENCE images above show the EXACT model type and/or background style you must replicate.
-- Any section marked "MANDATORY MODEL:" describes the person. The MODEL TYPE reference image shows exactly what this person should look like. You MUST generate a model matching the reference image's appearance: same age range, similar facial features, build, grooming style, and posture.
-- Any section marked "MANDATORY BACKGROUND:" describes the setting. The BACKGROUND STYLE reference image shows exactly what the environment should look like. You MUST replicate this background style.
-- The product described in the prompt must be worn/displayed by the specified model in the specified background.
-- NEVER ignore or override MANDATORY instructions. They take absolute priority over any conflicting defaults.`;
+You are an elite fashion photographer creating a premium editorial e-commerce image.
+
+VISUAL QUALITY REQUIREMENTS:
+- Ultra high resolution, 8K detail, razor sharp focus throughout
+- Professional studio-grade lighting: soft key light with subtle rim light for depth and dimension
+- Rich, true-to-life color accuracy with cinematic color grading
+- Natural skin texture and tones — NO plastic/AI look, NO uncanny valley
+- Fabric must show realistic texture, weight, drape, and natural folds
+- Subtle depth of field to separate subject from background
+- Magazine-cover level retouching: flawless but natural
+
+PRESET ADHERENCE RULES:
+- The VISUAL REFERENCE images show the EXACT model type and/or background style. Use them as your creative starting point, then ELEVATE the quality far beyond the reference.
+- MANDATORY MODEL: Match the reference model's age range, build, grooming, and overall vibe — but render with superior photographic quality: better lighting on the face, more natural expression, refined skin detail, and cinematic presence.
+- MANDATORY BACKGROUND: Match the reference background's style and mood — but enhance it with richer atmospheric depth, better lighting transitions, and more photographic realism.
+- The product is the HERO: it must be the sharpest, most detailed element in the frame with accurate color, texture, and construction visible.
+- Final result must look like it belongs in a Zara, COS, or Mr Porter product catalog — never like AI-generated stock imagery.`;
       } else {
-        fullPrompt += ' Studio lighting, clean background, high resolution, commercial quality.';
+        fullPrompt += ' Professional studio lighting, clean white background, ultra high resolution, sharp detail, premium fashion catalog quality, cinematic color grading, 8K detail.';
       }
 
       const imageResult = await callGeminiImage(GEMINI_API_KEY, fullPrompt, referenceImage, referenceMimeType, presetImages.length > 0 ? presetImages : undefined);
