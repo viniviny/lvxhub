@@ -14,6 +14,7 @@ import {
   ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical,
   Clock, Check, ChevronLeft, ChevronRight, Camera, BookOpen, Search, ClipboardPaste
 } from 'lucide-react';
+import { ModelBackgroundPresets, getModelDescriptor, getBackgroundDescriptor } from '@/components/ModelBackgroundPresets';
 
 export type AspectRatio = '1:1' | '4:5';
 
@@ -116,6 +117,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const fileInputRef = useRef<HTMLInputElement>(null);
   const refImageInputRef = useRef<HTMLInputElement>(null);
   const refDropZoneRef = useRef<HTMLDivElement>(null);
+  const [selectedModel, setSelectedModel] = useState<string | null>(null);
+  const [selectedBackground, setSelectedBackground] = useState<string | null>(null);
 
   // Handle paste from clipboard (Ctrl+V anywhere or on the drop zone)
   const handlePasteReference = useCallback((e: ClipboardEvent | globalThis.ClipboardEvent) => {
@@ -228,6 +231,11 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const newImages: GeneratedImage[] = [];
     const isCustomPrompt = promptMode === 'custom';
     
+    // Build enriched prompt with model & background descriptors
+    const modelDesc = getModelDescriptor(selectedModel);
+    const bgDesc = getBackgroundDescriptor(selectedBackground);
+    const enrichedPrompt = [prompt.trim(), modelDesc, bgDesc].filter(Boolean).join(', ');
+    
     // Use a ref-like approach: accumulate results safely and only call onImagesChange once per completion
     const promises = angles.map(async (angle) => {
       try {
@@ -238,7 +246,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           if (match) { refMimeType = match[1]; refBase64 = match[2]; }
         }
         const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
-          body: { mode: 'generate-image', prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt, referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
+          body: { mode: 'generate-image', prompt: enrichedPrompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt, referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
         });
         if (error) { 
           console.error('Edge function error:', error); 
@@ -294,6 +302,9 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const existingImages = sanitizeGeneratedImages(images);
     const target = existingImages.find(i => i.id === imageId);
     if (!target || !prompt.trim()) return;
+    const modelDesc = getModelDescriptor(selectedModel);
+    const bgDesc = getBackgroundDescriptor(selectedBackground);
+    const enrichedPrompt = [prompt.trim(), modelDesc, bgDesc].filter(Boolean).join(', ');
     setGeneratingAngles(new Set([target.angle]));
     try {
       let refBase64: string | undefined;
@@ -303,7 +314,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         if (match) { refMimeType = match[1]; refBase64 = match[2]; }
       }
       const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
-        body: { mode: 'generate-image', prompt, angle: target.angle, customAngleText: target.angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
+        body: { mode: 'generate-image', prompt: enrichedPrompt, angle: target.angle, customAngleText: target.angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
       });
       if (error || data?.error) { toast.error('Erro ao regenerar imagem'); return; }
       const updated = existingImages.map(img => img.id === imageId ? { ...img, url: data.imageUrl } : img);
@@ -530,6 +541,14 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
             </div>
           )}
         </div>
+
+        {/* 3.5 Modelos & Fundos presets */}
+        <ModelBackgroundPresets
+          selectedModel={selectedModel}
+          selectedBackground={selectedBackground}
+          onModelChange={setSelectedModel}
+          onBackgroundChange={setSelectedBackground}
+        />
 
         {/* 4. Ângulos — Toggle pills */}
         <div>
