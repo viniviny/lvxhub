@@ -542,6 +542,14 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           )}
         </div>
 
+        {/* 3.5 Modelos & Fundos presets */}
+        <ModelBackgroundPresets
+          selectedModel={selectedModel}
+          selectedBackground={selectedBackground}
+          onModelChange={setSelectedModel}
+          onBackgroundChange={setSelectedBackground}
+        />
+
         {/* 4. Ângulos — Toggle pills */}
         <div>
           <Label className="text-xs font-medium text-muted-foreground">Ângulos</Label>
