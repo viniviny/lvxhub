@@ -306,7 +306,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     if (!target || !prompt.trim()) return;
     const modelDesc = getModelDescriptor(selectedModel, customPresets);
     const bgDesc = getBackgroundDescriptor(selectedBackground, customPresets);
-    const enrichedPrompt = [prompt.trim(), modelDesc, bgDesc].filter(Boolean).join(', ');
+    const hasPresets = !!(modelDesc || bgDesc);
+    const enrichedPrompt = [prompt.trim(), modelDesc, bgDesc].filter(Boolean).join('. ');
     setGeneratingAngles(new Set([target.angle]));
     try {
       let refBase64: string | undefined;
@@ -316,7 +317,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         if (match) { refMimeType = match[1]; refBase64 = match[2]; }
       }
       const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
-        body: { mode: 'generate-image', prompt: enrichedPrompt, angle: target.angle, customAngleText: target.angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
+        body: { mode: 'generate-image', prompt: enrichedPrompt, angle: target.angle, customAngleText: target.angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio, hasPresets },
       });
       if (error || data?.error) { toast.error('Erro ao regenerar imagem'); return; }
       const updated = existingImages.map(img => img.id === imageId ? { ...img, url: data.imageUrl } : img);
