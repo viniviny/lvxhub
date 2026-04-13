@@ -1094,7 +1094,7 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
               return (
                 <div
                   key={`thumb-${img?.id || angle}-${i}`}
-                  className={`relative shrink-0 cursor-pointer rounded-md overflow-hidden transition-all duration-150
+                  className={`group/thumb relative shrink-0 cursor-pointer rounded-md overflow-hidden transition-all duration-150
                     ${isActive && !selectMode ? 'border-2 border-primary opacity-100' : 'border-2 border-transparent opacity-60 hover:opacity-100 hover:border-primary/40'}
                     ${selectMode && img && selectedIds.has(img.id) ? 'border-2 border-primary opacity-100 ring-1 ring-primary' : ''}
                     ${dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-primary' : ''}
