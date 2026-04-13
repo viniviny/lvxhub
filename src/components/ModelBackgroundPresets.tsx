@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Plus, Upload, Image as ImageIcon } from 'lucide-react';
+import { Plus, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -61,32 +61,44 @@ interface ModelBackgroundPresetsProps {
   onBackgroundChange: (id: string | null) => void;
   customPresets?: CustomPreset[];
   onAddCustomPreset?: (preset: CustomPreset) => void;
+  onRemoveCustomPreset?: (id: string) => void;
 }
 
-function PresetCard({ preset, active, onClick }: { preset: PresetOption | CustomPreset; active: boolean; onClick: () => void }) {
+function PresetCard({ preset, active, onClick, onRemove }: { preset: PresetOption | CustomPreset; active: boolean; onClick: () => void; onRemove?: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      className={`shrink-0 flex flex-col items-center gap-1 w-[72px] rounded-lg border transition-all overflow-hidden ${
-        active
-          ? 'border-primary ring-1 ring-primary/40'
-          : 'border-border hover:border-primary/40'
-      }`}
-    >
-      <div className="w-full h-[52px] overflow-hidden bg-secondary">
-        <img
-          src={preset.image}
-          alt={preset.label}
-          className={`w-full h-full object-cover transition-opacity ${active ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`}
-          loading="lazy"
-          width={72}
-          height={52}
-        />
-      </div>
-      <span className={`text-[9px] font-medium leading-tight px-1 pb-1 text-center ${active ? 'text-[hsl(213,97%,67%)]' : 'text-muted-foreground'}`}>
-        {preset.label}
-      </span>
-    </button>
+    <div className="relative shrink-0 group">
+      {onRemove && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onRemove(); }}
+          className="absolute -top-1.5 -right-1.5 z-10 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+          title="Remover"
+        >
+          <X className="w-2.5 h-2.5" />
+        </button>
+      )}
+      <button
+        onClick={onClick}
+        className={`flex flex-col items-center gap-1 w-[72px] rounded-lg border transition-all overflow-hidden ${
+          active
+            ? 'border-primary ring-1 ring-primary/40'
+            : 'border-border hover:border-primary/40'
+        }`}
+      >
+        <div className="w-full h-[52px] overflow-hidden bg-secondary">
+          <img
+            src={preset.image}
+            alt={preset.label}
+            className={`w-full h-full object-cover transition-opacity ${active ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`}
+            loading="lazy"
+            width={72}
+            height={52}
+          />
+        </div>
+        <span className={`text-[9px] font-medium leading-tight px-1 pb-1 text-center ${active ? 'text-[hsl(213,97%,67%)]' : 'text-muted-foreground'}`}>
+          {preset.label}
+        </span>
+      </button>
+    </div>
   );
 }
 
@@ -225,7 +237,7 @@ function AddPresetButton({ type, onAdd }: { type: 'model' | 'background'; onAdd:
   );
 }
 
-export function ModelBackgroundPresets({ selectedModel, selectedBackground, onModelChange, onBackgroundChange, customPresets = [], onAddCustomPreset }: ModelBackgroundPresetsProps) {
+export function ModelBackgroundPresets({ selectedModel, selectedBackground, onModelChange, onBackgroundChange, customPresets = [], onAddCustomPreset, onRemoveCustomPreset }: ModelBackgroundPresetsProps) {
   const customModels = customPresets.filter(p => p.type === 'model');
   const customBackgrounds = customPresets.filter(p => p.type === 'background');
 
