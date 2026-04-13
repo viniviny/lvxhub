@@ -184,14 +184,31 @@ async function callGeminiText(apiKey: string, model: string, messages: { role: s
   return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
-async function callGeminiImage(apiKey: string, prompt: string, referenceImage?: string, referenceMimeType?: string) {
-  const parts: any[] = [{ text: prompt }];
+async function callGeminiImage(
+  apiKey: string,
+  prompt: string,
+  referenceImage?: string,
+  referenceMimeType?: string,
+  presetImages?: { base64: string; mimeType: string; label: string }[]
+) {
+  const parts: any[] = [];
 
-  if (referenceImage && referenceMimeType) {
-    parts.push({
-      inlineData: { mimeType: referenceMimeType, data: referenceImage },
-    });
+  // Add preset reference images first so the model sees them before the text instruction
+  if (presetImages && presetImages.length > 0) {
+    for (const pi of presetImages) {
+      parts.push({ text: `[VISUAL REFERENCE — ${pi.label}] Study this image carefully. The generated photo MUST match this reference exactly.` });
+      parts.push({ inlineData: { mimeType: pi.mimeType, data: pi.base64 } });
+    }
   }
+
+  // Add product reference image
+  if (referenceImage && referenceMimeType) {
+    parts.push({ text: '[PRODUCT REFERENCE] This is the exact product to photograph. Keep all details identical.' });
+    parts.push({ inlineData: { mimeType: referenceMimeType, data: referenceImage } });
+  }
+
+  // Add the main prompt last
+  parts.push({ text: prompt });
 
   const url = `${GEMINI_BASE}/${GEMINI_IMAGE_MODEL}:generateContent?key=${apiKey}`;
   const res = await fetch(url, {
