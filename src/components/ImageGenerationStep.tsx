@@ -891,7 +891,7 @@ interface ImageGalleryProps {
   completedAngles: Set<ImageAngle>;
   angleStartTimes: Record<string, number>;
   onImagesChange: (images: GeneratedImage[]) => void;
-  onRegenerate: (imageId: string) => void;
+  onRegenerate: (imageId: string) => Promise<void>;
   onRemove: (imageId: string) => void;
   onSetCover: (imageId: string) => void;
   onBulkRemove: (imageIds: string[]) => void;
