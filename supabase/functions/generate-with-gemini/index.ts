@@ -336,7 +336,15 @@ PRESET ADHERENCE:
 - Match the reference model's age range, build, and grooming — but with FULL creative variety in pose, expression, and interaction with the product
 - Match the reference background's style and mood — enhanced with richer depth and cinematic lighting
 - The PRODUCT is the HERO: sharpest element, accurate color/texture/construction, always the focal point
-- Final result: Zara / COS / Mr Porter catalog level — never AI-generated stock imagery.`;
+
+PREMIUM BRAND IDENTITY — THIS IS NON-NEGOTIABLE:
+- The final image must be INDISTINGUISHABLE from a real campaign photo by Zara, COS, Mr Porter, or Acne Studios
+- Think: understated luxury, effortless sophistication, editorial restraint — never overdone, never cheap-looking
+- The model must exude QUIET CONFIDENCE — the kind of person who wears expensive clothes without trying to show off
+- Body language: relaxed but intentional, never stiff or awkward. Think "caught mid-moment by a fashion photographer" — not "posing for a passport photo"
+- Color palette must feel curated and cohesive — product, skin tones, and background should harmonize like a styled editorial spread
+- Avoid anything that screams "AI generated": no plastic skin, no uncanny symmetry, no floating limbs, no impossible lighting angles
+- The image should make someone WANT to buy the product immediately — aspirational but attainable.`;
       } else {
         fullPrompt += ' Professional studio lighting, clean white background, ultra high resolution, sharp detail, premium fashion catalog quality, cinematic color grading, 8K detail.';
       }
