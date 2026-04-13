@@ -14,7 +14,7 @@ import {
   ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical,
   Clock, Check, ChevronLeft, ChevronRight, Camera, BookOpen, Search, ClipboardPaste
 } from 'lucide-react';
-import { ModelBackgroundPresets, getModelDescriptor, getBackgroundDescriptor } from '@/components/ModelBackgroundPresets';
+import { ModelBackgroundPresets, getModelDescriptor, getBackgroundDescriptor, type CustomPreset } from '@/components/ModelBackgroundPresets';
 
 export type AspectRatio = '1:1' | '4:5';
 
@@ -119,6 +119,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const refDropZoneRef = useRef<HTMLDivElement>(null);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [selectedBackground, setSelectedBackground] = useState<string | null>(null);
+  const [customPresets, setCustomPresets] = useState<CustomPreset[]>([]);
 
   // Handle paste from clipboard (Ctrl+V anywhere or on the drop zone)
   const handlePasteReference = useCallback((e: ClipboardEvent | globalThis.ClipboardEvent) => {
@@ -232,8 +233,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const isCustomPrompt = promptMode === 'custom';
     
     // Build enriched prompt with model & background descriptors
-    const modelDesc = getModelDescriptor(selectedModel);
-    const bgDesc = getBackgroundDescriptor(selectedBackground);
+    const modelDesc = getModelDescriptor(selectedModel, customPresets);
+    const bgDesc = getBackgroundDescriptor(selectedBackground, customPresets);
     const enrichedPrompt = [prompt.trim(), modelDesc, bgDesc].filter(Boolean).join(', ');
     
     // Use a ref-like approach: accumulate results safely and only call onImagesChange once per completion
@@ -302,8 +303,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const existingImages = sanitizeGeneratedImages(images);
     const target = existingImages.find(i => i.id === imageId);
     if (!target || !prompt.trim()) return;
-    const modelDesc = getModelDescriptor(selectedModel);
-    const bgDesc = getBackgroundDescriptor(selectedBackground);
+    const modelDesc = getModelDescriptor(selectedModel, customPresets);
+    const bgDesc = getBackgroundDescriptor(selectedBackground, customPresets);
     const enrichedPrompt = [prompt.trim(), modelDesc, bgDesc].filter(Boolean).join(', ');
     setGeneratingAngles(new Set([target.angle]));
     try {
@@ -548,6 +549,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           selectedBackground={selectedBackground}
           onModelChange={setSelectedModel}
           onBackgroundChange={setSelectedBackground}
+          customPresets={customPresets}
+          onAddCustomPreset={(preset) => setCustomPresets(prev => [...prev, preset])}
         />
 
         {/* 4. Ângulos — Toggle pills */}
