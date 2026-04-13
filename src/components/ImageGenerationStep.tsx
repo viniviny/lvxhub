@@ -551,6 +551,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           onBackgroundChange={setSelectedBackground}
           customPresets={customPresets}
           onAddCustomPreset={(preset) => setCustomPresets(prev => [...prev, preset])}
+          onRemoveCustomPreset={(id) => setCustomPresets(prev => prev.filter(p => p.id !== id))}
         />
 
         {/* 4. Ângulos — Toggle pills */}
