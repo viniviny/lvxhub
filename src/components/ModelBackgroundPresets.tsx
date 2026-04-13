@@ -30,20 +30,20 @@ interface PresetOption {
 }
 
 const MODEL_PRESETS: PresetOption[] = [
-  { id: 'none', label: 'Sem Modelo', descriptor: 'product only, no person, invisible mannequin', image: modelNone },
-  { id: 'exec', label: 'Executivo Maduro', descriptor: 'distinguished well-groomed man aged 45-55, beard, glasses, serious refined expression', image: modelExec },
-  { id: 'young', label: 'Profissional Jovem', descriptor: 'stylish confident man aged 28-38, clean shaven, modern look', image: modelYoung },
-  { id: 'casual', label: 'Casual Sofisticado', descriptor: 'relaxed sophisticated man aged 30-45, effortless style, natural expression', image: modelCasual },
-  { id: 'athletic', label: 'Atlético Premium', descriptor: 'athletic fit man aged 25-35, strong build, confident posture', image: modelAthletic },
+  { id: 'none', label: 'Sem Modelo', descriptor: 'product only, no person, no model, invisible mannequin, ghost mannequin technique', image: modelNone },
+  { id: 'exec', label: 'Executivo Maduro', descriptor: 'MANDATORY MODEL: distinguished well-groomed male model aged 45-55 with short salt-and-pepper beard and elegant glasses, serious refined expression, upright posture, wearing the product naturally — the model MUST match this exact description', image: modelExec },
+  { id: 'young', label: 'Profissional Jovem', descriptor: 'MANDATORY MODEL: stylish confident young male model aged 28-38, clean shaven with sharp jawline, modern contemporary look, natural confident expression — the model MUST match this exact description', image: modelYoung },
+  { id: 'casual', label: 'Casual Sofisticado', descriptor: 'MANDATORY MODEL: relaxed sophisticated male model aged 30-45, light stubble, effortless natural style, calm composed expression, relaxed body language — the model MUST match this exact description', image: modelCasual },
+  { id: 'athletic', label: 'Atlético Premium', descriptor: 'MANDATORY MODEL: athletic fit male model aged 25-35, strong muscular build, broad shoulders, confident powerful posture, defined features — the model MUST match this exact description', image: modelAthletic },
 ];
 
 const BACKGROUND_PRESETS: PresetOption[] = [
-  { id: 'studio', label: 'Estúdio Limpo', descriptor: 'pure white studio background, seamless, soft shadows', image: bgStudio },
-  { id: 'cream', label: 'Neutro Cremoso', descriptor: 'warm cream or soft ecru background, minimal, elegant', image: bgCream },
-  { id: 'interior', label: 'Interior Premium', descriptor: 'sophisticated interior, dark wood panelling, warm ambient light, fireplace or library', image: bgInterior },
-  { id: 'urban', label: 'Urbano Europeu', descriptor: 'European urban setting, stone architecture, wide empty avenue, golden hour', image: bgUrban },
-  { id: 'nature', label: 'Natureza Minimalista', descriptor: 'minimal outdoor nature setting, soft natural light, neutral tones', image: bgNature },
-  { id: 'dark', label: 'Dark & Dramatic', descriptor: 'dark dramatic studio, deep shadows, single directional light, Rembrandt lighting', image: bgDark },
+  { id: 'studio', label: 'Estúdio Limpo', descriptor: 'MANDATORY BACKGROUND: pure white seamless studio background, soft even lighting, subtle floor shadow only, no props, no environment', image: bgStudio },
+  { id: 'cream', label: 'Neutro Cremoso', descriptor: 'MANDATORY BACKGROUND: warm cream or soft ecru colored background, minimal elegant feel, soft diffused lighting, no props', image: bgCream },
+  { id: 'interior', label: 'Interior Premium', descriptor: 'MANDATORY BACKGROUND: sophisticated luxury interior setting with dark wood panelling, warm ambient lighting, leather furniture, bookshelf or fireplace visible, rich warm tones', image: bgInterior },
+  { id: 'urban', label: 'Urbano Europeu', descriptor: 'MANDATORY BACKGROUND: European urban street setting, classic stone architecture, wide empty cobblestone avenue, golden hour warm light, cinematic atmosphere', image: bgUrban },
+  { id: 'nature', label: 'Natureza Minimalista', descriptor: 'MANDATORY BACKGROUND: minimal outdoor nature setting, soft diffused natural light, neutral earthy tones, blurred greenery, serene and clean', image: bgNature },
+  { id: 'dark', label: 'Dark & Dramatic', descriptor: 'MANDATORY BACKGROUND: dark dramatic studio, deep rich shadows, single directional key light, Rembrandt lighting style, moody atmosphere, dark grey or black background', image: bgDark },
 ];
 
 export interface CustomPreset {
