@@ -121,6 +121,17 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [selectedBackground, setSelectedBackground] = useState<string | null>(null);
   const { presets: customPresets, addPreset: addCustomPreset, removePreset: removeCustomPreset } = useCustomPresets();
+  const [hiddenBuiltinIds, setHiddenBuiltinIds] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem('hidden-builtin-presets') || '[]'); } catch { return []; }
+  });
+  const hideBuiltinPreset = useCallback((id: string) => {
+    setHiddenBuiltinIds(prev => { const next = [...prev, id]; localStorage.setItem('hidden-builtin-presets', JSON.stringify(next)); return next; });
+    toast.success('Preset ocultado');
+  }, []);
+  const restoreBuiltinPresets = useCallback(() => {
+    setHiddenBuiltinIds([]); localStorage.removeItem('hidden-builtin-presets');
+    toast.success('Presets restaurados');
+  }, []);
 
   // Handle paste from clipboard (Ctrl+V anywhere or on the drop zone)
   const handlePasteReference = useCallback((e: ClipboardEvent | globalThis.ClipboardEvent) => {
