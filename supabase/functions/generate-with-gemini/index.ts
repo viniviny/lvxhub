@@ -55,18 +55,18 @@ const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 // ─── Prompt templates ───
 
 const ANGLE_SUFFIXES: Record<string, string> = {
-  frente: 'Front view, centered, facing camera.',
-  costas: 'Back view, showing the rear of the product.',
-  detalhe: 'Close-up detail shot, showing texture and craftsmanship.',
-  lateral: 'Side profile view.',
-  flat_lay: 'Flat lay, top-down view on a clean surface.',
-  textura: 'Extreme close-up of the fabric/material texture.',
-  look_completo: 'Full outfit/look, styled on a model or mannequin.',
+  frente: 'MANDATORY ANGLE: Front view — model facing camera directly, centered in frame, full torso or full body visible.',
+  costas: 'MANDATORY ANGLE: Back view — model turned completely away from camera, showing the entire rear of the garment clearly.',
+  detalhe: 'MANDATORY ANGLE: Extreme close-up detail shot — macro focus on fabric texture, stitching, buttons, zippers or craftsmanship details. Fill the frame with the detail.',
+  lateral: 'MANDATORY ANGLE: Side profile view — model turned 90 degrees, showing the garment silhouette, side seams, and fit from the side.',
+  flat_lay: 'MANDATORY ANGLE: Flat lay — product laid flat on a clean surface, shot from directly above (top-down bird\'s eye view), neatly arranged.',
+  textura: 'MANDATORY ANGLE: Extreme macro close-up of fabric/material texture only — fill entire frame with the weave, knit pattern, or surface texture.',
+  look_completo: 'MANDATORY ANGLE: Full look — complete head-to-toe outfit on the model, full body framing, showing the entire styled look.',
 };
 
 const RATIO_PROMPTS: Record<string, string> = {
-  '1:1': 'Square format (1:1 aspect ratio).',
-  '4:5': 'Portrait format (4:5 aspect ratio).',
+  '1:1': 'MANDATORY FORMAT: Square composition (1:1 aspect ratio). Frame the subject accordingly.',
+  '4:5': 'MANDATORY FORMAT: Portrait composition (4:5 aspect ratio, vertical orientation). Frame the subject accordingly.',
 };
 
 const SPECS_SYSTEM = `You are an expert e-commerce product data generator.
