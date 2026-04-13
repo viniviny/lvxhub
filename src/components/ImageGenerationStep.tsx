@@ -90,6 +90,30 @@ interface ImageGenerationStepProps {
 
 type PromptMode = 'simple' | 'custom';
 
+async function imageUrlToBase64(url: string): Promise<{ base64: string; mimeType: string } | null> {
+  try {
+    if (url.startsWith('data:')) {
+      const match = url.match(/^data:([^;]+);base64,(.+)$/);
+      if (match) return { mimeType: match[1], base64: match[2] };
+      return null;
+    }
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        const match = result.match(/^data:([^;]+);base64,(.+)$/);
+        if (match) resolve({ mimeType: match[1], base64: match[2] });
+        else resolve(null);
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch { return null; }
+}
+
 export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange }: ImageGenerationStepProps) {
   const navigate = useNavigate();
   const { prompts: allPrompts, recentPrompts: allRecentPrompts, incrementUsage } = useUserPrompts();
