@@ -231,6 +231,11 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const newImages: GeneratedImage[] = [];
     const isCustomPrompt = promptMode === 'custom';
     
+    // Build enriched prompt with model & background descriptors
+    const modelDesc = getModelDescriptor(selectedModel);
+    const bgDesc = getBackgroundDescriptor(selectedBackground);
+    const enrichedPrompt = [prompt.trim(), modelDesc, bgDesc].filter(Boolean).join(', ');
+    
     // Use a ref-like approach: accumulate results safely and only call onImagesChange once per completion
     const promises = angles.map(async (angle) => {
       try {
@@ -241,7 +246,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           if (match) { refMimeType = match[1]; refBase64 = match[2]; }
         }
         const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
-          body: { mode: 'generate-image', prompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt, referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
+          body: { mode: 'generate-image', prompt: enrichedPrompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt, referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio },
         });
         if (error) { 
           console.error('Edge function error:', error); 
