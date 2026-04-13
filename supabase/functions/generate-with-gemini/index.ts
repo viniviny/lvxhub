@@ -316,18 +316,27 @@ VISUAL QUALITY REQUIREMENTS:
 - Magazine-cover level retouching: flawless but natural
 
 POSES & INTERACTION WITH THE PRODUCT — TOTAL CREATIVE FREEDOM:
-You have COMPLETE creative liberty to choose poses that STRATEGICALLY HIGHLIGHT THE PRODUCT. The model must INTERACT with the garment in a natural, intentional way that draws the viewer's eye to the product's best features. Choose freely from techniques like:
-- Adjusting a collar or lapel to show construction quality
-- Buttoning or unbuttoning a jacket to reveal the interior lining
-- Rolling up sleeves to show fabric weight and texture
-- Hands in pockets to demonstrate the fit and drape
-- Walking mid-stride to show natural movement and silhouette
-- Turning slightly to reveal the side cut and tailoring
-- Gesturing naturally to show sleeve length and shoulder fit
-- Pulling the garment slightly to emphasize the fabric's stretch or structure
-- Leaning casually against a surface to show the outfit in a lifestyle context
-- Looking over shoulder to show the back details
-- Arms crossed to show chest fit and shoulder structure
+You have COMPLETE creative liberty to choose poses that STRATEGICALLY HIGHLIGHT THE PRODUCT. The model must INTERACT with the garment in a natural, intentional way.
+
+VARIETY SEED #${Math.floor(Math.random() * 9999)} — USE THIS TO ENSURE UNIQUENESS:
+For THIS specific generation, you MUST pick a DIFFERENT pose from the list below. Use the random seed above to select — do NOT default to the same safe pose every time.
+
+POSE OPTIONS (pick ONE that you haven't used recently — be unpredictable):
+1. Adjusting collar/lapel to show construction quality
+2. Buttoning or unbuttoning to reveal interior lining
+3. Rolling up sleeves to show fabric weight
+4. Hands in pockets, relaxed drape
+5. Walking mid-stride, natural movement
+6. Turning slightly to reveal side cut
+7. Gesturing naturally showing sleeve/shoulder fit
+8. Pulling garment to show stretch/structure
+9. Leaning casually against a surface
+10. Looking over shoulder, back details visible
+11. Arms crossed, chest fit emphasis
+12. One hand on hip, confident stance
+13. Adjusting watch/cuff, lifestyle detail
+14. Mid-laugh candid moment
+15. Stepping forward dynamically
 
 NEVER use a stiff, lifeless, arms-at-sides mannequin pose. Every pose must feel PURPOSEFUL — like the photographer specifically directed it to showcase a feature of the product.
 
