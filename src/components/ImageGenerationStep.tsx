@@ -15,6 +15,7 @@ import {
   Clock, Check, ChevronLeft, ChevronRight, Camera, BookOpen, Search, ClipboardPaste
 } from 'lucide-react';
 import { ModelBackgroundPresets, getModelDescriptor, getBackgroundDescriptor, type CustomPreset } from '@/components/ModelBackgroundPresets';
+import { useCustomPresets } from '@/hooks/useCustomPresets';
 
 export type AspectRatio = '1:1' | '4:5';
 
@@ -119,7 +120,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const refDropZoneRef = useRef<HTMLDivElement>(null);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [selectedBackground, setSelectedBackground] = useState<string | null>(null);
-  const [customPresets, setCustomPresets] = useState<CustomPreset[]>([]);
+  const { presets: customPresets, addPreset: addCustomPreset, removePreset: removeCustomPreset } = useCustomPresets();
 
   // Handle paste from clipboard (Ctrl+V anywhere or on the drop zone)
   const handlePasteReference = useCallback((e: ClipboardEvent | globalThis.ClipboardEvent) => {
@@ -552,8 +553,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           onModelChange={setSelectedModel}
           onBackgroundChange={setSelectedBackground}
           customPresets={customPresets}
-          onAddCustomPreset={(preset) => setCustomPresets(prev => [...prev, preset])}
-          onRemoveCustomPreset={(id) => setCustomPresets(prev => prev.filter(p => p.id !== id))}
+          onAddCustomPreset={addCustomPreset}
+          onRemoveCustomPreset={removeCustomPreset}
         />
 
         {/* 4. Ângulos — Toggle pills */}
