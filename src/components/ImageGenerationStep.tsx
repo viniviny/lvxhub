@@ -305,7 +305,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const modelDesc = getModelDescriptor(selectedModel, customPresets);
     const bgDesc = getBackgroundDescriptor(selectedBackground, customPresets);
     const hasPresets = !!(modelDesc || bgDesc);
-    const enrichedPrompt = [prompt.trim(), modelDesc, bgDesc].filter(Boolean).join('. ');
+    const enrichedPrompt = buildPremiumPrompt(prompt, modelDesc, bgDesc);
     
     // Convert preset images to base64 for visual reference
     const modelImgUrl = getModelImage(selectedModel, customPresets);
@@ -398,7 +398,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const modelDesc = getModelDescriptor(selectedModel, customPresets);
     const bgDesc = getBackgroundDescriptor(selectedBackground, customPresets);
     const hasPresets = !!(modelDesc || bgDesc);
-    const enrichedPrompt = [prompt.trim(), modelDesc, bgDesc].filter(Boolean).join('. ');
+    const enrichedPrompt = buildPremiumPrompt(prompt, modelDesc, bgDesc);
     
     const modelImgUrl = getModelImage(selectedModel, customPresets);
     const bgImgUrl = getBackgroundImage(selectedBackground, customPresets);
