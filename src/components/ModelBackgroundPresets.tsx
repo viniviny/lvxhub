@@ -240,9 +240,12 @@ function AddPresetButton({ type, onAdd }: { type: 'model' | 'background'; onAdd:
   );
 }
 
-export function ModelBackgroundPresets({ selectedModel, selectedBackground, onModelChange, onBackgroundChange, customPresets = [], onAddCustomPreset, onRemoveCustomPreset }: ModelBackgroundPresetsProps) {
+export function ModelBackgroundPresets({ selectedModel, selectedBackground, onModelChange, onBackgroundChange, customPresets = [], onAddCustomPreset, onRemoveCustomPreset, hiddenBuiltinIds = [], onHideBuiltinPreset, onRestoreBuiltinPresets }: ModelBackgroundPresetsProps) {
   const customModels = customPresets.filter(p => p.type === 'model');
   const customBackgrounds = customPresets.filter(p => p.type === 'background');
+  const visibleModels = MODEL_PRESETS.filter(p => !hiddenBuiltinIds.includes(p.id));
+  const visibleBackgrounds = BACKGROUND_PRESETS.filter(p => !hiddenBuiltinIds.includes(p.id));
+  const hasHidden = hiddenBuiltinIds.length > 0;
 
   return (
     <div className="space-y-2">
@@ -250,8 +253,8 @@ export function ModelBackgroundPresets({ selectedModel, selectedBackground, onMo
       <div>
         <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Modelo</span>
         <div className="flex gap-1.5 mt-1 overflow-x-auto pb-1 scrollbar-thin">
-          {MODEL_PRESETS.map(p => (
-            <PresetCard key={p.id} preset={p} active={selectedModel === p.id} onClick={() => onModelChange(selectedModel === p.id ? null : p.id)} />
+          {visibleModels.map(p => (
+            <PresetCard key={p.id} preset={p} active={selectedModel === p.id} onClick={() => onModelChange(selectedModel === p.id ? null : p.id)} onRemove={onHideBuiltinPreset ? () => { if (selectedModel === p.id) onModelChange(null); onHideBuiltinPreset(p.id); } : undefined} />
           ))}
           {customModels.map(p => (
             <PresetCard key={p.id} preset={p} active={selectedModel === p.id} onClick={() => onModelChange(selectedModel === p.id ? null : p.id)} onRemove={onRemoveCustomPreset ? () => { if (selectedModel === p.id) onModelChange(null); onRemoveCustomPreset(p.id); } : undefined} />
@@ -264,8 +267,8 @@ export function ModelBackgroundPresets({ selectedModel, selectedBackground, onMo
       <div>
         <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Fundo</span>
         <div className="flex gap-1.5 mt-1 overflow-x-auto pb-1 scrollbar-thin">
-          {BACKGROUND_PRESETS.map(p => (
-            <PresetCard key={p.id} preset={p} active={selectedBackground === p.id} onClick={() => onBackgroundChange(selectedBackground === p.id ? null : p.id)} />
+          {visibleBackgrounds.map(p => (
+            <PresetCard key={p.id} preset={p} active={selectedBackground === p.id} onClick={() => onBackgroundChange(selectedBackground === p.id ? null : p.id)} onRemove={onHideBuiltinPreset ? () => { if (selectedBackground === p.id) onBackgroundChange(null); onHideBuiltinPreset(p.id); } : undefined} />
           ))}
           {customBackgrounds.map(p => (
             <PresetCard key={p.id} preset={p} active={selectedBackground === p.id} onClick={() => onBackgroundChange(selectedBackground === p.id ? null : p.id)} onRemove={onRemoveCustomPreset ? () => { if (selectedBackground === p.id) onBackgroundChange(null); onRemoveCustomPreset(p.id); } : undefined} />
@@ -273,6 +276,16 @@ export function ModelBackgroundPresets({ selectedModel, selectedBackground, onMo
           {onAddCustomPreset && <AddPresetButton type="background" onAdd={onAddCustomPreset} />}
         </div>
       </div>
+
+      {/* Restore hidden presets */}
+      {hasHidden && onRestoreBuiltinPresets && (
+        <button
+          onClick={onRestoreBuiltinPresets}
+          className="text-[10px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
+        >
+          Restaurar {hiddenBuiltinIds.length} preset{hiddenBuiltinIds.length > 1 ? 's' : ''} oculto{hiddenBuiltinIds.length > 1 ? 's' : ''}
+        </button>
+      )}
     </div>
   );
 }
