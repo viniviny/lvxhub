@@ -392,7 +392,16 @@ serve(async (req) => {
         throw { status: 400, message: `Failed to fetch image: ${imgResponse.status}` };
       }
       const imgBuffer = await imgResponse.arrayBuffer();
-      const imgBase64 = btoa(String.fromCharCode(...new Uint8Array(imgBuffer)));
+      const imgBytes = new Uint8Array(imgBuffer);
+      let imgBinary = '';
+      const CHUNK = 8192;
+      for (let i = 0; i < imgBytes.length; i += CHUNK) {
+        const slice = imgBytes.subarray(i, Math.min(i + CHUNK, imgBytes.length));
+        for (let j = 0; j < slice.length; j++) {
+          imgBinary += String.fromCharCode(slice[j]);
+        }
+      }
+      const imgBase64 = btoa(imgBinary);
       const imgMimeType = imgResponse.headers.get('content-type') || 'image/jpeg';
 
       const content = await callGeminiText(GEMINI_API_KEY, GEMINI_TEXT_MODEL, [
