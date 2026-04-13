@@ -381,12 +381,21 @@ serve(async (req) => {
         });
       }
 
+      // Fetch image and convert to base64 for Gemini native API
+      const imgResponse = await fetch(imageUrl);
+      if (!imgResponse.ok) {
+        throw { status: 400, message: `Failed to fetch image: ${imgResponse.status}` };
+      }
+      const imgBuffer = await imgResponse.arrayBuffer();
+      const imgBase64 = btoa(String.fromCharCode(...new Uint8Array(imgBuffer)));
+      const imgMimeType = imgResponse.headers.get('content-type') || 'image/jpeg';
+
       const content = await callGeminiText(GEMINI_API_KEY, GEMINI_TEXT_MODEL, [
         {
           role: 'user',
           content: [
             { text: ANALYZE_SYSTEM },
-            { imageUrl: { url: imageUrl } },
+            { inlineData: { mimeType: imgMimeType, data: imgBase64 } },
           ],
         },
       ], true);
