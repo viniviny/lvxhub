@@ -114,6 +114,39 @@ async function imageUrlToBase64(url: string): Promise<{ base64: string; mimeType
   } catch { return null; }
 }
 
+/**
+ * Builds the enriched prompt with premium photography directives.
+ * Single source of truth for all creative/quality instructions on the client side.
+ * The edge function adds further reinforcement (variety seed, non-negotiable foundations).
+ */
+function buildPremiumPrompt(
+  userPrompt: string,
+  modelDesc: string,
+  bgDesc: string,
+): string {
+  const base = userPrompt.trim();
+  const parts = [base, modelDesc, bgDesc].filter(Boolean);
+
+  if (!modelDesc && !bgDesc) {
+    return parts.join('. ');
+  }
+
+  const premiumDirectives = `
+
+PHOTOGRAPHY DIRECTION:
+Create this as a premium fashion editorial photograph — the kind you'd see in a Zara, COS, Mr Porter, or Acne Studios campaign.
+
+The model must INTERACT with the product naturally and strategically to highlight its best features. Choose a pose that feels purposeful and DIFFERENT each time: adjusting a collar, hands in pockets showing drape, walking mid-stride, leaning casually, turning to show the cut, rolling sleeves, mid-laugh candid moment — whatever best showcases THIS specific product. NEVER a stiff arms-at-sides mannequin pose.
+
+The model's face must be photorealistic with natural skin texture, visible pores, and realistic eye reflections. Expression should match the product's mood — relaxed for casual, sharp for formal, edgy for streetwear. Each image must feel like a unique candid editorial moment captured by a top fashion photographer.
+
+The product is the absolute HERO — sharpest element in frame, accurate color and texture, every construction detail visible. The viewer must want to buy it immediately.
+
+Quiet confidence, understated luxury, effortless sophistication. Never overdone, never cheap-looking.`;
+
+  return parts.join('. ') + premiumDirectives;
+}
+
 export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange }: ImageGenerationStepProps) {
   const navigate = useNavigate();
   const { prompts: allPrompts, recentPrompts: allRecentPrompts, incrementUsage } = useUserPrompts();
