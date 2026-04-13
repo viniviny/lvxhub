@@ -60,7 +60,7 @@ interface ModelBackgroundPresetsProps {
   onModelChange: (id: string | null) => void;
   onBackgroundChange: (id: string | null) => void;
   customPresets?: CustomPreset[];
-  onAddCustomPreset?: (preset: CustomPreset) => void;
+  onAddCustomPreset?: (preset: CustomPreset) => void | Promise<void>;
   onRemoveCustomPreset?: (id: string) => void;
 }
 
