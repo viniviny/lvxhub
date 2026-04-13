@@ -249,7 +249,7 @@ serve(async (req) => {
 
     // ═══ MODE: generate-image ═══
     if (mode === 'generate-image') {
-      const { prompt, angle, customAngleText, isCustomPrompt, referenceImage, referenceMimeType, aspectRatio } = body;
+      const { prompt, angle, customAngleText, isCustomPrompt, referenceImage, referenceMimeType, aspectRatio, hasPresets } = body;
       if (!prompt) {
         return new Response(JSON.stringify({ error: 'prompt is required' }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -270,7 +270,12 @@ serve(async (req) => {
         fullPrompt += ` ${RATIO_PROMPTS[aspectRatio]}`;
       }
 
-      fullPrompt += ' Studio lighting, clean background, high resolution, commercial quality.';
+      // When presets are selected, trust their descriptors instead of adding generic defaults
+      if (hasPresets) {
+        fullPrompt += ' High resolution, commercial quality. Follow ALL MANDATORY MODEL and MANDATORY BACKGROUND instructions exactly as specified — do not deviate from the described model appearance or background setting.';
+      } else {
+        fullPrompt += ' Studio lighting, clean background, high resolution, commercial quality.';
+      }
 
       const imageResult = await callGeminiImage(GEMINI_API_KEY, fullPrompt, referenceImage, referenceMimeType);
 
