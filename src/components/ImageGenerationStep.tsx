@@ -289,6 +289,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
 
   const generateImages = useCallback(async () => {
     if (!prompt.trim() || selectedAngles.size === 0) return;
+    lastUsedPromptRef.current = prompt.trim();
     const angles = Array.from(selectedAngles);
     const existingImages = sanitizeGeneratedImages(images);
     const now = Date.now();
