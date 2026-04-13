@@ -300,7 +300,7 @@ serve(async (req) => {
       if (hasPresets) {
         fullPrompt += `
 
-You are an elite fashion photographer creating a premium editorial e-commerce image.
+You are an elite fashion photographer with TOTAL CREATIVE FREEDOM to create a premium editorial e-commerce image.
 
 VISUAL QUALITY REQUIREMENTS:
 - Ultra high resolution, 8K detail, razor sharp focus throughout
@@ -310,20 +310,33 @@ VISUAL QUALITY REQUIREMENTS:
 - Subtle depth of field to separate subject from background
 - Magazine-cover level retouching: flawless but natural
 
-MODEL FACE & EXPRESSION — CREATIVE FREEDOM:
-- The model's FACE must be rendered with photorealistic quality: visible pores, natural skin texture, realistic eye reflections, subtle micro-expressions
-- DO NOT repeat the same stiff pose or blank expression every time. Be CREATIVE with expressions and body language:
-  * Vary between: confident gaze, relaxed smile, looking away candidly, mid-stride motion, adjusting clothing naturally, hands in pockets, looking over shoulder, thoughtful downward glance
-  * Match the expression to the MOOD of the scene — a casual outfit deserves a relaxed vibe, a formal blazer calls for a sharper, more composed look
-- The model should feel ALIVE and NATURAL — like a real person captured in a candid editorial moment, not a mannequin with a pasted face
-- Each generation should feel unique — different micro-pose, different expression, different energy
+POSES & INTERACTION WITH THE PRODUCT — TOTAL CREATIVE FREEDOM:
+You have COMPLETE creative liberty to choose poses that STRATEGICALLY HIGHLIGHT THE PRODUCT. The model must INTERACT with the garment in a natural, intentional way that draws the viewer's eye to the product's best features. Choose freely from techniques like:
+- Adjusting a collar or lapel to show construction quality
+- Buttoning or unbuttoning a jacket to reveal the interior lining
+- Rolling up sleeves to show fabric weight and texture
+- Hands in pockets to demonstrate the fit and drape
+- Walking mid-stride to show natural movement and silhouette
+- Turning slightly to reveal the side cut and tailoring
+- Gesturing naturally to show sleeve length and shoulder fit
+- Pulling the garment slightly to emphasize the fabric's stretch or structure
+- Leaning casually against a surface to show the outfit in a lifestyle context
+- Looking over shoulder to show the back details
+- Arms crossed to show chest fit and shoulder structure
 
-PRESET ADHERENCE RULES:
-- The VISUAL REFERENCE images show the model type and background style. Use them as your creative starting point, then ELEVATE the quality far beyond the reference.
-- MANDATORY MODEL: Match the reference model's age range, build, and grooming style — but bring CREATIVE VARIETY to pose, expression, and energy. The same person type, but a fresh editorial moment each time.
-- MANDATORY BACKGROUND: Match the reference background's style and mood — but enhance it with richer atmospheric depth, better lighting transitions, and more photographic realism.
-- The product is the HERO: it must be the sharpest, most detailed element in the frame with accurate color, texture, and construction visible.
-- Final result must look like it belongs in a Zara, COS, or Mr Porter product catalog — never like AI-generated stock imagery.`;
+NEVER use a stiff, lifeless, arms-at-sides mannequin pose. Every pose must feel PURPOSEFUL — like the photographer specifically directed it to showcase a feature of the product.
+
+MODEL FACE & EXPRESSION — NATURAL & VARIED:
+- Photorealistic face quality: visible pores, natural skin texture, realistic eye reflections
+- Expression must match the MOOD: casual outfit → relaxed confident vibe; formal blazer → sharp composed presence; streetwear → edgy cool energy
+- Each generation must feel like a DIFFERENT MOMENT — unique micro-pose, unique expression, unique energy
+- The model should feel ALIVE — captured in a candid editorial moment, never a frozen stock photo
+
+PRESET ADHERENCE:
+- Match the reference model's age range, build, and grooming — but with FULL creative variety in pose, expression, and interaction with the product
+- Match the reference background's style and mood — enhanced with richer depth and cinematic lighting
+- The PRODUCT is the HERO: sharpest element, accurate color/texture/construction, always the focal point
+- Final result: Zara / COS / Mr Porter catalog level — never AI-generated stock imagery.`;
       } else {
         fullPrompt += ' Professional studio lighting, clean white background, ultra high resolution, sharp detail, premium fashion catalog quality, cinematic color grading, 8K detail.';
       }
