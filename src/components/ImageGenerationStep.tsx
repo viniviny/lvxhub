@@ -274,6 +274,14 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const hasPresets = !!(modelDesc || bgDesc);
     const enrichedPrompt = [prompt.trim(), modelDesc, bgDesc].filter(Boolean).join('. ');
     
+    // Convert preset images to base64 for visual reference
+    const modelImgUrl = getModelImage(selectedModel, customPresets);
+    const bgImgUrl = getBackgroundImage(selectedBackground, customPresets);
+    const [modelImageData, bgImageData] = await Promise.all([
+      modelImgUrl ? imageUrlToBase64(modelImgUrl) : Promise.resolve(null),
+      bgImgUrl ? imageUrlToBase64(bgImgUrl) : Promise.resolve(null),
+    ]);
+    
     // Use a ref-like approach: accumulate results safely and only call onImagesChange once per completion
     const promises = angles.map(async (angle) => {
       try {
@@ -284,7 +292,21 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           if (match) { refMimeType = match[1]; refBase64 = match[2]; }
         }
         const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
-          body: { mode: 'generate-image', prompt: enrichedPrompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt, referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio, hasPresets },
+          body: {
+            mode: 'generate-image',
+            prompt: enrichedPrompt,
+            angle,
+            customAngleText: angle === 'personalizado' ? customAngleText : undefined,
+            isCustomPrompt,
+            referenceImage: refBase64,
+            referenceMimeType: refMimeType,
+            aspectRatio: activeRatio,
+            hasPresets,
+            modelPresetImage: modelImageData?.base64,
+            modelPresetMimeType: modelImageData?.mimeType,
+            bgPresetImage: bgImageData?.base64,
+            bgPresetMimeType: bgImageData?.mimeType,
+          },
         });
         if (error) { 
           console.error('Edge function error:', error); 
