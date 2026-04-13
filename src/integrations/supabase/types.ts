@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_presets: {
+        Row: {
+          created_at: string
+          descriptor: string
+          id: string
+          image_url: string
+          label: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          descriptor: string
+          id?: string
+          image_url: string
+          label: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          descriptor?: string
+          id?: string
+          image_url?: string
+          label?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       image_library: {
         Row: {
           angle: string | null
