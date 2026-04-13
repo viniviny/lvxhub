@@ -73,33 +73,35 @@ function PresetCard({ preset, active, onClick, onRemove }: { preset: PresetOptio
       {onRemove && (
         <button
           onClick={(e) => { e.stopPropagation(); onRemove(); }}
-          className="absolute -top-1.5 -right-1.5 z-10 w-4 h-4 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+          className="absolute -top-1 -right-1 z-10 w-5 h-5 rounded-full bg-background/90 backdrop-blur-sm border border-border text-muted-foreground hover:text-destructive hover:border-destructive/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md"
           title="Remover"
         >
-          <X className="w-2.5 h-2.5" />
+          <X className="w-3 h-3" />
         </button>
       )}
       <button
         onClick={onClick}
-        className={`flex flex-col items-center gap-1 w-[72px] rounded-lg border transition-all overflow-hidden ${
+        className={`flex flex-col items-center w-[80px] rounded-xl border-2 transition-all duration-200 overflow-hidden ${
           active
-            ? 'border-primary ring-1 ring-primary/40'
-            : 'border-border hover:border-primary/40'
+            ? 'border-primary shadow-[0_0_12px_hsl(var(--primary)/0.3)] scale-[1.02]'
+            : 'border-transparent hover:border-border hover:shadow-md bg-card/50'
         }`}
       >
-        <div className="w-full h-[52px] overflow-hidden bg-secondary">
+        <div className={`w-full h-[60px] overflow-hidden rounded-t-[10px] ${active ? '' : 'grayscale-[30%] group-hover:grayscale-0'} transition-all duration-200`}>
           <img
             src={preset.image}
             alt={preset.label}
-            className={`w-full h-full object-cover transition-opacity ${active ? 'opacity-100' : 'opacity-70 hover:opacity-100'}`}
+            className={`w-full h-full object-cover transition-all duration-200 ${active ? 'scale-105' : 'group-hover:scale-105'}`}
             loading="lazy"
-            width={72}
-            height={52}
+            width={80}
+            height={60}
           />
         </div>
-        <span className={`text-[9px] font-medium leading-tight px-1 pb-1 text-center ${active ? 'text-[hsl(213,97%,67%)]' : 'text-muted-foreground'}`}>
-          {preset.label}
-        </span>
+        <div className={`w-full px-1 py-1.5 text-center transition-colors duration-200 ${active ? 'bg-primary/10' : 'bg-card/80'}`}>
+          <span className={`text-[9px] font-semibold leading-tight tracking-wide ${active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`}>
+            {preset.label}
+          </span>
+        </div>
       </button>
     </div>
   );
@@ -151,10 +153,10 @@ function AddPresetButton({ type, onAdd }: { type: 'model' | 'background'; onAdd:
     <>
       <button
         onClick={() => inputRef.current?.click()}
-        className="shrink-0 flex flex-col items-center justify-center gap-1 w-[72px] h-[72px] rounded-lg border border-dashed border-border hover:border-primary/40 text-muted-foreground hover:text-foreground transition-all"
+        className="shrink-0 flex flex-col items-center justify-center gap-1.5 w-[80px] h-[82px] rounded-xl border-2 border-dashed border-border/60 hover:border-primary/50 text-muted-foreground hover:text-primary transition-all duration-200 hover:bg-primary/5 hover:shadow-sm"
       >
         <Plus className="w-4 h-4" />
-        <span className="text-[8px] font-medium">Adicionar</span>
+        <span className="text-[8px] font-semibold tracking-wide">Adicionar</span>
       </button>
       <input
         ref={inputRef}
@@ -248,11 +250,11 @@ export function ModelBackgroundPresets({ selectedModel, selectedBackground, onMo
   const hasHidden = hiddenBuiltinIds.length > 0;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {/* MODEL SECTION */}
       <div>
-        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Modelo</span>
-        <div className="flex gap-1.5 mt-1 overflow-x-auto pb-1 scrollbar-thin">
+        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">Modelo</span>
+        <div className="flex gap-2 mt-1.5 overflow-x-auto pb-1.5 scrollbar-thin">
           {visibleModels.map(p => (
             <PresetCard key={p.id} preset={p} active={selectedModel === p.id} onClick={() => onModelChange(selectedModel === p.id ? null : p.id)} onRemove={onHideBuiltinPreset ? () => { if (selectedModel === p.id) onModelChange(null); onHideBuiltinPreset(p.id); } : undefined} />
           ))}
@@ -265,8 +267,8 @@ export function ModelBackgroundPresets({ selectedModel, selectedBackground, onMo
 
       {/* BACKGROUND SECTION */}
       <div>
-        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Fundo</span>
-        <div className="flex gap-1.5 mt-1 overflow-x-auto pb-1 scrollbar-thin">
+        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">Fundo</span>
+        <div className="flex gap-2 mt-1.5 overflow-x-auto pb-1.5 scrollbar-thin">
           {visibleBackgrounds.map(p => (
             <PresetCard key={p.id} preset={p} active={selectedBackground === p.id} onClick={() => onBackgroundChange(selectedBackground === p.id ? null : p.id)} onRemove={onHideBuiltinPreset ? () => { if (selectedBackground === p.id) onBackgroundChange(null); onHideBuiltinPreset(p.id); } : undefined} />
           ))}
