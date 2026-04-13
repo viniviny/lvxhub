@@ -266,7 +266,7 @@ serve(async (req) => {
 
     // ═══ MODE: generate-image ═══
     if (mode === 'generate-image') {
-      const { prompt, angle, customAngleText, isCustomPrompt, referenceImage, referenceMimeType, aspectRatio, hasPresets } = body;
+      const { prompt, angle, customAngleText, isCustomPrompt, referenceImage, referenceMimeType, aspectRatio, hasPresets, modelPresetImage, modelPresetMimeType, bgPresetImage, bgPresetMimeType } = body;
       if (!prompt) {
         return new Response(JSON.stringify({ error: 'prompt is required' }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -287,20 +287,30 @@ serve(async (req) => {
         fullPrompt += ` ${RATIO_PROMPTS[aspectRatio]}`;
       }
 
+      // Build preset reference images array
+      const presetImages: { base64: string; mimeType: string; label: string }[] = [];
+      if (modelPresetImage && modelPresetMimeType) {
+        presetImages.push({ base64: modelPresetImage, mimeType: modelPresetMimeType, label: 'MODEL TYPE' });
+      }
+      if (bgPresetImage && bgPresetMimeType) {
+        presetImages.push({ base64: bgPresetImage, mimeType: bgPresetMimeType, label: 'BACKGROUND STYLE' });
+      }
+
       // When presets are selected, enforce strict adherence
       if (hasPresets) {
         fullPrompt += ` High resolution, commercial quality.
 
 CRITICAL INSTRUCTIONS — YOU MUST FOLLOW THESE EXACTLY:
-- Any section marked "MANDATORY MODEL:" describes the EXACT person who must appear in the photo. You MUST generate a model matching EVERY detail: age range, facial hair, build, expression, and posture. Do NOT substitute a different model type.
-- Any section marked "MANDATORY BACKGROUND:" describes the EXACT setting/environment. You MUST generate this exact background. Do NOT use a white studio if a different background is specified, and vice versa.
+- The VISUAL REFERENCE images above show the EXACT model type and/or background style you must replicate.
+- Any section marked "MANDATORY MODEL:" describes the person. The MODEL TYPE reference image shows exactly what this person should look like. You MUST generate a model matching the reference image's appearance: same age range, similar facial features, build, grooming style, and posture.
+- Any section marked "MANDATORY BACKGROUND:" describes the setting. The BACKGROUND STYLE reference image shows exactly what the environment should look like. You MUST replicate this background style.
 - The product described in the prompt must be worn/displayed by the specified model in the specified background.
 - NEVER ignore or override MANDATORY instructions. They take absolute priority over any conflicting defaults.`;
       } else {
         fullPrompt += ' Studio lighting, clean background, high resolution, commercial quality.';
       }
 
-      const imageResult = await callGeminiImage(GEMINI_API_KEY, fullPrompt, referenceImage, referenceMimeType);
+      const imageResult = await callGeminiImage(GEMINI_API_KEY, fullPrompt, referenceImage, referenceMimeType, presetImages.length > 0 ? presetImages : undefined);
 
       // Try to upload to Supabase Storage
       const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
