@@ -1,6 +1,11 @@
-import { useRef } from 'react';
-import { Plus } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Plus, Upload, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 // Model preset images
 import modelNone from '@/assets/presets/model-none.jpg';
@@ -85,8 +90,48 @@ function PresetCard({ preset, active, onClick }: { preset: PresetOption | Custom
   );
 }
 
-function AddPresetButton({ onFileSelected }: { onFileSelected: (file: File) => void }) {
+interface AddPresetDialogState {
+  open: boolean;
+  type: 'model' | 'background';
+  file: File | null;
+  preview: string | null;
+  name: string;
+  descriptor: string;
+}
+
+function AddPresetButton({ type, onAdd }: { type: 'model' | 'background'; onAdd: (preset: CustomPreset) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [dialog, setDialog] = useState<AddPresetDialogState>({
+    open: false, type, file: null, preview: null, name: '', descriptor: '',
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error('Máximo 5MB por imagem'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setDialog(prev => ({ ...prev, open: true, file, preview: reader.result as string, name: '', descriptor: '' }));
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleConfirm = () => {
+    if (!dialog.name.trim()) { toast.error('Informe um nome'); return; }
+    if (!dialog.preview) return;
+    const preset: CustomPreset = {
+      id: `custom-${Date.now()}`,
+      label: dialog.name.trim(),
+      descriptor: dialog.descriptor.trim() || dialog.name.trim(),
+      image: dialog.preview,
+      type,
+    };
+    onAdd(preset);
+    setDialog(prev => ({ ...prev, open: false, file: null, preview: null, name: '', descriptor: '' }));
+    toast.success(`${type === 'model' ? 'Modelo' : 'Fundo'} adicionado!`);
+  };
+
   return (
     <>
       <button
@@ -101,14 +146,81 @@ function AddPresetButton({ onFileSelected }: { onFileSelected: (file: File) => v
         type="file"
         accept=".png,.jpg,.jpeg,.webp"
         className="hidden"
-        onChange={e => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          if (file.size > 5 * 1024 * 1024) { toast.error('Máx. 5MB'); return; }
-          onFileSelected(file);
-          e.target.value = '';
-        }}
+        onChange={handleFileChange}
       />
+
+      <Dialog open={dialog.open} onOpenChange={(open) => setDialog(prev => ({ ...prev, open }))}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-primary" />
+              {type === 'model' ? 'Novo Modelo' : 'Novo Fundo'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Image preview */}
+            {dialog.preview && (
+              <div className="relative w-full h-40 rounded-lg overflow-hidden border border-border bg-secondary">
+                <img src={dialog.preview} alt="Preview" className="w-full h-full object-cover" />
+                <button
+                  onClick={() => inputRef.current?.click()}
+                  className="absolute bottom-2 right-2 flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-background/80 backdrop-blur-sm border border-border text-xs text-foreground hover:bg-background transition-colors"
+                >
+                  <Upload className="w-3 h-3" />
+                  Trocar
+                </button>
+              </div>
+            )}
+
+            {/* Name field */}
+            <div className="space-y-1.5">
+              <Label htmlFor="preset-name" className="text-xs">
+                Nome <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="preset-name"
+                placeholder={type === 'model' ? 'Ex: Modelo Clássico' : 'Ex: Escritório Moderno'}
+                value={dialog.name}
+                onChange={e => setDialog(prev => ({ ...prev, name: e.target.value }))}
+                className="h-9 text-sm"
+                autoFocus
+              />
+            </div>
+
+            {/* Descriptor field */}
+            <div className="space-y-1.5">
+              <Label htmlFor="preset-descriptor" className="text-xs">
+                Descritor para a IA
+              </Label>
+              <Textarea
+                id="preset-descriptor"
+                placeholder={
+                  type === 'model'
+                    ? 'Ex: distinguished man aged 40-50, casual style, natural expression'
+                    : 'Ex: modern office interior, glass walls, natural light, minimalist'
+                }
+                value={dialog.descriptor}
+                onChange={e => setDialog(prev => ({ ...prev, descriptor: e.target.value }))}
+                className="text-sm min-h-[60px] resize-none"
+                rows={2}
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Texto em inglês que será combinado ao prompt de geração. Se vazio, usa o nome.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="ghost" size="sm" onClick={() => setDialog(prev => ({ ...prev, open: false }))}>
+              Cancelar
+            </Button>
+            <Button size="sm" onClick={handleConfirm} disabled={!dialog.name.trim()}>
+              Adicionar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -116,25 +228,6 @@ function AddPresetButton({ onFileSelected }: { onFileSelected: (file: File) => v
 export function ModelBackgroundPresets({ selectedModel, selectedBackground, onModelChange, onBackgroundChange, customPresets = [], onAddCustomPreset }: ModelBackgroundPresetsProps) {
   const customModels = customPresets.filter(p => p.type === 'model');
   const customBackgrounds = customPresets.filter(p => p.type === 'background');
-
-  const handleUpload = (file: File, type: 'model' | 'background') => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const name = prompt(type === 'model' ? 'Nome do modelo:' : 'Nome do fundo:');
-      if (!name) return;
-      const descriptor = prompt('Descritor para a IA (ex: "man aged 40, casual style"):') || name;
-      const preset: CustomPreset = {
-        id: `custom-${Date.now()}`,
-        label: name,
-        descriptor,
-        image: reader.result as string,
-        type,
-      };
-      onAddCustomPreset?.(preset);
-      toast.success(`${type === 'model' ? 'Modelo' : 'Fundo'} adicionado!`);
-    };
-    reader.readAsDataURL(file);
-  };
 
   return (
     <div className="space-y-2">
@@ -148,7 +241,7 @@ export function ModelBackgroundPresets({ selectedModel, selectedBackground, onMo
           {customModels.map(p => (
             <PresetCard key={p.id} preset={p} active={selectedModel === p.id} onClick={() => onModelChange(selectedModel === p.id ? null : p.id)} />
           ))}
-          {onAddCustomPreset && <AddPresetButton onFileSelected={f => handleUpload(f, 'model')} />}
+          {onAddCustomPreset && <AddPresetButton type="model" onAdd={onAddCustomPreset} />}
         </div>
       </div>
 
@@ -162,7 +255,7 @@ export function ModelBackgroundPresets({ selectedModel, selectedBackground, onMo
           {customBackgrounds.map(p => (
             <PresetCard key={p.id} preset={p} active={selectedBackground === p.id} onClick={() => onBackgroundChange(selectedBackground === p.id ? null : p.id)} />
           ))}
-          {onAddCustomPreset && <AddPresetButton onFileSelected={f => handleUpload(f, 'background')} />}
+          {onAddCustomPreset && <AddPresetButton type="background" onAdd={onAddCustomPreset} />}
         </div>
       </div>
     </div>
