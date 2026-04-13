@@ -912,6 +912,16 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [regeneratingIds, setRegeneratingIds] = useState<Set<string>>(new Set());
+
+  const handleThumbRegenerate = useCallback(async (imageId: string) => {
+    setRegeneratingIds(prev => new Set(prev).add(imageId));
+    try {
+      await onRegenerate(imageId);
+    } finally {
+      setRegeneratingIds(prev => { const next = new Set(prev); next.delete(imageId); return next; });
+    }
+  }, [onRegenerate]);
 
   // Build display list: all images + generating slots for angles not yet done
   const generatingSlots = Array.from(generatingAngles)
