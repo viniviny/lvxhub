@@ -251,7 +251,7 @@ export function ModelBackgroundPresets({ selectedModel, selectedBackground, onMo
             <PresetCard key={p.id} preset={p} active={selectedModel === p.id} onClick={() => onModelChange(selectedModel === p.id ? null : p.id)} />
           ))}
           {customModels.map(p => (
-            <PresetCard key={p.id} preset={p} active={selectedModel === p.id} onClick={() => onModelChange(selectedModel === p.id ? null : p.id)} />
+            <PresetCard key={p.id} preset={p} active={selectedModel === p.id} onClick={() => onModelChange(selectedModel === p.id ? null : p.id)} onRemove={onRemoveCustomPreset ? () => { if (selectedModel === p.id) onModelChange(null); onRemoveCustomPreset(p.id); } : undefined} />
           ))}
           {onAddCustomPreset && <AddPresetButton type="model" onAdd={onAddCustomPreset} />}
         </div>
@@ -265,7 +265,7 @@ export function ModelBackgroundPresets({ selectedModel, selectedBackground, onMo
             <PresetCard key={p.id} preset={p} active={selectedBackground === p.id} onClick={() => onBackgroundChange(selectedBackground === p.id ? null : p.id)} />
           ))}
           {customBackgrounds.map(p => (
-            <PresetCard key={p.id} preset={p} active={selectedBackground === p.id} onClick={() => onBackgroundChange(selectedBackground === p.id ? null : p.id)} />
+            <PresetCard key={p.id} preset={p} active={selectedBackground === p.id} onClick={() => onBackgroundChange(selectedBackground === p.id ? null : p.id)} onRemove={onRemoveCustomPreset ? () => { if (selectedBackground === p.id) onBackgroundChange(null); onRemoveCustomPreset(p.id); } : undefined} />
           ))}
           {onAddCustomPreset && <AddPresetButton type="background" onAdd={onAddCustomPreset} />}
         </div>
