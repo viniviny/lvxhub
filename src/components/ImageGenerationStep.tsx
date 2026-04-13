@@ -1109,7 +1109,25 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
                   onDragEnd={handleThumbDragEnd}
                 >
                   {img && (
-                    <img src={img.url} alt={label} className="w-full h-full object-cover" />
+                    <>
+                      <img src={img.url} alt={label} className="w-full h-full object-cover" />
+                      {/* Regenerating overlay */}
+                      {regeneratingIds.has(img.id) && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        </div>
+                      )}
+                      {/* Hover refresh button */}
+                      {!selectMode && !regeneratingIds.has(img.id) && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleThumbRegenerate(img.id); }}
+                          className="absolute top-0.5 right-0.5 w-5 h-5 rounded-sm bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 hover:bg-primary transition-all z-10"
+                          title="Regenerar este ângulo"
+                        >
+                          <RefreshCw className="w-2.5 h-2.5" />
+                        </button>
+                      )}
+                    </>
                   )}
                   {!img && isGen && (
                     <div className="w-full h-full bg-card flex items-center justify-center" style={{ animation: 'pulse-border 1.5s infinite' }}>
@@ -1130,7 +1148,13 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
                       {selectedIds.has(img.id) && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
                     </div>
                   )}
-                  {!selectMode && isFirst && img && (
+                  {/* Angle badge */}
+                  {img && (
+                    <span className="absolute bottom-0.5 left-0.5 text-[7px] font-semibold px-1 py-0.5 rounded bg-black/70 text-white/90 leading-tight z-10">
+                      {isFirst ? 'Capa' : label}
+                    </span>
+                  )}
+                  {!selectMode && isFirst && img && !img && (
                     <span className="absolute bottom-0.5 left-0.5 text-[7px] font-semibold px-1 py-0.5 rounded bg-black/70 text-white/90">
                       Capa
                     </span>
