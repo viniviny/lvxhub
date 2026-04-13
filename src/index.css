@@ -242,22 +242,24 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  /* Premium thin scrollbar for preset rows */
-  .preset-scroll::-webkit-scrollbar {
-    height: 4px;
   }
-  .preset-scroll::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .preset-scroll::-webkit-scrollbar-thumb {
-    background: hsl(var(--border));
-    border-radius: 9999px;
-  }
-  .preset-scroll::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.4);
-  }
-  .preset-scroll {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--border)) transparent;
-  }
+}
+
+/* ===== Premium Preset Scrollbar ===== */
+.preset-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.preset-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.preset-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+}
+.preset-scroll::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.4);
+}
+.preset-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
 }
