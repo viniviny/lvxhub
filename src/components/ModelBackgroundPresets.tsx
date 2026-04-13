@@ -303,3 +303,17 @@ export function getBackgroundDescriptor(id: string | null, customPresets: Custom
   const custom = customPresets.find(p => p.id === id);
   return custom?.descriptor || '';
 }
+
+export function getModelImage(id: string | null, customPresets: CustomPreset[] = []): string {
+  const builtin = MODEL_PRESETS.find(p => p.id === id);
+  if (builtin) return builtin.image;
+  const custom = customPresets.find(p => p.id === id);
+  return custom?.image || '';
+}
+
+export function getBackgroundImage(id: string | null, customPresets: CustomPreset[] = []): string {
+  const builtin = BACKGROUND_PRESETS.find(p => p.id === id);
+  if (builtin) return builtin.image;
+  const custom = customPresets.find(p => p.id === id);
+  return custom?.image || '';
+}

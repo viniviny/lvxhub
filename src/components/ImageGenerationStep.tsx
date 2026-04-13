@@ -14,7 +14,7 @@ import {
   ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical,
   Clock, Check, ChevronLeft, ChevronRight, Camera, BookOpen, Search, ClipboardPaste
 } from 'lucide-react';
-import { ModelBackgroundPresets, getModelDescriptor, getBackgroundDescriptor, type CustomPreset } from '@/components/ModelBackgroundPresets';
+import { ModelBackgroundPresets, getModelDescriptor, getBackgroundDescriptor, getModelImage, getBackgroundImage, type CustomPreset } from '@/components/ModelBackgroundPresets';
 import { useCustomPresets } from '@/hooks/useCustomPresets';
 
 export type AspectRatio = '1:1' | '4:5';
@@ -89,6 +89,30 @@ interface ImageGenerationStepProps {
 }
 
 type PromptMode = 'simple' | 'custom';
+
+async function imageUrlToBase64(url: string): Promise<{ base64: string; mimeType: string } | null> {
+  try {
+    if (url.startsWith('data:')) {
+      const match = url.match(/^data:([^;]+);base64,(.+)$/);
+      if (match) return { mimeType: match[1], base64: match[2] };
+      return null;
+    }
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        const match = result.match(/^data:([^;]+);base64,(.+)$/);
+        if (match) resolve({ mimeType: match[1], base64: match[2] });
+        else resolve(null);
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch { return null; }
+}
 
 export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange }: ImageGenerationStepProps) {
   const navigate = useNavigate();
@@ -250,6 +274,14 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const hasPresets = !!(modelDesc || bgDesc);
     const enrichedPrompt = [prompt.trim(), modelDesc, bgDesc].filter(Boolean).join('. ');
     
+    // Convert preset images to base64 for visual reference
+    const modelImgUrl = getModelImage(selectedModel, customPresets);
+    const bgImgUrl = getBackgroundImage(selectedBackground, customPresets);
+    const [modelImageData, bgImageData] = await Promise.all([
+      modelImgUrl ? imageUrlToBase64(modelImgUrl) : Promise.resolve(null),
+      bgImgUrl ? imageUrlToBase64(bgImgUrl) : Promise.resolve(null),
+    ]);
+    
     // Use a ref-like approach: accumulate results safely and only call onImagesChange once per completion
     const promises = angles.map(async (angle) => {
       try {
@@ -260,7 +292,21 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           if (match) { refMimeType = match[1]; refBase64 = match[2]; }
         }
         const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
-          body: { mode: 'generate-image', prompt: enrichedPrompt, angle, customAngleText: angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt, referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio, hasPresets },
+          body: {
+            mode: 'generate-image',
+            prompt: enrichedPrompt,
+            angle,
+            customAngleText: angle === 'personalizado' ? customAngleText : undefined,
+            isCustomPrompt,
+            referenceImage: refBase64,
+            referenceMimeType: refMimeType,
+            aspectRatio: activeRatio,
+            hasPresets,
+            modelPresetImage: modelImageData?.base64,
+            modelPresetMimeType: modelImageData?.mimeType,
+            bgPresetImage: bgImageData?.base64,
+            bgPresetMimeType: bgImageData?.mimeType,
+          },
         });
         if (error) { 
           console.error('Edge function error:', error); 
@@ -320,6 +366,14 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const bgDesc = getBackgroundDescriptor(selectedBackground, customPresets);
     const hasPresets = !!(modelDesc || bgDesc);
     const enrichedPrompt = [prompt.trim(), modelDesc, bgDesc].filter(Boolean).join('. ');
+    
+    const modelImgUrl = getModelImage(selectedModel, customPresets);
+    const bgImgUrl = getBackgroundImage(selectedBackground, customPresets);
+    const [modelImageData, bgImageData] = await Promise.all([
+      modelImgUrl ? imageUrlToBase64(modelImgUrl) : Promise.resolve(null),
+      bgImgUrl ? imageUrlToBase64(bgImgUrl) : Promise.resolve(null),
+    ]);
+    
     setGeneratingAngles(new Set([target.angle]));
     try {
       let refBase64: string | undefined;
@@ -329,7 +383,21 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         if (match) { refMimeType = match[1]; refBase64 = match[2]; }
       }
       const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
-        body: { mode: 'generate-image', prompt: enrichedPrompt, angle: target.angle, customAngleText: target.angle === 'personalizado' ? customAngleText : undefined, isCustomPrompt: promptMode === 'custom', referenceImage: refBase64, referenceMimeType: refMimeType, aspectRatio: activeRatio, hasPresets },
+        body: {
+          mode: 'generate-image',
+          prompt: enrichedPrompt,
+          angle: target.angle,
+          customAngleText: target.angle === 'personalizado' ? customAngleText : undefined,
+          isCustomPrompt: promptMode === 'custom',
+          referenceImage: refBase64,
+          referenceMimeType: refMimeType,
+          aspectRatio: activeRatio,
+          hasPresets,
+          modelPresetImage: modelImageData?.base64,
+          modelPresetMimeType: modelImageData?.mimeType,
+          bgPresetImage: bgImageData?.base64,
+          bgPresetMimeType: bgImageData?.mimeType,
+        },
       });
       if (error || data?.error) { toast.error('Erro ao regenerar imagem'); return; }
       const updated = existingImages.map(img => img.id === imageId ? { ...img, url: data.imageUrl } : img);
