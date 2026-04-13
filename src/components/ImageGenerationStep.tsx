@@ -14,6 +14,7 @@ import {
   ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical,
   Clock, Check, ChevronLeft, ChevronRight, Camera, BookOpen, Search, ClipboardPaste
 } from 'lucide-react';
+import { ModelBackgroundPresets, getModelDescriptor, getBackgroundDescriptor } from '@/components/ModelBackgroundPresets';
 
 export type AspectRatio = '1:1' | '4:5';
 
