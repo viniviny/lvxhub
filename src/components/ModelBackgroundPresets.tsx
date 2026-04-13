@@ -62,6 +62,9 @@ interface ModelBackgroundPresetsProps {
   customPresets?: CustomPreset[];
   onAddCustomPreset?: (preset: CustomPreset) => void | Promise<void>;
   onRemoveCustomPreset?: (id: string) => void;
+  hiddenBuiltinIds?: string[];
+  onHideBuiltinPreset?: (id: string) => void;
+  onRestoreBuiltinPresets?: () => void;
 }
 
 function PresetCard({ preset, active, onClick, onRemove }: { preset: PresetOption | CustomPreset; active: boolean; onClick: () => void; onRemove?: () => void }) {
