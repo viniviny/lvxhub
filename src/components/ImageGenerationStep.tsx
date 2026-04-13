@@ -566,6 +566,9 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           customPresets={customPresets}
           onAddCustomPreset={addCustomPreset}
           onRemoveCustomPreset={removeCustomPreset}
+          hiddenBuiltinIds={hiddenBuiltinIds}
+          onHideBuiltinPreset={hideBuiltinPreset}
+          onRestoreBuiltinPresets={restoreBuiltinPresets}
         />
 
         {/* 4. Ângulos — Toggle pills */}
