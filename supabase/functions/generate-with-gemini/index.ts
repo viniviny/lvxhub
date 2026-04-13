@@ -270,9 +270,15 @@ serve(async (req) => {
         fullPrompt += ` ${RATIO_PROMPTS[aspectRatio]}`;
       }
 
-      // When presets are selected, trust their descriptors instead of adding generic defaults
+      // When presets are selected, enforce strict adherence
       if (hasPresets) {
-        fullPrompt += ' High resolution, commercial quality. Follow ALL MANDATORY MODEL and MANDATORY BACKGROUND instructions exactly as specified — do not deviate from the described model appearance or background setting.';
+        fullPrompt += ` High resolution, commercial quality.
+
+CRITICAL INSTRUCTIONS — YOU MUST FOLLOW THESE EXACTLY:
+- Any section marked "MANDATORY MODEL:" describes the EXACT person who must appear in the photo. You MUST generate a model matching EVERY detail: age range, facial hair, build, expression, and posture. Do NOT substitute a different model type.
+- Any section marked "MANDATORY BACKGROUND:" describes the EXACT setting/environment. You MUST generate this exact background. Do NOT use a white studio if a different background is specified, and vice versa.
+- The product described in the prompt must be worn/displayed by the specified model in the specified background.
+- NEVER ignore or override MANDATORY instructions. They take absolute priority over any conflicting defaults.`;
       } else {
         fullPrompt += ' Studio lighting, clean background, high resolution, commercial quality.';
       }
