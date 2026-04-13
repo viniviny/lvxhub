@@ -196,7 +196,7 @@ async function callGeminiImage(
   // Add preset reference images first so the model sees them before the text instruction
   if (presetImages && presetImages.length > 0) {
     for (const pi of presetImages) {
-      parts.push({ text: `[VISUAL REFERENCE — ${pi.label}] Study this image carefully. The generated photo MUST match this reference exactly.` });
+      parts.push({ text: `[VISUAL REFERENCE — ${pi.label}] Study this reference image carefully. Match the same type/style but ELEVATE the quality to premium fashion photography level. Better lighting, richer detail, more cinematic presence.` });
       parts.push({ inlineData: { mimeType: pi.mimeType, data: pi.base64 } });
     }
   }
