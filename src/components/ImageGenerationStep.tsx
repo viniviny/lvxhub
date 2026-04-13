@@ -119,6 +119,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const refDropZoneRef = useRef<HTMLDivElement>(null);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [selectedBackground, setSelectedBackground] = useState<string | null>(null);
+  const [customPresets, setCustomPresets] = useState<CustomPreset[]>([]);
 
   // Handle paste from clipboard (Ctrl+V anywhere or on the drop zone)
   const handlePasteReference = useCallback((e: ClipboardEvent | globalThis.ClipboardEvent) => {
