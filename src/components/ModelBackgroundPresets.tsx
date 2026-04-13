@@ -254,7 +254,7 @@ export function ModelBackgroundPresets({ selectedModel, selectedBackground, onMo
       {/* MODEL SECTION */}
       <div>
         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">Modelo</span>
-        <div className="flex gap-2 mt-1.5 overflow-x-auto pb-1.5 scrollbar-thin">
+        <div className="flex gap-2 mt-1.5 overflow-x-auto pb-1.5 preset-scroll">
           {visibleModels.map(p => (
             <PresetCard key={p.id} preset={p} active={selectedModel === p.id} onClick={() => onModelChange(selectedModel === p.id ? null : p.id)} onRemove={onHideBuiltinPreset ? () => { if (selectedModel === p.id) onModelChange(null); onHideBuiltinPreset(p.id); } : undefined} />
           ))}
@@ -268,7 +268,7 @@ export function ModelBackgroundPresets({ selectedModel, selectedBackground, onMo
       {/* BACKGROUND SECTION */}
       <div>
         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.15em]">Fundo</span>
-        <div className="flex gap-2 mt-1.5 overflow-x-auto pb-1.5 scrollbar-thin">
+        <div className="flex gap-2 mt-1.5 overflow-x-auto pb-1.5 preset-scroll">
           {visibleBackgrounds.map(p => (
             <PresetCard key={p.id} preset={p} active={selectedBackground === p.id} onClick={() => onBackgroundChange(selectedBackground === p.id ? null : p.id)} onRemove={onHideBuiltinPreset ? () => { if (selectedBackground === p.id) onBackgroundChange(null); onHideBuiltinPreset(p.id); } : undefined} />
           ))}
