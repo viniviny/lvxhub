@@ -306,14 +306,21 @@ VISUAL QUALITY REQUIREMENTS:
 - Ultra high resolution, 8K detail, razor sharp focus throughout
 - Professional studio-grade lighting: soft key light with subtle rim light for depth and dimension
 - Rich, true-to-life color accuracy with cinematic color grading
-- Natural skin texture and tones — NO plastic/AI look, NO uncanny valley
 - Fabric must show realistic texture, weight, drape, and natural folds
 - Subtle depth of field to separate subject from background
 - Magazine-cover level retouching: flawless but natural
 
+MODEL FACE & EXPRESSION — CREATIVE FREEDOM:
+- The model's FACE must be rendered with photorealistic quality: visible pores, natural skin texture, realistic eye reflections, subtle micro-expressions
+- DO NOT repeat the same stiff pose or blank expression every time. Be CREATIVE with expressions and body language:
+  * Vary between: confident gaze, relaxed smile, looking away candidly, mid-stride motion, adjusting clothing naturally, hands in pockets, looking over shoulder, thoughtful downward glance
+  * Match the expression to the MOOD of the scene — a casual outfit deserves a relaxed vibe, a formal blazer calls for a sharper, more composed look
+- The model should feel ALIVE and NATURAL — like a real person captured in a candid editorial moment, not a mannequin with a pasted face
+- Each generation should feel unique — different micro-pose, different expression, different energy
+
 PRESET ADHERENCE RULES:
-- The VISUAL REFERENCE images show the EXACT model type and/or background style. Use them as your creative starting point, then ELEVATE the quality far beyond the reference.
-- MANDATORY MODEL: Match the reference model's age range, build, grooming, and overall vibe — but render with superior photographic quality: better lighting on the face, more natural expression, refined skin detail, and cinematic presence.
+- The VISUAL REFERENCE images show the model type and background style. Use them as your creative starting point, then ELEVATE the quality far beyond the reference.
+- MANDATORY MODEL: Match the reference model's age range, build, and grooming style — but bring CREATIVE VARIETY to pose, expression, and energy. The same person type, but a fresh editorial moment each time.
 - MANDATORY BACKGROUND: Match the reference background's style and mood — but enhance it with richer atmospheric depth, better lighting transitions, and more photographic realism.
 - The product is the HERO: it must be the sharpest, most detailed element in the frame with accurate color, texture, and construction visible.
 - Final result must look like it belongs in a Zara, COS, or Mr Porter product catalog — never like AI-generated stock imagery.`;
