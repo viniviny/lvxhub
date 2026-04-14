@@ -1085,7 +1085,7 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
       <div className="flex gap-3 flex-1 min-h-0">
         {/* Thumbnail strip — vertical, left side */}
         {displayList.length > 0 && (
-          <div className="flex flex-col gap-2 overflow-y-auto scrollbar-thin pr-0.5" style={{ scrollbarWidth: 'thin', maxHeight: mainMaxH }}>
+          <div className="flex flex-col gap-1.5 overflow-y-auto preset-scroll pr-0.5" style={{ maxHeight: mainMaxH }}>
             {displayList.map((item, i) => {
               const isImg = !('empty' in item);
               const img = isImg ? (item as GeneratedImage) : null;
@@ -1098,13 +1098,15 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
               return (
                 <div
                   key={`thumb-${img?.id || angle}-${i}`}
-                  className={`group/thumb relative shrink-0 cursor-pointer rounded-md overflow-hidden transition-all duration-150
-                    ${isActive && !selectMode ? 'border-2 border-primary opacity-100' : 'border-2 border-transparent opacity-60 hover:opacity-100 hover:border-primary/40'}
-                    ${selectMode && img && selectedIds.has(img.id) ? 'border-2 border-primary opacity-100 ring-1 ring-primary' : ''}
-                    ${dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-primary' : ''}
-                    ${dragIdx === i ? 'opacity-30' : ''}
+                  className={`group/thumb relative shrink-0 cursor-pointer rounded-lg overflow-hidden transition-all duration-200 ease-out
+                    ${isActive && !selectMode
+                      ? 'ring-2 ring-primary ring-offset-1 ring-offset-background shadow-[0_0_12px_rgba(31,111,235,0.25)] scale-[1.03]'
+                      : 'opacity-70 hover:opacity-100 hover:ring-1 hover:ring-primary/30 hover:shadow-sm'}
+                    ${selectMode && img && selectedIds.has(img.id) ? 'ring-2 ring-primary ring-offset-1 ring-offset-background opacity-100' : ''}
+                    ${dragOverIdx === i && dragIdx !== i ? 'ring-2 ring-accent scale-105' : ''}
+                    ${dragIdx === i ? 'opacity-30 scale-95' : ''}
                   `}
-                  style={{ width: '64px', aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
+                  style={{ width: '68px', aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
                   onClick={() => selectMode && img ? toggleSelect(img.id) : setSelectedIdx(i)}
                   draggable={!selectMode && !!img}
                   onDragStart={e => handleThumbDragStart(e, i)}
@@ -1114,10 +1116,12 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
                 >
                   {img && (
                     <>
-                      <img src={img.url} alt={label} className="w-full h-full object-cover" />
+                      <img src={img.url} alt={label} className="w-full h-full object-cover transition-transform duration-300 group-hover/thumb:scale-105" />
+                      {/* Gradient overlay for badge readability */}
+                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
                       {/* Regenerating overlay */}
                       {regeneratingIds.has(img.id) && (
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center z-10">
                           <Loader2 className="w-4 h-4 animate-spin text-white" />
                         </div>
                       )}
@@ -1125,7 +1129,7 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
                       {!selectMode && !regeneratingIds.has(img.id) && (
                         <button
                           onClick={(e) => { e.stopPropagation(); handleThumbRegenerate(img.id); }}
-                          className="absolute top-0.5 right-0.5 w-5 h-5 rounded-sm bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 hover:bg-primary transition-all z-10"
+                          className="absolute top-1 right-1 w-5 h-5 rounded-md bg-black/50 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 hover:bg-primary hover:scale-110 transition-all duration-150 z-10"
                           title="Regenerar este ângulo"
                         >
                           <RefreshCw className="w-2.5 h-2.5" />
@@ -1134,28 +1138,28 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
                     </>
                   )}
                   {!img && isGen && (
-                    <div className="w-full h-full bg-card flex items-center justify-center" style={{ animation: 'pulse-border 1.5s infinite' }}>
+                    <div className="w-full h-full bg-card/80 backdrop-blur-sm flex items-center justify-center" style={{ animation: 'pulse-border 1.5s infinite' }}>
                       <Loader2 className="w-3 h-3 animate-spin text-primary" />
                     </div>
                   )}
                   {!img && !isGen && (
-                    <div className="w-full h-full bg-card border border-dashed border-border flex flex-col items-center justify-center gap-0.5 rounded-md">
+                    <div className="w-full h-full bg-secondary/30 border border-dashed border-border/50 flex flex-col items-center justify-center gap-0.5 rounded-lg hover:border-primary/30 hover:bg-secondary/50 transition-all">
                       <Plus className="w-3 h-3 text-muted-foreground/40" />
-                      <span className="text-[7px] text-muted-foreground/40 leading-tight">{label}</span>
+                      <span className="text-[7px] text-muted-foreground/50 leading-tight font-medium">{label}</span>
                     </div>
                   )}
                   {/* Select mode checkbox */}
                   {selectMode && img && (
-                    <div className={`absolute top-0.5 right-0.5 w-4 h-4 rounded-sm border flex items-center justify-center transition-all
-                      ${selectedIds.has(img.id) ? 'bg-primary border-primary' : 'bg-black/40 border-white/50'}`}
+                    <div className={`absolute top-1 right-1 w-4 h-4 rounded-md border-[1.5px] flex items-center justify-center transition-all shadow-sm
+                      ${selectedIds.has(img.id) ? 'bg-primary border-primary shadow-primary/30' : 'bg-black/40 backdrop-blur-sm border-white/60'}`}
                     >
                       {selectedIds.has(img.id) && <Check className="w-2.5 h-2.5 text-primary-foreground" />}
                     </div>
                   )}
                   {/* Angle badge */}
                   {img && (
-                    <span className="absolute bottom-0.5 left-0.5 text-[7px] font-semibold px-1 py-0.5 rounded bg-black/70 text-white/90 leading-tight z-10">
-                      {isFirst ? 'Capa' : label}
+                    <span className="absolute bottom-1 left-1 text-[7px] font-semibold px-1.5 py-[2px] rounded-md bg-black/50 backdrop-blur-sm text-white/95 leading-tight z-10 tracking-wide">
+                      {isFirst ? '★ Capa' : label}
                     </span>
                   )}
                 </div>
@@ -1164,10 +1168,10 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
             {/* Add button at bottom of thumbs */}
             <button
               onClick={onAddUpload}
-              className="shrink-0 flex items-center justify-center rounded-md border border-dashed border-border hover:border-primary/40 transition-colors"
-              style={{ width: '64px', aspectRatio: '1/1' }}
+              className="shrink-0 flex items-center justify-center rounded-lg border border-dashed border-border/50 hover:border-primary/40 hover:bg-secondary/30 transition-all duration-200"
+              style={{ width: '68px', aspectRatio: '1/1' }}
             >
-              <Plus className="w-3.5 h-3.5 text-muted-foreground/50" />
+              <Plus className="w-3.5 h-3.5 text-muted-foreground/40" />
             </button>
           </div>
         )}
@@ -1175,17 +1179,19 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
         {/* Main image viewer */}
         <div className="flex-1 flex flex-col items-center justify-center min-h-0 min-w-0">
           <div
-            className="relative rounded-[10px] overflow-hidden bg-card w-full mx-auto"
+            className="relative rounded-xl overflow-hidden bg-card border border-border/50 shadow-lg w-full mx-auto group/main"
             style={{ aspectRatio: mainAspect, maxHeight: mainMaxH, maxWidth: mainMaxW }}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
           >
             {/* Empty state */}
             {displayList.length === 0 && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-[10px]">
-                <Camera className="w-8 h-8 text-muted-foreground/40" />
-                <span className="text-[12px] text-muted-foreground">Gere ou faça upload das imagens</span>
-                <span className="text-[10px] text-muted-foreground/60">As imagens aparecerão aqui</span>
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 border-2 border-dashed border-border/40 rounded-xl bg-secondary/20">
+                <div className="w-14 h-14 rounded-2xl bg-secondary/60 flex items-center justify-center">
+                  <Camera className="w-7 h-7 text-muted-foreground/50" />
+                </div>
+                <span className="text-[13px] font-medium text-muted-foreground">Gere ou faça upload das imagens</span>
+                <span className="text-[11px] text-muted-foreground/50">As imagens aparecerão aqui</span>
               </div>
             )}
 
@@ -1206,60 +1212,68 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
               <img
                 src={currentImage.url}
                 alt={currentLabel}
-                className={`w-full h-full object-cover cursor-pointer transition-all duration-300 ${currentImage.justCompleted ? 'animate-fade-in' : ''}`}
+                className={`w-full h-full object-cover cursor-pointer transition-all duration-500 ${currentImage.justCompleted ? 'animate-fade-in' : ''}`}
                 onClick={() => setPreviewOpen(true)}
               />
             )}
 
-            {/* Hover overlay */}
+            {/* Hover overlay — premium glassmorphism */}
             {currentImage && hovered && (
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-3 transition-opacity">
-                <button onClick={() => onUseAsReference(currentImage.url)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Usar como referência">
-                  <Camera className="w-4 h-4" />
-                </button>
-                <button onClick={() => onRegenerate(currentImage.id)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Regenerar">
-                  <RefreshCw className="w-4 h-4" />
-                </button>
-                <button onClick={() => onSetCover(currentImage.id)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Definir como capa">
-                  <Star className="w-4 h-4" />
-                </button>
-                <button onClick={() => onRemove(currentImage.id)} className="p-2 rounded-full bg-black/60 text-white hover:bg-destructive transition-colors" title="Remover">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-                <button onClick={() => setPreviewOpen(true)} className="p-2 rounded-full bg-black/60 text-white hover:bg-primary transition-colors" title="Ampliar">
-                  <Eye className="w-4 h-4" />
-                </button>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/10 flex items-center justify-center gap-2 transition-all duration-300 animate-fade-in">
+                {[
+                  { icon: Camera, action: () => onUseAsReference(currentImage.url), tip: 'Usar como referência', color: 'hover:bg-primary' },
+                  { icon: RefreshCw, action: () => onRegenerate(currentImage.id), tip: 'Regenerar', color: 'hover:bg-primary' },
+                  { icon: Star, action: () => onSetCover(currentImage.id), tip: 'Definir como capa', color: 'hover:bg-primary' },
+                  { icon: Trash2, action: () => onRemove(currentImage.id), tip: 'Remover', color: 'hover:bg-destructive' },
+                  { icon: Eye, action: () => setPreviewOpen(true), tip: 'Ampliar', color: 'hover:bg-primary' },
+                ].map(({ icon: Icon, action, tip, color }, idx) => (
+                  <button
+                    key={idx}
+                    onClick={action}
+                    className={`p-2.5 rounded-xl bg-white/10 backdrop-blur-md text-white border border-white/10 ${color} hover:scale-110 hover:shadow-lg transition-all duration-200`}
+                    title={tip}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </button>
+                ))}
               </div>
             )}
 
-            {/* Navigation arrows */}
+            {/* Navigation arrows — pill style */}
             {showArrows && (
               <>
-                <button onClick={() => setSelectedIdx(i => Math.max(0, i - 1))} className="absolute left-1 top-1/2 -translate-y-1/2 p-1 rounded-full bg-black/50 text-white/80 hover:bg-black/70 transition-colors" style={{ display: clampedIdx === 0 ? 'none' : 'flex' }}>
+                <button onClick={() => setSelectedIdx(i => Math.max(0, i - 1))} className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-white/10 backdrop-blur-md text-white border border-white/10 hover:bg-white/20 hover:scale-105 transition-all duration-200 shadow-lg" style={{ display: clampedIdx === 0 ? 'none' : 'flex' }}>
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <button onClick={() => setSelectedIdx(i => Math.min(displayList.length - 1, i + 1))} className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded-full bg-black/50 text-white/80 hover:bg-black/70 transition-colors" style={{ display: clampedIdx === displayList.length - 1 ? 'none' : 'flex' }}>
+                <button onClick={() => setSelectedIdx(i => Math.min(displayList.length - 1, i + 1))} className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-white/10 backdrop-blur-md text-white border border-white/10 hover:bg-white/20 hover:scale-105 transition-all duration-200 shadow-lg" style={{ display: clampedIdx === displayList.length - 1 ? 'none' : 'flex' }}>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </>
             )}
 
-            {/* Angle label */}
+            {/* Angle label — pill badge */}
             {currentLabel && displayList.length > 0 && (
-              <span className="absolute top-2 left-2 text-[10px] font-medium px-2 py-0.5 rounded-full bg-black/60 text-white/80 backdrop-blur-sm">
+              <span className="absolute top-3 left-3 text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md text-white/90 border border-white/10 tracking-wide shadow-sm">
                 {currentLabel}
+              </span>
+            )}
+
+            {/* Image counter */}
+            {displayList.length > 1 && (
+              <span className="absolute top-3 right-3 text-[10px] font-semibold px-2 py-1 rounded-lg bg-black/40 backdrop-blur-md text-white/90 border border-white/10 tabular-nums">
+                {clampedIdx + 1} / {displayList.length}
               </span>
             )}
           </div>
 
-          {/* Dots */}
+          {/* Dots — premium style */}
           {displayList.length > 1 && (
-            <div className="flex items-center justify-center gap-[5px] mt-2">
+            <div className="flex items-center justify-center gap-1 mt-3">
               {displayList.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setSelectedIdx(i)}
-                  className={`w-1.5 h-1.5 rounded-full transition-all duration-150 ${i === clampedIdx ? 'bg-foreground' : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'}`}
+                  className={`rounded-full transition-all duration-200 ${i === clampedIdx ? 'w-5 h-1.5 bg-primary shadow-[0_0_6px_rgba(31,111,235,0.4)]' : 'w-1.5 h-1.5 bg-muted-foreground/25 hover:bg-muted-foreground/40'}`}
                 />
               ))}
             </div>
@@ -1267,8 +1281,8 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
 
           {/* Summary */}
           {displayList.length > 0 && (
-            <div className="flex items-center justify-center mt-1">
-              <span className="text-[10px] text-muted-foreground">
+            <div className="flex items-center justify-center mt-1.5">
+              <span className="text-[10px] text-muted-foreground/70 font-medium">
                 {images.length} {images.length === 1 ? 'imagem' : 'imagens'}{images.length > 1 ? ' · arraste para reorganizar' : ''}
               </span>
             </div>
@@ -1279,8 +1293,8 @@ function ImageGallery({ images, generatingAngles, completedAngles, angleStartTim
       {/* Fullscreen preview dialog */}
       {currentImage && (
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-          <DialogContent className="max-w-3xl p-2 bg-background border-border">
-            <img src={currentImage.url} alt={currentLabel} className="w-full h-full rounded-lg object-contain max-h-[80vh]" />
+          <DialogContent className="max-w-4xl p-1.5 bg-card/95 backdrop-blur-xl border-border/50 shadow-2xl rounded-2xl">
+            <img src={currentImage.url} alt={currentLabel} className="w-full h-full rounded-xl object-contain max-h-[85vh]" />
           </DialogContent>
         </Dialog>
       )}
