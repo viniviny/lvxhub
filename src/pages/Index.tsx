@@ -230,6 +230,9 @@ const Index = () => {
   useEffect(() => {
     if (draftCheckedRef.current) return;
     draftCheckedRef.current = true;
+    // Only show resume dialog once per browser session
+    const dismissed = sessionStorage.getItem('draft-dialog-dismissed');
+    if (dismissed === 'true') return;
     const draft = loadDraft();
     if (draft) {
       setPendingDraft(draft);
@@ -264,12 +267,14 @@ const Index = () => {
       setGeneratedImages(pendingDraft.generatedImages);
       setImagePreview(pendingDraft.imagePreview || pendingDraft.generatedImages[0]?.url || null);
     }
+    sessionStorage.setItem('draft-dialog-dismissed', 'true');
     setShowDraftResume(false);
     setPendingDraft(null);
   }, [pendingDraft]);
 
   const handleDiscardDraft = useCallback(() => {
     clearDraft();
+    sessionStorage.setItem('draft-dialog-dismissed', 'true');
     setShowDraftResume(false);
     setPendingDraft(null);
   }, [clearDraft]);
