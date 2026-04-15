@@ -86,6 +86,8 @@ interface ImageGenerationStepProps {
   onSkip: () => void;
   aspectRatio?: AspectRatio;
   onAspectRatioChange?: (ratio: AspectRatio) => void;
+  initialPrompt?: string;
+  aliSourceImages?: string[];
 }
 
 type PromptMode = 'simple' | 'custom';
@@ -147,7 +149,7 @@ Quiet confidence, understated luxury, effortless sophistication. Never overdone,
   return parts.join('. ') + premiumDirectives;
 }
 
-export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange }: ImageGenerationStepProps) {
+export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange, initialPrompt, aliSourceImages }: ImageGenerationStepProps) {
   const navigate = useNavigate();
   const { prompts: allPrompts, recentPrompts: allRecentPrompts, incrementUsage } = useUserPrompts();
   const { logUsage } = useApiUsage();
@@ -158,7 +160,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const [promptDropdownOpen, setPromptDropdownOpen] = useState(false);
   const [promptSearch, setPromptSearch] = useState('');
   const promptDropdownRef = useRef<HTMLDivElement>(null);
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState(initialPrompt || '');
+  const [showAliRef, setShowAliRef] = useState(true);
   const [promptMode, setPromptMode] = useState<PromptMode>('simple');
   const [customAngleText, setCustomAngleText] = useState('');
   const [selectedAngles, setSelectedAngles] = useState<Set<ImageAngle>>(
