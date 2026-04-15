@@ -821,6 +821,7 @@ const Index = () => {
         onDismiss={() => setAliImport(prev => ({ ...prev, open: false }))}
       />
 
+      <div className="flex-1 flex">
         <DashboardSidebar currentView={currentView} onViewChange={handleViewChange} />
 
         <main className="flex-1 overflow-y-auto">
