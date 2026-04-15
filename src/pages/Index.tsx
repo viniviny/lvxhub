@@ -1003,7 +1003,20 @@ const Index = () => {
                       }}
                       onNext={() => { markStepComplete(1); setWizardStep(2); updateStep(2); }}
                       onSkip={() => { markStepComplete(1); setWizardStep(2); updateStep(2); }}
-                    />
+                      initialPrompt={(() => {
+                        const insights = project?.aiData?.imageInsights as any;
+                        if (insights?.importedFrom === 'aliexpress') {
+                          return project?.productData?.title || '';
+                        }
+                        return '';
+                      })()}
+                      aliSourceImages={(() => {
+                        const insights = project?.aiData?.imageInsights as any;
+                        if (insights?.importedFrom === 'aliexpress') {
+                          return insights?.sourceImages || [];
+                        }
+                        return [];
+                      })()}
                   )}
 
                   {/* ═══ STEP 2: DETAILS ═══ */}
