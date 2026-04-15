@@ -6,6 +6,7 @@ import { SaveStatusIndicator } from '@/components/SaveStatusIndicator';
 import { useDraftSave } from '@/hooks/useDraftSave';
 import { DraftResumeDialog } from '@/components/DraftResumeDialog';
 import { AliExpressImportToast } from '@/components/AliExpressImportToast';
+import { ImportedProducts } from '@/components/ImportedProducts';
 import { DraftSavedIndicator } from '@/components/DraftSavedIndicator';
 import { ProductFormData, ProductSize, ProductGender, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
 import { useProductUnderstanding } from '@/hooks/useProductUnderstanding';
@@ -647,6 +648,22 @@ const Index = () => {
     setUsedTitleNames([]);
     clearSpecs();
     clearDraft();
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    projectRestoredRef.current = false;
+    savedToProjectRef.current = new Set();
+    savedToLibraryRef.current = new Set();
+    deletedProjectImageUrlsRef.current = new Set();
+    const { loadProjectFromBackend, setLastOpenedProjectId } = await import('@/services/projectService');
+    const imported = await loadProjectFromBackend(projectId);
+    if (imported) {
+      updateProject(() => imported);
+      setLastOpenedProjectId(imported.id);
+    }
+    setCurrentView('publish');
+  };
+
+  const handleOpenImported = async (projectId: string) => {
+    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setEditingShopifyProductId(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced'); resetUnderstanding(); setUsedTitleNames([]); clearSpecs(); clearDraft();
     if (fileInputRef.current) fileInputRef.current.value = '';
     projectRestoredRef.current = false;
     savedToProjectRef.current = new Set();
@@ -1545,6 +1562,9 @@ const Index = () => {
 
             {/* HISTORY VIEW */}
             {currentView === 'history' && <ProductHistory onEditProduct={handleEditPublishedProduct} />}
+
+            {/* IMPORTED VIEW */}
+            {currentView === 'imported' && <ImportedProducts onOpen={handleOpenImported} />}
 
             {/* LIBRARY VIEW */}
             {currentView === 'library' && <ImageLibrary />}
