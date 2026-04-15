@@ -290,6 +290,26 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     e.target.value = '';
   };
 
+  const handleAliRefClick = useCallback(async (url: string) => {
+    try {
+      toast.loading('Carregando referência...', { id: 'ali-ref' });
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Falha ao carregar imagem');
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onload = () => {
+        setReferenceImage(reader.result as string);
+        toast.success('Referência definida! A IA vai usar esta foto.', { id: 'ali-ref' });
+      };
+      reader.onerror = () => {
+        toast.error('Erro ao carregar imagem', { id: 'ali-ref' });
+      };
+      reader.readAsDataURL(blob);
+    } catch {
+      toast.error('Não foi possível carregar esta imagem como referência', { id: 'ali-ref' });
+    }
+  }, []);
+
   const generateImages = useCallback(async () => {
     if (!prompt.trim() || selectedAngles.size === 0) return;
     lastUsedPromptRef.current = prompt.trim();
@@ -562,22 +582,48 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
               {aliSourceImages.slice(0, 6).map((url, i) => (
                 <div
                   key={i}
-                  onClick={() => window.open(url, '_blank')}
+                  onClick={() => handleAliRefClick(url)}
+                  title="Clique para usar como referência da IA"
                   style={{
                     flexShrink: 0, width: '68px', height: '68px',
                     borderRadius: '7px', overflow: 'hidden',
                     border: '1px solid hsl(var(--primary) / 0.2)',
-                    cursor: 'pointer', transition: 'opacity 0.15s',
+                    cursor: 'pointer',
+                    transition: 'opacity 0.15s, border-color 0.15s, transform 0.15s',
+                    position: 'relative' as const,
                   }}
-                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
-                  onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = 'hsl(var(--primary) / 0.7)';
+                    e.currentTarget.style.transform = 'scale(1.04)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = 'hsl(var(--primary) / 0.2)';
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }}
                 >
-                  <img src={url} alt={`ref-${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }} />
+                  <img
+                    src={url}
+                    alt={`ref-${i}`}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    onError={e => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                  />
+                  {/* Overlay hint */}
+                  <div style={{
+                    position: 'absolute' as const, inset: 0,
+                    background: 'rgba(59,111,212,0)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'background 0.15s',
+                    fontSize: '18px',
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(59,111,212,0.35)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(59,111,212,0)'; }}
+                  >
+                  </div>
                 </div>
               ))}
             </div>
-            <p style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', marginTop: '6px', margin: '6px 0 0 0' }}>
-              💡 Descreva o produto baseado nestas fotos e clique em Regenerar tudo para criar imagens no estilo Rilmont.
+            <p style={{ fontSize: '10px', color: 'hsl(var(--muted-foreground))', marginTop: '8px', lineHeight: 1.4 }}>
+              💡 <strong>Clique numa foto</strong> para usá-la como referência da IA. Depois descreva o produto e clique em <strong>Regenerar tudo</strong>.
             </p>
           </div>
         )}
