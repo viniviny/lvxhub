@@ -811,8 +811,16 @@ const Index = () => {
         onResume={handleResumeDraft}
         onDiscard={handleDiscardDraft}
       />
+      <AliExpressImportToast
+        open={aliImport.open}
+        title={aliImport.title}
+        price={aliImport.price}
+        imageUrl={aliImport.imageUrl}
+        imageCount={aliImport.imageCount}
+        onOpen={handleOpenAliImport}
+        onDismiss={() => setAliImport(prev => ({ ...prev, open: false }))}
+      />
 
-      <div className="flex-1 flex">
         <DashboardSidebar currentView={currentView} onViewChange={handleViewChange} />
 
         <main className="flex-1 overflow-y-auto">
