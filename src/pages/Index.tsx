@@ -661,6 +661,7 @@ const Index = () => {
     setCurrentView('publish');
   };
 
+  const handleEditPublishedProduct = (product: import('@/hooks/usePublishedProducts').PublishedProduct) => {
     // Load published product data into the wizard form
     setForm(prev => ({
       ...prev,
