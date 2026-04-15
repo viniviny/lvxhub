@@ -251,7 +251,36 @@ const Index = () => {
     }
   }, [loadDraft]);
 
-  // ─── Auto-save draft to localStorage on changes ──────────
+  // ─── Realtime: detecta produto importado do AliExpress ────
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      const channel = supabase
+        .channel('ali-import-watcher')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'projects', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            const row = payload.new as any;
+            const insights = row?.ai_data?.imageInsights;
+            if (insights?.importedFrom !== 'aliexpress') return;
+            const sourceImages: string[] = insights?.sourceImages || [];
+            setAliImport({
+              open: true,
+              projectId: row.id,
+              title: row.name || 'Produto AliExpress',
+              price: row?.product_data?.cost || 0,
+              imageUrl: sourceImages[0] || '',
+              imageCount: sourceImages.length,
+              sourceImages,
+            });
+          }
+        )
+        .subscribe();
+      return () => { supabase.removeChannel(channel); };
+    });
+  }, []);
+
   useEffect(() => {
     if (!draftCheckedRef.current) return;
     saveDraft({
