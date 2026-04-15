@@ -627,7 +627,40 @@ const Index = () => {
     await createNewProject();
   };
 
-  const handleEditPublishedProduct = (product: import('@/hooks/usePublishedProducts').PublishedProduct) => {
+  const handleOpenAliImport = async () => {
+    const { projectId } = aliImport;
+    setAliImport(prev => ({ ...prev, open: false }));
+    setForm(initialForm);
+    setImageFile(null);
+    setImagePreview(null);
+    setGeneratedImages([]);
+    setPublishResult(null);
+    setEditingShopifyProductId(null);
+    setWizardStep(1);
+    setCompletedSteps(new Set());
+    setColors([]);
+    setSeoTitle('');
+    setSeoDescription('');
+    setOptimizeImages(false);
+    setImageQualityPreset('balanced');
+    resetUnderstanding();
+    setUsedTitleNames([]);
+    clearSpecs();
+    clearDraft();
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    projectRestoredRef.current = false;
+    savedToProjectRef.current = new Set();
+    savedToLibraryRef.current = new Set();
+    deletedProjectImageUrlsRef.current = new Set();
+    const { loadProjectFromBackend, setLastOpenedProjectId } = await import('@/services/projectService');
+    const imported = await loadProjectFromBackend(projectId);
+    if (imported) {
+      updateProject(imported);
+      setLastOpenedProjectId(imported.id);
+    }
+    setCurrentView('publish');
+  };
+
     // Load published product data into the wizard form
     setForm(prev => ({
       ...prev,
