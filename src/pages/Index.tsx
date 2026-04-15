@@ -5,6 +5,7 @@ import { useProject } from '@/hooks/useProject';
 import { SaveStatusIndicator } from '@/components/SaveStatusIndicator';
 import { useDraftSave } from '@/hooks/useDraftSave';
 import { DraftResumeDialog } from '@/components/DraftResumeDialog';
+import { AliExpressImportToast } from '@/components/AliExpressImportToast';
 import { DraftSavedIndicator } from '@/components/DraftSavedIndicator';
 import { ProductFormData, ProductSize, ProductGender, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
 import { useProductUnderstanding } from '@/hooks/useProductUnderstanding';
@@ -156,6 +157,16 @@ const Index = () => {
   const [pendingDraft, setPendingDraft] = useState<ReturnType<typeof loadDraft>>(null);
   const draftCheckedRef = useRef(false);
 
+  const [aliImport, setAliImport] = useState<{
+    open: boolean;
+    projectId: string;
+    title: string;
+    price?: number;
+    imageUrl?: string;
+    imageCount?: number;
+    sourceImages?: string[];
+  }>({ open: false, projectId: '', title: '' });
+
   const {
     understanding, isAnalyzing, setManualProductType, setManualField,
     analyzeImage, updateFinalFromTitle, reset: resetUnderstanding,
@@ -240,7 +251,36 @@ const Index = () => {
     }
   }, [loadDraft]);
 
-  // ─── Auto-save draft to localStorage on changes ──────────
+  // ─── Realtime: detecta produto importado do AliExpress ────
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      const channel = supabase
+        .channel('ali-import-watcher')
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'projects', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            const row = payload.new as any;
+            const insights = row?.ai_data?.imageInsights;
+            if (insights?.importedFrom !== 'aliexpress') return;
+            const sourceImages: string[] = insights?.sourceImages || [];
+            setAliImport({
+              open: true,
+              projectId: row.id,
+              title: row.name || 'Produto AliExpress',
+              price: row?.product_data?.cost || 0,
+              imageUrl: sourceImages[0] || '',
+              imageCount: sourceImages.length,
+              sourceImages,
+            });
+          }
+        )
+        .subscribe();
+      return () => { supabase.removeChannel(channel); };
+    });
+  }, []);
+
   useEffect(() => {
     if (!draftCheckedRef.current) return;
     saveDraft({
@@ -587,6 +627,40 @@ const Index = () => {
     await createNewProject();
   };
 
+  const handleOpenAliImport = async () => {
+    const { projectId } = aliImport;
+    setAliImport(prev => ({ ...prev, open: false }));
+    setForm(initialForm);
+    setImageFile(null);
+    setImagePreview(null);
+    setGeneratedImages([]);
+    setPublishResult(null);
+    setEditingShopifyProductId(null);
+    setWizardStep(1);
+    setCompletedSteps(new Set());
+    setColors([]);
+    setSeoTitle('');
+    setSeoDescription('');
+    setOptimizeImages(false);
+    setImageQualityPreset('balanced');
+    resetUnderstanding();
+    setUsedTitleNames([]);
+    clearSpecs();
+    clearDraft();
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    projectRestoredRef.current = false;
+    savedToProjectRef.current = new Set();
+    savedToLibraryRef.current = new Set();
+    deletedProjectImageUrlsRef.current = new Set();
+    const { loadProjectFromBackend, setLastOpenedProjectId } = await import('@/services/projectService');
+    const imported = await loadProjectFromBackend(projectId);
+    if (imported) {
+      updateProject(() => imported);
+      setLastOpenedProjectId(imported.id);
+    }
+    setCurrentView('publish');
+  };
+
   const handleEditPublishedProduct = (product: import('@/hooks/usePublishedProducts').PublishedProduct) => {
     // Load published product data into the wizard form
     setForm(prev => ({
@@ -736,6 +810,15 @@ const Index = () => {
         draftDate={pendingDraft?.savedAt ? new Date(pendingDraft.savedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : undefined}
         onResume={handleResumeDraft}
         onDiscard={handleDiscardDraft}
+      />
+      <AliExpressImportToast
+        open={aliImport.open}
+        title={aliImport.title}
+        price={aliImport.price}
+        imageUrl={aliImport.imageUrl}
+        imageCount={aliImport.imageCount}
+        onOpen={handleOpenAliImport}
+        onDismiss={() => setAliImport(prev => ({ ...prev, open: false }))}
       />
 
       <div className="flex-1 flex">
@@ -920,6 +1003,20 @@ const Index = () => {
                       }}
                       onNext={() => { markStepComplete(1); setWizardStep(2); updateStep(2); }}
                       onSkip={() => { markStepComplete(1); setWizardStep(2); updateStep(2); }}
+                      initialPrompt={(() => {
+                        const insights = project?.aiData?.imageInsights as any;
+                        if (insights?.importedFrom === 'aliexpress') {
+                          return project?.productData?.title || '';
+                        }
+                        return '';
+                      })()}
+                      aliSourceImages={(() => {
+                        const insights = project?.aiData?.imageInsights as any;
+                        if (insights?.importedFrom === 'aliexpress') {
+                          return insights?.sourceImages || [];
+                        }
+                        return [];
+                      })()}
                     />
                   )}
 

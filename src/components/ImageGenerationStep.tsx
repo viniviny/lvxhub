@@ -86,6 +86,8 @@ interface ImageGenerationStepProps {
   onSkip: () => void;
   aspectRatio?: AspectRatio;
   onAspectRatioChange?: (ratio: AspectRatio) => void;
+  initialPrompt?: string;
+  aliSourceImages?: string[];
 }
 
 type PromptMode = 'simple' | 'custom';
@@ -147,7 +149,7 @@ Quiet confidence, understated luxury, effortless sophistication. Never overdone,
   return parts.join('. ') + premiumDirectives;
 }
 
-export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange }: ImageGenerationStepProps) {
+export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange, initialPrompt, aliSourceImages }: ImageGenerationStepProps) {
   const navigate = useNavigate();
   const { prompts: allPrompts, recentPrompts: allRecentPrompts, incrementUsage } = useUserPrompts();
   const { logUsage } = useApiUsage();
@@ -158,7 +160,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const [promptDropdownOpen, setPromptDropdownOpen] = useState(false);
   const [promptSearch, setPromptSearch] = useState('');
   const promptDropdownRef = useRef<HTMLDivElement>(null);
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState(initialPrompt || '');
+  const [showAliRef, setShowAliRef] = useState(true);
   const [promptMode, setPromptMode] = useState<PromptMode>('simple');
   const [customAngleText, setCustomAngleText] = useState('');
   const [selectedAngles, setSelectedAngles] = useState<Set<ImageAngle>>(
@@ -526,6 +529,58 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
             </div>
           )}
         </div>
+
+        {/* AliExpress reference panel */}
+        {aliSourceImages && aliSourceImages.length > 0 && showAliRef && (
+          <div style={{
+            border: '1px solid hsl(var(--primary) / 0.2)',
+            borderRadius: '10px',
+            padding: '10px 12px',
+            marginBottom: '10px',
+            background: 'hsl(var(--secondary) / 0.4)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'hsl(var(--foreground))' }}>
+                  📦 Referência AliExpress
+                </span>
+                <span style={{ fontSize: '10px', color: 'hsl(var(--muted-foreground))' }}>
+                  · clique para ampliar
+                </span>
+              </div>
+              <button
+                onClick={() => setShowAliRef(false)}
+                style={{
+                  background: 'none', border: 'none',
+                  color: 'hsl(var(--muted-foreground))',
+                  cursor: 'pointer', fontSize: '16px', lineHeight: 1,
+                  display: 'flex', alignItems: 'center',
+                }}
+              >×</button>
+            </div>
+            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
+              {aliSourceImages.slice(0, 6).map((url, i) => (
+                <div
+                  key={i}
+                  onClick={() => window.open(url, '_blank')}
+                  style={{
+                    flexShrink: 0, width: '68px', height: '68px',
+                    borderRadius: '7px', overflow: 'hidden',
+                    border: '1px solid hsl(var(--primary) / 0.2)',
+                    cursor: 'pointer', transition: 'opacity 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
+                  onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                >
+                  <img src={url} alt={`ref-${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }} />
+                </div>
+              ))}
+            </div>
+            <p style={{ fontSize: '11px', color: 'hsl(var(--muted-foreground))', marginTop: '6px', margin: '6px 0 0 0' }}>
+              💡 Descreva o produto baseado nestas fotos e clique em Regenerar tudo para criar imagens no estilo Rilmont.
+            </p>
+          </div>
+        )}
 
         {/* 3. Prompt with dropdown selector */}
         <div>
