@@ -662,6 +662,22 @@ const Index = () => {
     setCurrentView('publish');
   };
 
+  const handleOpenImported = async (projectId: string) => {
+    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setEditingShopifyProductId(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced'); resetUnderstanding(); setUsedTitleNames([]); clearSpecs(); clearDraft();
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    projectRestoredRef.current = false;
+    savedToProjectRef.current = new Set();
+    savedToLibraryRef.current = new Set();
+    deletedProjectImageUrlsRef.current = new Set();
+    const { loadProjectFromBackend, setLastOpenedProjectId } = await import('@/services/projectService');
+    const imported = await loadProjectFromBackend(projectId);
+    if (imported) {
+      updateProject(() => imported);
+      setLastOpenedProjectId(imported.id);
+    }
+    setCurrentView('publish');
+  };
+
   const handleEditPublishedProduct = (product: import('@/hooks/usePublishedProducts').PublishedProduct) => {
     // Load published product data into the wizard form
     setForm(prev => ({
