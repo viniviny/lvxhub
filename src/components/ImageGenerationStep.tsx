@@ -290,6 +290,26 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     e.target.value = '';
   };
 
+  const handleAliRefClick = useCallback(async (url: string) => {
+    try {
+      toast.loading('Carregando referência...', { id: 'ali-ref' });
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Falha ao carregar imagem');
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onload = () => {
+        setReferenceImage(reader.result as string);
+        toast.success('Referência definida! A IA vai usar esta foto.', { id: 'ali-ref' });
+      };
+      reader.onerror = () => {
+        toast.error('Erro ao carregar imagem', { id: 'ali-ref' });
+      };
+      reader.readAsDataURL(blob);
+    } catch {
+      toast.error('Não foi possível carregar esta imagem como referência', { id: 'ali-ref' });
+    }
+  }, []);
+
   const generateImages = useCallback(async () => {
     if (!prompt.trim() || selectedAngles.size === 0) return;
     lastUsedPromptRef.current = prompt.trim();
