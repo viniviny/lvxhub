@@ -655,7 +655,7 @@ const Index = () => {
     const { loadProjectFromBackend, setLastOpenedProjectId } = await import('@/services/projectService');
     const imported = await loadProjectFromBackend(projectId);
     if (imported) {
-      updateProject(imported);
+      updateProject(() => imported);
       setLastOpenedProjectId(imported.id);
     }
     setCurrentView('publish');
