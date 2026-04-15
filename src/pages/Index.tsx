@@ -6,6 +6,7 @@ import { SaveStatusIndicator } from '@/components/SaveStatusIndicator';
 import { useDraftSave } from '@/hooks/useDraftSave';
 import { DraftResumeDialog } from '@/components/DraftResumeDialog';
 import { AliExpressImportToast } from '@/components/AliExpressImportToast';
+import { ImportedProducts } from '@/components/ImportedProducts';
 import { DraftSavedIndicator } from '@/components/DraftSavedIndicator';
 import { ProductFormData, ProductSize, ProductGender, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
 import { useProductUnderstanding } from '@/hooks/useProductUnderstanding';
@@ -1545,6 +1546,9 @@ const Index = () => {
 
             {/* HISTORY VIEW */}
             {currentView === 'history' && <ProductHistory onEditProduct={handleEditPublishedProduct} />}
+
+            {/* IMPORTED VIEW */}
+            {currentView === 'imported' && <ImportedProducts onOpen={handleOpenImported} />}
 
             {/* LIBRARY VIEW */}
             {currentView === 'library' && <ImageLibrary />}
