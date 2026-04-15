@@ -1017,6 +1017,7 @@ const Index = () => {
                         }
                         return [];
                       })()}
+                    />
                   )}
 
                   {/* ═══ STEP 2: DETAILS ═══ */}
