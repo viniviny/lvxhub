@@ -5,6 +5,7 @@ import { useProject } from '@/hooks/useProject';
 import { SaveStatusIndicator } from '@/components/SaveStatusIndicator';
 import { useDraftSave } from '@/hooks/useDraftSave';
 import { DraftResumeDialog } from '@/components/DraftResumeDialog';
+import { AliExpressImportToast } from '@/components/AliExpressImportToast';
 import { DraftSavedIndicator } from '@/components/DraftSavedIndicator';
 import { ProductFormData, ProductSize, ProductGender, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
 import { useProductUnderstanding } from '@/hooks/useProductUnderstanding';
