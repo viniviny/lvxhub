@@ -157,6 +157,16 @@ const Index = () => {
   const [pendingDraft, setPendingDraft] = useState<ReturnType<typeof loadDraft>>(null);
   const draftCheckedRef = useRef(false);
 
+  const [aliImport, setAliImport] = useState<{
+    open: boolean;
+    projectId: string;
+    title: string;
+    price?: number;
+    imageUrl?: string;
+    imageCount?: number;
+    sourceImages?: string[];
+  }>({ open: false, projectId: '', title: '' });
+
   const {
     understanding, isAnalyzing, setManualProductType, setManualField,
     analyzeImage, updateFinalFromTitle, reset: resetUnderstanding,
