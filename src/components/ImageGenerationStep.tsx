@@ -108,6 +108,7 @@ function buildPremiumPrompt(userPrompt: string, modelDesc: string, bgDesc: strin
   const base = userPrompt.trim();
   const parts = [base, modelDesc, bgDesc].filter(Boolean);
   if (!modelDesc && !bgDesc) return parts.join('. ');
+  const bgFidelityRule = bgDesc ? `\n\nBACKGROUND FIDELITY RULE: The background MUST be EXACTLY as described — replicate the setting, colors, lighting, and atmosphere faithfully. Do NOT substitute, simplify, or deviate from the specified background. If a reference image was provided for the background, the result must be visually identical to that reference.` : '';
   const premiumDirectives = `
 
 PHOTOGRAPHY DIRECTION:
@@ -120,7 +121,7 @@ The model's face must be photorealistic with natural skin texture, visible pores
 The product is the absolute HERO — sharpest element in frame, accurate color and texture, every construction detail visible. The viewer must want to buy it immediately.
 
 CRITICAL FRAMING RULE: The ENTIRE product must be visible in the frame — never crop or cut off any part of the garment. Show the product from top to bottom, including collar, hem, sleeves, and all edges. Leave adequate breathing room around the product. If the model is wearing the product, frame the shot to include the full garment with generous margins. The product must NEVER be cut off at any edge of the image.
-
+${bgFidelityRule}
 Quiet confidence, understated luxury, effortless sophistication. Never overdone, never cheap-looking.`;
   return parts.join('. ') + premiumDirectives;
 }

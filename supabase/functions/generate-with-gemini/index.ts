@@ -197,7 +197,11 @@ async function callGeminiImage(
   // Add preset reference images first so the model sees them before the text instruction
   if (presetImages && presetImages.length > 0) {
     for (const pi of presetImages) {
-      parts.push({ text: `[VISUAL REFERENCE — ${pi.label}] Study this reference image carefully. Match the same type/style but ELEVATE the quality to premium fashion photography level. Better lighting, richer detail, more cinematic presence.` });
+      const isBg = pi.label === 'BACKGROUND STYLE';
+      const instruction = isBg
+        ? `[MANDATORY BACKGROUND REFERENCE — ${pi.label}] You MUST replicate this EXACT background environment, setting, colors, textures, lighting, and atmosphere. The generated image background must be virtually identical to this reference. Do NOT change the background style, do NOT simplify it, do NOT substitute it with a different setting. Copy it faithfully.`
+        : `[VISUAL REFERENCE — ${pi.label}] Study this reference image carefully. Match the same type/style but ELEVATE the quality to premium fashion photography level. Better lighting, richer detail, more cinematic presence.`;
+      parts.push({ text: instruction });
       parts.push({ inlineData: { mimeType: pi.mimeType, data: pi.base64 } });
     }
   }
