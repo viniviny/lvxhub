@@ -185,6 +185,74 @@ async function callGeminiText(apiKey: string, model: string, messages: { role: s
   return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
+// ─── Validation: verify generated image matches references ───
+
+async function validateGeneratedImage(
+  apiKey: string,
+  generatedBase64: string,
+  generatedMimeType: string,
+  presetImages?: { base64: string; mimeType: string; label: string }[],
+  referenceImage?: string,
+  referenceMimeType?: string,
+): Promise<{ isValid: boolean; reason?: string }> {
+  if (!presetImages?.length && !referenceImage) return { isValid: true };
+
+  const parts: any[] = [];
+  parts.push({ text: `You are a strict quality control inspector for e-commerce product photography.
+
+Compare the GENERATED IMAGE against the PROVIDED REFERENCE IMAGES and answer with ONLY a JSON object.
+
+CHECK EACH APPLICABLE CRITERION:
+- "background_match": Does the generated background match the background reference? (true/false/null if no bg reference)
+- "model_match": Does the model type/style match the model reference? (true/false/null if no model reference)  
+- "product_intact": Is the product fully visible without cropping? (true/false)
+- "overall_valid": true ONLY if ALL non-null checks are true
+
+Respond with ONLY valid JSON, no markdown:
+{"background_match": bool|null, "model_match": bool|null, "product_intact": bool, "overall_valid": bool, "reason": "brief explanation if invalid"}` });
+
+  parts.push({ text: '[GENERATED IMAGE — evaluate this]' });
+  parts.push({ inlineData: { mimeType: generatedMimeType, data: generatedBase64 } });
+
+  if (presetImages) {
+    for (const pi of presetImages) {
+      const label = pi.label === 'BACKGROUND STYLE' ? 'BACKGROUND REFERENCE' : 'MODEL REFERENCE';
+      parts.push({ text: `[${label} — compare against this]` });
+      parts.push({ inlineData: { mimeType: pi.mimeType, data: pi.base64 } });
+    }
+  }
+
+  if (referenceImage && referenceMimeType) {
+    parts.push({ text: '[PRODUCT REFERENCE — the product should match this]' });
+    parts.push({ inlineData: { mimeType: referenceMimeType, data: referenceImage } });
+  }
+
+  try {
+    const url = `${GEMINI_BASE}/${GEMINI_TEXT_MODEL}:generateContent?key=${apiKey}`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts }],
+        generationConfig: { responseMimeType: 'application/json' },
+      }),
+    });
+
+    if (!res.ok) {
+      console.warn('Validation call failed, accepting image:', res.status);
+      return { isValid: true };
+    }
+
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const result = JSON.parse(text);
+    return { isValid: !!result.overall_valid, reason: result.reason };
+  } catch (e) {
+    console.warn('Validation parse error, accepting image:', e);
+    return { isValid: true };
+  }
+}
+
 async function callGeminiImage(
   apiKey: string,
   prompt: string,
@@ -378,7 +446,35 @@ Do NOT substitute, simplify, or deviate. The generated background must be virtua
         presetImages.push({ base64: bgPresetImage, mimeType: bgPresetMimeType, label: 'BACKGROUND STYLE' });
       }
 
-      const imageResult = await callGeminiImage(GEMINI_API_KEY, fullPrompt, referenceImage, referenceMimeType, presetImages.length > 0 ? presetImages : undefined);
+      // Generate with validation loop (max 2 retries)
+      const hasReferences = presetImages.length > 0 || (referenceImage && referenceMimeType);
+      const MAX_ATTEMPTS = hasReferences ? 3 : 1;
+      let imageResult: { base64: string; mimeType: string } | null = null;
+
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        const result = await callGeminiImage(GEMINI_API_KEY, fullPrompt, referenceImage, referenceMimeType, presetImages.length > 0 ? presetImages : undefined);
+
+        if (attempt < MAX_ATTEMPTS && hasReferences) {
+          const validation = await validateGeneratedImage(
+            GEMINI_API_KEY, result.base64, result.mimeType,
+            presetImages.length > 0 ? presetImages : undefined,
+            referenceImage, referenceMimeType
+          );
+
+          if (!validation.isValid) {
+            console.log(`Attempt ${attempt}/${MAX_ATTEMPTS} rejected: ${validation.reason || 'mismatch'}. Retrying...`);
+            continue;
+          }
+        }
+
+        imageResult = result;
+        break;
+      }
+
+      if (!imageResult) {
+        // Last attempt — accept whatever we get
+        imageResult = await callGeminiImage(GEMINI_API_KEY, fullPrompt, referenceImage, referenceMimeType, presetImages.length > 0 ? presetImages : undefined);
+      }
 
       // Try to upload to Supabase Storage
       const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
