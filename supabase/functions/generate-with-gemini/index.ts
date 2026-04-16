@@ -194,26 +194,79 @@ async function callGeminiImage(
 ) {
   const parts: any[] = [];
 
-  // Add preset reference images first so the model sees them before the text instruction
-  if (presetImages && presetImages.length > 0) {
-    for (const pi of presetImages) {
-      const isBg = pi.label === 'BACKGROUND STYLE';
-      const instruction = isBg
-        ? `[MANDATORY BACKGROUND REFERENCE — ${pi.label}] You MUST replicate this EXACT background environment, setting, colors, textures, lighting, and atmosphere. The generated image background must be virtually identical to this reference. Do NOT change the background style, do NOT simplify it, do NOT substitute it with a different setting. Copy it faithfully.`
-        : `[VISUAL REFERENCE — ${pi.label}] Study this reference image carefully. Match the same type/style but ELEVATE the quality to premium fashion photography level. Better lighting, richer detail, more cinematic presence.`;
-      parts.push({ text: instruction });
-      parts.push({ inlineData: { mimeType: pi.mimeType, data: pi.base64 } });
+  const hasProduct = referenceImage && referenceMimeType;
+  const hasModel = presetImages?.some(p => p.label === 'MODEL TYPE');
+  const hasBg = presetImages?.some(p => p.label === 'BACKGROUND STYLE');
+  const isComposition = hasProduct && (hasModel || hasBg);
+
+  if (isComposition) {
+    // ─── COMPOSITION MODE: combine multiple reference images ───
+    parts.push({ text: `You are an advanced image composition AI.
+Your task is to COMBINE elements from multiple reference images into a single realistic product photo.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+MANDATORY RULES (STRICT)
+- Use the EXACT product from the product reference image
+- Do NOT modify the product design
+- Do NOT change colors or structure
+${hasModel ? '- Use the EXACT model type/style from the model reference image\n- Keep face, body, and proportions consistent' : '- No model — show product only'}
+${hasBg ? '- Use the EXACT background from the background reference image\n- Do NOT generate a new background\n- Do NOT alter the environment' : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━
+COMPOSITION RULES
+- Place the product naturally${hasModel ? ' on the model' : ''}
+- Maintain realistic proportions
+- Keep product fully visible — no cropping
+- Clean framing with safe margins
+- Centered composition
+
+━━━━━━━━━━━━━━━━━━━━━━━
+FORBIDDEN
+${hasModel ? '- generating a new model (use reference)' : ''}
+${hasBg ? '- generating a new background (use reference)' : ''}
+- changing the product design, colors, or textures
+- mixing styles from different references
+- cropping or cutting the product
+━━━━━━━━━━━━━━━━━━━━━━━` });
+
+    // Add reference images with clear labels
+    if (presetImages) {
+      for (const pi of presetImages) {
+        const label = pi.label === 'BACKGROUND STYLE' ? 'BACKGROUND REFERENCE' : 'MODEL REFERENCE';
+        parts.push({ text: `[${label}] Use this EXACTLY as the ${pi.label === 'BACKGROUND STYLE' ? 'background environment' : 'model type/style'}. Do NOT deviate.` });
+        parts.push({ inlineData: { mimeType: pi.mimeType, data: pi.base64 } });
+      }
     }
-  }
 
-  // Add product reference image
-  if (referenceImage && referenceMimeType) {
-    parts.push({ text: '[PRODUCT REFERENCE] This is the exact product to photograph. Keep all details identical.' });
-    parts.push({ inlineData: { mimeType: referenceMimeType, data: referenceImage } });
-  }
+    parts.push({ text: '[PRODUCT REFERENCE] This is the EXACT product to use. Keep all details identical — colors, patterns, texture, shape.' });
+    parts.push({ inlineData: { mimeType: referenceMimeType!, data: referenceImage! } });
 
-  // Add the main prompt last
-  parts.push({ text: prompt });
+    parts.push({ text: `━━━━━━━━━━━━━━━━━━━━━━━
+FINAL INSTRUCTION
+Combine all provided reference images into a single realistic, high-end product photo. Preserve every element exactly as shown in its reference.
+
+${prompt}` });
+
+  } else {
+    // ─── STANDARD MODE: single/no reference ───
+    if (presetImages && presetImages.length > 0) {
+      for (const pi of presetImages) {
+        const isBg = pi.label === 'BACKGROUND STYLE';
+        const instruction = isBg
+          ? `[MANDATORY BACKGROUND REFERENCE — ${pi.label}] You MUST replicate this EXACT background environment, setting, colors, textures, lighting, and atmosphere. The generated image background must be virtually identical to this reference. Do NOT change the background style, do NOT simplify it, do NOT substitute it with a different setting. Copy it faithfully.`
+          : `[VISUAL REFERENCE — ${pi.label}] Study this reference image carefully. Match the same type/style but ELEVATE the quality to premium fashion photography level. Better lighting, richer detail, more cinematic presence.`;
+        parts.push({ text: instruction });
+        parts.push({ inlineData: { mimeType: pi.mimeType, data: pi.base64 } });
+      }
+    }
+
+    if (hasProduct) {
+      parts.push({ text: '[PRODUCT REFERENCE] This is the exact product to photograph. Keep all details identical.' });
+      parts.push({ inlineData: { mimeType: referenceMimeType!, data: referenceImage! } });
+    }
+
+    parts.push({ text: prompt });
+  }
 
   const url = `${GEMINI_BASE}/${GEMINI_IMAGE_MODEL}:generateContent?key=${apiKey}`;
   const res = await fetch(url, {
@@ -240,7 +293,6 @@ async function callGeminiImage(
   const candidate = data.candidates?.[0]?.content?.parts;
   if (!candidate) throw { status: 500, message: 'No image generated' };
 
-  // Find the image part
   const imagePart = candidate.find((p: any) => p.inlineData);
   if (imagePart) {
     return {
