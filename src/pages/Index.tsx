@@ -176,14 +176,26 @@ const Index = () => {
   const { specs, isGeneratingSpecs, generateSpecs, clearSpecs, restoreSpecs } = useProductSpecs();
 
   // ─── Restore project state on load ────────────────────────
+  const sanitizeImportedHtml = (html: string): string => {
+    if (!html) return '';
+    // Strip all HTML tags
+    const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    // If after stripping we only have generic AliExpress boilerplate, return empty
+    if (!text || text.length < 10 || /^(Description|report|View more)\s*$/i.test(text)) return '';
+    return text;
+  };
+
   useEffect(() => {
     if (!project || projectRestoredRef.current) return;
     projectRestoredRef.current = true;
 
     const pd = project.productData;
+    const rawDesc = pd.description || '';
+    // If description contains HTML (from AliExpress import), sanitize it
+    const cleanDesc = rawDesc.includes('<') ? sanitizeImportedHtml(rawDesc) : rawDesc;
     setForm({
       title: pd.title || '',
-      description: pd.description || '',
+      description: cleanDesc,
       price: pd.price || 0,
       compareAtPrice: pd.compareAtPrice ?? null,
       cost: pd.cost ?? null,
