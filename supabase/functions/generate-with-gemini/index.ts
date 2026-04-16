@@ -228,6 +228,7 @@ async function callGeminiImage(
     console.error(`Gemini image error:`, res.status, errText);
     if (res.status === 429) throw { status: 429, message: 'Rate limit exceeded' };
     if (res.status === 403) throw { status: 403, message: 'Invalid API key' };
+    if (res.status === 503) throw { status: 503, message: 'Model temporarily unavailable due to high demand' };
     throw { status: res.status, message: errText };
   }
 
