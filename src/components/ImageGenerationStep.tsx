@@ -30,9 +30,9 @@ interface AngleOption {
 }
 
 const ANGLE_OPTIONS: AngleOption[] = [
-  { id: 'frente', label: 'Frente', defaultChecked: true },
-  { id: 'costas', label: 'Costas', defaultChecked: true },
-  { id: 'detalhe', label: 'Detalhe', defaultChecked: true },
+  { id: 'frente', label: 'Frente', defaultChecked: false },
+  { id: 'costas', label: 'Costas', defaultChecked: false },
+  { id: 'detalhe', label: 'Detalhe', defaultChecked: false },
   { id: 'lateral', label: 'Lateral', defaultChecked: false },
   { id: 'flat_lay', label: 'Flat lay', defaultChecked: false },
   { id: 'textura', label: 'Textura', defaultChecked: false },
