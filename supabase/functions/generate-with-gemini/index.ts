@@ -279,94 +279,42 @@ serve(async (req) => {
         });
       }
 
-      let fullPrompt = isCustomPrompt
-        ? prompt
-        : `Professional e-commerce product photo. ${prompt}`;
+      let fullPrompt = prompt;
 
+      // Add angle instruction
       if (angle && angle !== 'personalizado' && ANGLE_SUFFIXES[angle]) {
-        fullPrompt += ` ${ANGLE_SUFFIXES[angle]}`;
+        fullPrompt += `\n\n${ANGLE_SUFFIXES[angle]}`;
       } else if (angle === 'personalizado' && customAngleText) {
-        fullPrompt += ` ${customAngleText}`;
+        fullPrompt += `\n\nMANDATORY ANGLE: ${customAngleText}`;
       }
 
+      // Add aspect ratio instruction
       if (aspectRatio && RATIO_PROMPTS[aspectRatio]) {
-        fullPrompt += ` ${RATIO_PROMPTS[aspectRatio]}`;
+        fullPrompt += `\n\n${RATIO_PROMPTS[aspectRatio]}`;
       }
 
-      // Build preset reference images array
-      const presetImages: { base64: string; mimeType: string; label: string }[] = [];
-      if (modelPresetImage && modelPresetMimeType) {
-        presetImages.push({ base64: modelPresetImage, mimeType: modelPresetMimeType, label: 'MODEL TYPE' });
-      }
-      if (bgPresetImage && bgPresetMimeType) {
-        presetImages.push({ base64: bgPresetImage, mimeType: bgPresetMimeType, label: 'BACKGROUND STYLE' });
-      }
-
-      // When presets are selected, enforce adherence + premium quality
-      if (hasPresets) {
+      // Add model interaction directives when model presets are selected
+      if (modelPresetImage) {
         fullPrompt += `
 
-You are an elite fashion photographer with TOTAL CREATIVE FREEDOM to create a premium editorial e-commerce image.
+MODEL INTERACTION & POSE:
+The model must interact with the product naturally. Choose a purposeful pose that highlights the product.
+VARIETY SEED #${Math.floor(Math.random() * 9999)} — pick a DIFFERENT pose each time:
+- Adjusting collar/lapel, hands in pockets, walking mid-stride, turning to show side cut
+- Rolling sleeves, leaning casually, mid-laugh candid moment, one hand on hip
+- Arms crossed showing chest fit, stepping forward dynamically, looking over shoulder
+NEVER use a stiff mannequin pose. The model must feel ALIVE — a candid editorial moment.
+Face: photorealistic with natural skin texture, visible pores, realistic eye reflections.
+Expression must match the product mood — relaxed for casual, sharp for formal, edgy for streetwear.`;
+      }
 
-NON-NEGOTIABLE FOUNDATIONS (these override everything else):
-- The MANDATORY ANGLE specified above is the EXACT camera angle you MUST use. It defines where the camera is positioned relative to the subject. Do NOT change it.
-- The MANDATORY FORMAT specified above is the EXACT aspect ratio. Compose and frame accordingly. Do NOT crop differently.
-- These are the technical base — your creative freedom applies to pose, expression, lighting mood, and interaction with the product WITHIN these constraints.
+      // Add background fidelity when background preset is selected
+      if (bgPresetImage) {
+        fullPrompt += `
 
-VISUAL QUALITY REQUIREMENTS:
-- Ultra high resolution, 8K detail, razor sharp focus throughout
-- Professional studio-grade lighting: soft key light with subtle rim light for depth and dimension
-- Rich, true-to-life color accuracy with cinematic color grading
-- Fabric must show realistic texture, weight, drape, and natural folds
-- Subtle depth of field to separate subject from background
-- Magazine-cover level retouching: flawless but natural
-
-POSES & INTERACTION WITH THE PRODUCT — TOTAL CREATIVE FREEDOM:
-You have COMPLETE creative liberty to choose poses that STRATEGICALLY HIGHLIGHT THE PRODUCT. The model must INTERACT with the garment in a natural, intentional way.
-
-VARIETY SEED #${Math.floor(Math.random() * 9999)} — USE THIS TO ENSURE UNIQUENESS:
-For THIS specific generation, you MUST pick a DIFFERENT pose from the list below. Use the random seed above to select — do NOT default to the same safe pose every time.
-
-POSE OPTIONS (pick ONE that you haven't used recently — be unpredictable):
-1. Adjusting collar/lapel to show construction quality
-2. Buttoning or unbuttoning to reveal interior lining
-3. Rolling up sleeves to show fabric weight
-4. Hands in pockets, relaxed drape
-5. Walking mid-stride, natural movement
-6. Turning slightly to reveal side cut
-7. Gesturing naturally showing sleeve/shoulder fit
-8. Pulling garment to show stretch/structure
-9. Leaning casually against a surface
-10. Looking over shoulder, back details visible
-11. Arms crossed, chest fit emphasis
-12. One hand on hip, confident stance
-13. Adjusting watch/cuff, lifestyle detail
-14. Mid-laugh candid moment
-15. Stepping forward dynamically
-
-NEVER use a stiff, lifeless, arms-at-sides mannequin pose. Every pose must feel PURPOSEFUL — like the photographer specifically directed it to showcase a feature of the product.
-
-MODEL FACE & EXPRESSION — NATURAL & VARIED:
-- Photorealistic face quality: visible pores, natural skin texture, realistic eye reflections
-- Expression must match the MOOD: casual outfit → relaxed confident vibe; formal blazer → sharp composed presence; streetwear → edgy cool energy
-- Each generation must feel like a DIFFERENT MOMENT — unique micro-pose, unique expression, unique energy
-- The model should feel ALIVE — captured in a candid editorial moment, never a frozen stock photo
-
-PRESET ADHERENCE:
-- Match the reference model's age range, build, and grooming — but with FULL creative variety in pose, expression, and interaction with the product
-- Match the reference background's style and mood — enhanced with richer depth and cinematic lighting
-- The PRODUCT is the HERO: sharpest element, accurate color/texture/construction, always the focal point
-
-PREMIUM BRAND IDENTITY — THIS IS NON-NEGOTIABLE:
-- The final image must be INDISTINGUISHABLE from a real campaign photo by Zara, COS, Mr Porter, or Acne Studios
-- Think: understated luxury, effortless sophistication, editorial restraint — never overdone, never cheap-looking
-- The model must exude QUIET CONFIDENCE — the kind of person who wears expensive clothes without trying to show off
-- Body language: relaxed but intentional, never stiff or awkward. Think "caught mid-moment by a fashion photographer" — not "posing for a passport photo"
-- Color palette must feel curated and cohesive — product, skin tones, and background should harmonize like a styled editorial spread
-- Avoid anything that screams "AI generated": no plastic skin, no uncanny symmetry, no floating limbs, no impossible lighting angles
-- The image should make someone WANT to buy the product immediately — aspirational but attainable.`;
-      } else {
-        fullPrompt += ' Professional studio lighting, clean white background, ultra high resolution, sharp detail, premium fashion catalog quality, cinematic color grading, 8K detail.';
+BACKGROUND FIDELITY (NON-NEGOTIABLE):
+The background MUST be EXACTLY as shown in the reference image — replicate the setting, colors, textures, lighting, and atmosphere faithfully.
+Do NOT substitute, simplify, or deviate. The generated background must be virtually identical to the reference.`;
       }
 
       const imageResult = await callGeminiImage(GEMINI_API_KEY, fullPrompt, referenceImage, referenceMimeType, presetImages.length > 0 ? presetImages : undefined);
