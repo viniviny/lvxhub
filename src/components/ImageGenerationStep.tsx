@@ -579,7 +579,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
               >×</button>
             </div>
             <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
-              {aliSourceImages.slice(0, 6).map((url, i) => (
+              {aliSourceImages.map((url, i) => (
                 <div
                   key={i}
                   onClick={() => handleAliRefClick(url)}
