@@ -490,7 +490,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
 
           {referenceImage ? (
             <div className="relative rounded-lg overflow-hidden border border-border aspect-square">
-              <img src={referenceImage} alt="Referência" className="w-full h-full object-cover" />
+              <img src={referenceImage} alt="Referência" className="w-full h-full object-contain bg-black/5" />
               <button onClick={() => setReferenceImage(null)} className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 backdrop-blur-sm text-white flex items-center justify-center hover:bg-destructive transition-colors">
                 <X className="w-3 h-3" />
               </button>
@@ -515,7 +515,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
               {aliSourceImages.map((url, i) => (
                 <div key={i} onClick={() => handleAliRefClick(url)} title="Clique para usar como referência"
                   className="relative rounded-md overflow-hidden border border-border/40 cursor-pointer hover:border-primary/50 hover:scale-[1.03] transition-all aspect-square">
-                  <img src={url} alt={`ref-${i}`} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }} />
+                  <img src={url} alt={`ref-${i}`} className="w-full h-full object-contain bg-black/5" onError={e => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }} />
                 </div>
               ))}
             </div>
@@ -838,7 +838,7 @@ function ImageGrid({ images, generatingAngles, onImagesChange, onRegenerate, onR
               ${selectMode && selectedIds.has(img.id) ? 'ring-2 ring-primary' : ''}`}
               style={{ aspectRatio: aspectRatio === '4:5' ? '4/5' : '1/1' }}
               onClick={() => selectMode ? toggleSelect(img.id) : setPreviewImage(img)}>
-              <img src={img.url} alt={label} className={`w-full h-full object-cover transition-all duration-300 ${img.justCompleted ? 'animate-fade-in' : ''}`} />
+              <img src={img.url} alt={label} className={`w-full h-full object-contain transition-all duration-300 ${img.justCompleted ? 'animate-fade-in' : ''}`} />
 
               {/* Regenerating overlay */}
               {(isRegen || isGen) && (

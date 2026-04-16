@@ -149,7 +149,7 @@ function PreviewContent({ form, images, imagePreview, storeDomain, currencySymbo
                 key={mainImage}
                 src={currentImg}
                 alt={form.title}
-                className="w-full h-full object-cover animate-[fadeImg_0.2s_ease-out]"
+                className="w-full h-full object-contain animate-[fadeImg_0.2s_ease-out]"
                 style={{ animationFillMode: 'forwards' }}
               />
             ) : (
@@ -204,7 +204,7 @@ function PreviewContent({ form, images, imagePreview, storeDomain, currencySymbo
                   onClick={() => setMainImage(i)}
                   className={`w-14 h-14 rounded-md overflow-hidden border-2 flex-shrink-0 transition-all ${i === mainImage ? 'border-[hsl(220,13%,13%)] opacity-100' : 'border-transparent opacity-60 hover:opacity-100'}`}
                 >
-                  <img src={img.url} alt={img.label} className="w-full h-full object-cover" />
+                  <img src={img.url} alt={img.label} className="w-full h-full object-contain" />
                 </button>
               ))}
             </div>

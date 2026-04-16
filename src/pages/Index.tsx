@@ -1730,7 +1730,7 @@ const Index = () => {
                   <h2 className="font-display text-2xl font-bold text-foreground mb-2">Produto Publicado!</h2>
 
                   {publishResult.imageUrl && (
-                    <img src={publishResult.imageUrl} alt={publishResult.title} className="w-24 h-24 mx-auto rounded-lg border border-border object-cover my-4" />
+                    <img src={publishResult.imageUrl} alt={publishResult.title} className="w-24 h-24 mx-auto rounded-lg border border-border object-contain my-4" />
                   )}
 
                   <p className="text-foreground font-semibold text-lg">{publishResult.title}</p>
