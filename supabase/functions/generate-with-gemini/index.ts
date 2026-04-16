@@ -177,6 +177,7 @@ async function callGeminiText(apiKey: string, model: string, messages: { role: s
     console.error(`Gemini ${model} error:`, res.status, errText);
     if (res.status === 429) throw { status: 429, message: 'Rate limit exceeded' };
     if (res.status === 403) throw { status: 403, message: 'Invalid API key or access denied' };
+    if (res.status === 503) throw { status: 503, message: 'Model temporarily unavailable due to high demand' };
     throw { status: res.status, message: errText };
   }
 
