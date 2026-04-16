@@ -268,50 +268,75 @@ async function callGeminiImage(
   const isComposition = hasProduct && (hasModel || hasBg);
 
   if (isComposition) {
-    // ─── COMPOSITION MODE: combine multiple reference images ───
-    parts.push({ text: `You are an advanced image composition AI.
-Your task is to COMBINE elements from multiple reference images into a single realistic product photo.
+    // ─── COMPOSITION MODE: high-end editorial product photography ───
+    parts.push({ text: `You are a high-end fashion editorial image generation AI.
+Your goal is to create a premium product image with strong visual quality and creative direction.
 
 ━━━━━━━━━━━━━━━━━━━━━━━
-MANDATORY RULES (STRICT)
-- Use the EXACT product from the product reference image
-- Do NOT modify the product design
-- Do NOT change colors or structure
-${hasModel ? '- Use the EXACT model type/style from the model reference image\n- Keep face, body, and proportions consistent' : '- No model — show product only'}
-${hasBg ? '- Use the EXACT background from the background reference image\n- Do NOT generate a new background\n- Do NOT alter the environment' : ''}
+MODEL USAGE (VERY IMPORTANT)
+${hasModel ? `- Use the provided model image ONLY as a reference for: face, hairstyle, body type, proportions
+- DO NOT use the background from the model image
+- DO NOT replicate the original pose from the model image
+- DO NOT copy the original scene from the model image
+- The model must be recreated in a NEW scene` : '- No model — show product only (invisible mannequin or flat lay)'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━
-COMPOSITION RULES
-- Place the product naturally${hasModel ? ' on the model' : ''}
-- Maintain realistic proportions
-- Keep product fully visible — no cropping
-- Clean framing with safe margins
-- Centered composition
+BACKGROUND (MANDATORY)
+${hasBg ? `- Use the selected background reference EXACTLY as shown
+- The environment must match the background reference image
+- Clean, consistent, and realistic` : '- White seamless studio background, soft diffused lighting'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━
-FORBIDDEN
-${hasModel ? '- generating a new model (use reference)' : ''}
-${hasBg ? '- generating a new background (use reference)' : ''}
-- changing the product design, colors, or textures
-- mixing styles from different references
-- cropping or cutting the product
+PRODUCT RULES
+- Use the exact product from the product reference (shape, color, material, texture, pattern)
+- Do NOT modify the product design in any way
+- Product must be clearly visible and fully in frame
+- No cropping — show the ENTIRE product
+
+━━━━━━━━━━━━━━━━━━━━━━━
+CREATIVE FREEDOM (IMPORTANT)
+${hasModel ? `- Create natural fashion poses — editorial movements, relaxed or confident posture
+- Realistic fashion expressions that match the product mood
+- The pose must look natural and high-end
+- NEVER use stiff or mannequin-like poses
+- Each generation should have a DIFFERENT pose` : '- Clean product presentation, professional angles'}
+
+━━━━━━━━━━━━━━━━━━━━━━━
+STYLE
+- Premium fashion photography — clean composition, natural lighting, soft shadows
+- High-end editorial look (Zara, COS, Massimo Dutti quality)
+- Photorealistic with natural skin texture, visible pores, realistic eye reflections
+
+━━━━━━━━━━━━━━━━━━━━━━━
+NEGATIVE (AVOID)
+- using original background from model image
+- stiff or repeated poses
+- low quality, blurry
+- distorted anatomy or unrealistic fabric
+- cropped or cut product
+- messy composition
 ━━━━━━━━━━━━━━━━━━━━━━━` });
 
     // Add reference images with clear labels
     if (presetImages) {
       for (const pi of presetImages) {
-        const label = pi.label === 'BACKGROUND STYLE' ? 'BACKGROUND REFERENCE' : 'MODEL REFERENCE';
-        parts.push({ text: `[${label}] Use this EXACTLY as the ${pi.label === 'BACKGROUND STYLE' ? 'background environment' : 'model type/style'}. Do NOT deviate.` });
+        if (pi.label === 'BACKGROUND STYLE') {
+          parts.push({ text: '[BACKGROUND REFERENCE] Replicate this EXACT background environment — setting, colors, textures, lighting, atmosphere. Do NOT deviate.' });
+        } else {
+          parts.push({ text: '[MODEL REFERENCE] Use this person\'s face, hairstyle, body type, and proportions ONLY. Place them in a NEW scene with a NEW pose. Do NOT copy the background or pose from this image.' });
+        }
         parts.push({ inlineData: { mimeType: pi.mimeType, data: pi.base64 } });
       }
     }
 
-    parts.push({ text: '[PRODUCT REFERENCE] This is the EXACT product to use. Keep all details identical — colors, patterns, texture, shape.' });
+    parts.push({ text: '[PRODUCT REFERENCE] This is the EXACT product to use. Keep all details identical — colors, patterns, texture, shape, design.' });
     parts.push({ inlineData: { mimeType: referenceMimeType!, data: referenceImage! } });
 
     parts.push({ text: `━━━━━━━━━━━━━━━━━━━━━━━
 FINAL INSTRUCTION
-Combine all provided reference images into a single realistic, high-end product photo. Preserve every element exactly as shown in its reference.
+Generate a high-quality fashion image where the model is consistent with the reference identity, placed in the correct background, wearing the exact product, with a natural, creative, and premium editorial pose.
+
+VARIETY SEED #${Math.floor(Math.random() * 9999)} — use a DIFFERENT pose than previous generations.
 
 ${prompt}` });
 
