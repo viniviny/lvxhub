@@ -92,8 +92,15 @@ export function useCustomPresets() {
     }]);
   }, [user]);
 
-  // Remove preset
+  // Remove preset with undo
   const removePreset = useCallback(async (id: string) => {
+    // Save a copy for undo
+    const removed = presets.find(p => p.id === id);
+    if (!removed) return;
+
+    // Optimistically remove from UI
+    setPresets(prev => prev.filter(p => p.id !== id));
+
     const { error } = await supabase
       .from('custom_presets')
       .delete()
@@ -102,11 +109,45 @@ export function useCustomPresets() {
     if (error) {
       console.error('Delete error:', error);
       toast.error('Erro ao remover preset');
+      // Restore on error
+      setPresets(prev => [...prev, removed]);
       return;
     }
 
-    setPresets(prev => prev.filter(p => p.id !== id));
-  }, []);
+    toast.success('Preset removido', {
+      action: {
+        label: 'Desfazer',
+        onClick: async () => {
+          if (!user) return;
+          const { data, error: insertErr } = await supabase
+            .from('custom_presets')
+            .insert({
+              user_id: user.id,
+              label: removed.label,
+              descriptor: removed.descriptor,
+              image_url: removed.image,
+              type: removed.type,
+            })
+            .select()
+            .single();
+
+          if (insertErr || !data) {
+            toast.error('Erro ao restaurar preset');
+            return;
+          }
+
+          setPresets(prev => [...prev, {
+            id: data.id,
+            label: data.label,
+            descriptor: data.descriptor,
+            image: data.image_url,
+            type: data.type as 'model' | 'background',
+          }]);
+          toast.success('Preset restaurado');
+        },
+      },
+    });
+  }, [user, presets]);
 
   return { presets, loading, addPreset, removePreset };
 }
