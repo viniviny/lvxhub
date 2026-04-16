@@ -279,15 +279,6 @@ export function ModelBackgroundPresets({ selectedModel, selectedBackground, onMo
         </div>
       </div>
 
-      {/* Restore hidden presets */}
-      {hasHidden && onRestoreBuiltinPresets && (
-        <button
-          onClick={onRestoreBuiltinPresets}
-          className="text-[10px] text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2"
-        >
-          Restaurar {hiddenBuiltinIds.length} preset{hiddenBuiltinIds.length > 1 ? 's' : ''} oculto{hiddenBuiltinIds.length > 1 ? 's' : ''}
-        </button>
-      )}
     </div>
   );
 }
