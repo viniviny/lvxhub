@@ -176,14 +176,35 @@ const Index = () => {
   const { specs, isGeneratingSpecs, generateSpecs, clearSpecs, restoreSpecs } = useProductSpecs();
 
   // ─── Restore project state on load ────────────────────────
+  const sanitizeAliExpressHtml = (html: string): string => {
+    if (!html) return '';
+    // If it contains AliExpress-specific classes/URLs, it's boilerplate — discard
+    if (
+      html.includes('report.aliexpress.com') ||
+      html.includes('description--report') ||
+      html.includes('lazy-load') ||
+      html.includes('comet-v2-btn') ||
+      html.includes('title--wrap--')
+    ) {
+      // Strip tags and check if any real content remains
+      const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      const cleaned = text.replace(/\b(Description|report|View more)\b/gi, '').trim();
+      return cleaned.length > 15 ? cleaned : '';
+    }
+    return html;
+  };
+
   useEffect(() => {
     if (!project || projectRestoredRef.current) return;
     projectRestoredRef.current = true;
 
     const pd = project.productData;
+    const isAliImport = (project.aiData?.imageInsights as any)?.importedFrom === 'aliexpress';
+    const rawDesc = pd.description || '';
+    const description = isAliImport ? sanitizeAliExpressHtml(rawDesc) : rawDesc;
     setForm({
       title: pd.title || '',
-      description: pd.description || '',
+      description,
       price: pd.price || 0,
       compareAtPrice: pd.compareAtPrice ?? null,
       cost: pd.cost ?? null,
