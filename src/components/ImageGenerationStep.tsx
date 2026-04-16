@@ -104,53 +104,60 @@ async function imageUrlToBase64(url: string): Promise<{ base64: string; mimeType
   } catch { return null; }
 }
 
-function buildPremiumPrompt(userPrompt: string, modelDesc: string, bgDesc: string): string {
+function buildPremiumPrompt(userPrompt: string, modelDesc: string, bgDesc: string, angle?: string, proportion?: string): string {
   const productDesc = userPrompt.trim() || 'High-end fashion product';
-  
-  const backgroundSection = bgDesc || 'Clean white studio background';
-  const modelSection = modelDesc || 'No model — product only';
+  const background = bgDesc || 'Clean white studio background';
+  const model = modelDesc || 'No model — product only';
+  const angleLabel = angle || 'front view';
+  const prop = proportion || '1:1';
 
-  return `You are a professional e-commerce product photographer specialized in high-end Shopify stores.
-Generate a product image that is consistent, clean, and commercially usable.
+  return `High-end e-commerce product photography.
 
-━━━ MANDATORY RULES (STRICT) ━━━
-- The product must ALWAYS be fully visible (no cropping)
-- The product must NEVER be cut off at any edge
-- The model (if present) must NEVER be cut off incorrectly
-- The framing must ALWAYS include the FULL product with generous margins
-- The product must be the main focus at all times
-- BACKGROUND: ${backgroundSection}
-- MODEL: ${modelSection}
-- DO NOT change the product design
-- DO NOT hallucinate new features on the product
-- DO NOT alter colors — keep exact color fidelity
-
-━━━ FRAMING RULES ━━━
-- Use centered composition with safe margins around the product
-- Do NOT zoom excessively — show the full silhouette
-- Do NOT crop edges — every part of the product must be visible
-- Leave breathing room on all sides
-
-━━━ PRODUCT CONSISTENCY ━━━
-- Keep exact shape, color, and material as described
-- Maintain realistic proportions
-- Keep texture fidelity — fabric weave, stitching, buttons must be accurate
-
-━━━ STYLE ━━━
-- High-end fashion editorial photography (Zara, COS, Mr Porter level)
-- Clean composition with professional soft lighting
-- Realistic shadows and depth
-- Premium look — understated luxury, never cheap-looking
-- 8K ultra-high resolution, razor sharp detail
-
-━━━ PRODUCT DESCRIPTION ━━━
+PRODUCT:
 ${productDesc}
 
-━━━ NEGATIVE CONSTRAINTS (AVOID) ━━━
-cropped product, cut off product, zoomed in too much, missing parts, distorted proportions, wrong background, inconsistent background, multiple backgrounds, messy composition, low quality, blurry, extra limbs, broken anatomy, unrealistic fabric, duplicated product, plastic skin, uncanny symmetry
+━━━━━━━━━━━━━━━━━━━━━━━
 
-━━━ FINAL INSTRUCTION ━━━
-Generate a clean, centered, high-end product image that strictly follows ALL rules above. The ENTIRE product must be visible with generous margins.`;
+STRICT RULES (MUST FOLLOW)
+- The product must be 100% fully visible
+- No cropping allowed
+- No zoom cutting the product
+- Keep full silhouette inside frame
+- Centered composition with safe margins
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+CONFIGURATION (MANDATORY)
+BACKGROUND: ${background}
+ANGLE: ${angleLabel}
+MODEL: ${model}
+PROPORTION: ${prop}
+These must be followed exactly.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+STYLE
+- clean background
+- soft shadows
+- realistic lighting
+- premium fashion photography
+- Shopify-ready image
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+NEGATIVE
+- cropped product
+- cut edges
+- zoomed in
+- wrong background
+- distorted clothing
+- unrealistic proportions
+- messy composition
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+FINAL
+Generate a clean, centered product image that strictly follows all rules.`;
 }
 
 export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange, initialPrompt, aliSourceImages }: ImageGenerationStepProps) {
@@ -325,7 +332,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const modelDesc = getModelDescriptor(selectedModel, customPresets);
     const bgDesc = getBackgroundDescriptor(selectedBackground, customPresets);
     const hasPresets = !!(modelDesc || bgDesc);
-    const enrichedPrompt = buildPremiumPrompt(effectivePrompt, modelDesc, bgDesc);
+    const angleLabels = angles.map(a => ANGLE_OPTIONS.find(o => o.id === a)?.label || a).join(', ');
+    const enrichedPromptBase = (angle: string) => buildPremiumPrompt(effectivePrompt, modelDesc, bgDesc, ANGLE_OPTIONS.find(o => o.id === angle)?.label || angle, activeRatio);
     const modelImgUrl = getModelImage(selectedModel, customPresets);
     const bgImgUrl = getBackgroundImage(selectedBackground, customPresets);
     const [modelImageData, bgImageData] = await Promise.all([
@@ -340,6 +348,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           const match = referenceImage.match(/^data:([^;]+);base64,(.+)$/);
           if (match) { refMimeType = match[1]; refBase64 = match[2]; }
         }
+        const enrichedPrompt = enrichedPromptBase(angle);
         const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
           body: {
             mode: 'generate-image', prompt: enrichedPrompt, angle,
@@ -388,7 +397,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const modelDesc = getModelDescriptor(selectedModel, customPresets);
     const bgDesc = getBackgroundDescriptor(selectedBackground, customPresets);
     const hasPresets = !!(modelDesc || bgDesc);
-    const enrichedPrompt = buildPremiumPrompt(effectivePrompt, modelDesc, bgDesc);
+    const enrichedPrompt = buildPremiumPrompt(effectivePrompt, modelDesc, bgDesc, ANGLE_OPTIONS.find(o => o.id === target.angle)?.label || target.angle, activeRatio);
     const modelImgUrl = getModelImage(selectedModel, customPresets);
     const bgImgUrl = getBackgroundImage(selectedBackground, customPresets);
     const [modelImageData, bgImageData] = await Promise.all([
