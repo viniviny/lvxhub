@@ -121,7 +121,7 @@ export function ColorManager({ colors, onColorsChange, generatedImages = [] }: C
                           }}
                           className="relative group rounded-lg overflow-hidden border-2 border-border hover:border-primary transition-colors aspect-square"
                         >
-                          <img src={img.url} alt="" className="w-full h-full object-cover" />
+                          <img src={img.url} alt="" className="w-full h-full object-contain" />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                             <Check className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
                           </div>

@@ -355,7 +355,7 @@ export function ImageLibrary() {
                   className="aspect-square bg-secondary cursor-pointer"
                   onClick={() => setPreviewImage(img)}
                 >
-                  <img src={img.url} alt={img.name} className="w-full h-full object-cover" loading="lazy" />
+                  <img src={img.url} alt={img.name} className="w-full h-full object-contain" loading="lazy" />
                 </div>
 
                 {/* Select checkbox */}
