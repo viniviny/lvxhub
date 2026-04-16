@@ -1594,7 +1594,7 @@ const Index = () => {
                                         }}
                                         className={`flex items-center gap-1 px-2.5 h-[26px] rounded-full text-[10px] font-medium transition-all border ${
                                           isOn
-                                            ? 'border-primary bg-primary/10 text-[hsl(213,97%,67%)]'
+                                            ? 'border-foreground bg-foreground/5 text-foreground'
                                             : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30'
                                         }`}
                                       >
