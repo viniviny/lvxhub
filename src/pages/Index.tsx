@@ -257,6 +257,130 @@ const Index = () => {
       setImagePreview(null);
       deletedProjectImageUrlsRef.current = new Set();
     }
+
+    // ─── Auto-preenche campos se produto veio do AliExpress ───
+    if (isAliImport) {
+      const aliInsights = project.aiData?.imageInsights as any;
+      const sourceVariants: any[] = aliInsights.sourceVariants || [];
+      const sourceSpecs: any[] = aliInsights.sourceSpecs || [];
+      const sourceBullets: string[] = aliInsights.sourceBullets || [];
+
+      // Detecta tamanhos
+      const sizeVariant = sourceVariants.find((v: any) =>
+        /size|tamanho|taille|größe|talla/i.test(v.name || '')
+      );
+      const autoSizes: ProductSize[] = sizeVariant?.values
+        ?.map((v: any) => typeof v === 'string' ? v : v.name)
+        ?.filter(Boolean)?.slice(0, 20) || [];
+
+      // Detecta cores
+      const colorVariant = sourceVariants.find((v: any) =>
+        /color|colour|cor|couleur|farbe|colore/i.test(v.name || '')
+      );
+      const autoColors: ProductColor[] = colorVariant?.values
+        ?.map((v: any) => {
+          const name = typeof v === 'string' ? v : v.name;
+          const imageUrl = typeof v === 'object' ? (v.imageUrl || '') : '';
+          const colorMap: Record<string, string> = {
+            black: '#1a1a1a', preto: '#1a1a1a', white: '#ffffff', branco: '#ffffff',
+            gray: '#808080', cinza: '#808080', grey: '#808080',
+            navy: '#001f5b', blue: '#2563eb', azul: '#2563eb',
+            red: '#dc2626', vermelho: '#dc2626', green: '#16a34a', verde: '#16a34a',
+            brown: '#92400e', marrom: '#92400e', beige: '#d4b896', khaki: '#c3b082',
+            yellow: '#eab308', orange: '#ea580c', pink: '#ec4899', purple: '#7c3aed',
+          };
+          const hex = colorMap[name?.toLowerCase()?.trim()] || '#666666';
+          return { id: crypto.randomUUID(), name, hex, imageUrl: imageUrl || undefined };
+        })
+        ?.filter((c: ProductColor) => c.name) || [];
+
+      // Extrai peso das specs
+      let autoWeight = 0;
+      let autoWeightUnit: WeightUnit = 'kg';
+      const weightSpec = sourceSpecs.find((s: any) =>
+        /weight|peso|poids|gewicht/i.test(s.key || '')
+      );
+      if (weightSpec) {
+        const wMatch = weightSpec.value?.match(/([\d.]+)\s*(kg|g|lb|oz)/i);
+        if (wMatch) {
+          autoWeight = parseFloat(wMatch[1]);
+          autoWeightUnit = wMatch[2].toLowerCase() as WeightUnit;
+        }
+      }
+
+      // Extrai país de origem
+      const originSpec = sourceSpecs.find((s: any) =>
+        /origin|origem|pays|country/i.test(s.key || '')
+      );
+      const autoOrigin = originSpec?.value?.trim() || 'CN';
+
+      // Monta tags
+      const specTags = sourceSpecs.slice(0, 5)
+        .map((s: any) => s.value?.split(/[,/]/)[0]?.trim()).filter(Boolean);
+      const bulletTags = sourceBullets.slice(0, 3)
+        .map((b: string) => b.split(' ').slice(0, 3).join(' ')).filter(Boolean);
+      const autoTags = [...new Set([...specTags, ...bulletTags])].slice(0, 8).join(', ');
+
+      // Preços automáticos
+      const baseCostAli = aliInsights.priceMin || pd.cost || 0;
+      const baseRetail = baseCostAli > 0
+        ? Math.ceil(((baseCostAli + 5 + 3.99) / (1 - 0.60)) * 100) / 100
+        : 0;
+
+      // Monta variantes
+      const autoVariants: VariantData[] = autoSizes.length > 0
+        ? autoSizes.map(size => ({
+            id: crypto.randomUUID(),
+            name: size,
+            price: baseRetail,
+            compareAtPrice: baseRetail > 0 ? Math.ceil(baseRetail * 1.3 * 100) / 100 : null,
+            cost: baseCostAli || null,
+            sku: '',
+            stock: 99,
+            requiresShipping: true,
+            weight: autoWeight || 0.5,
+            weightUnit: autoWeightUnit,
+          }))
+        : [];
+
+      // Detecta tipo de produto
+      const titleLower = (pd.title || '').toLowerCase();
+      let autoProductType = pd.productType || '';
+      if (!autoProductType) {
+        if (/t-shirt|tshirt|tee\b/.test(titleLower)) autoProductType = 'T-Shirt';
+        else if (/shirt|camisa/.test(titleLower)) autoProductType = 'Shirt';
+        else if (/jacket|jaqueta|casaco/.test(titleLower)) autoProductType = 'Jacket';
+        else if (/pants|trouser|calça/.test(titleLower)) autoProductType = 'Pants';
+        else if (/shorts/.test(titleLower)) autoProductType = 'Shorts';
+        else if (/coat|overcoat/.test(titleLower)) autoProductType = 'Coat';
+        else if (/sweater|hoodie|moletom/.test(titleLower)) autoProductType = 'Sweater';
+        else if (/suit|terno/.test(titleLower)) autoProductType = 'Suit';
+        else if (/shoe|sneaker|boot|tênis|sapato/.test(titleLower)) autoProductType = 'Shoes';
+        else if (/belt|cinto/.test(titleLower)) autoProductType = 'Belt';
+        else if (/watch|relógio/.test(titleLower)) autoProductType = 'Watch';
+      }
+
+      // Aplica tudo no formulário
+      setForm(prev => ({
+        ...prev,
+        sizes: autoSizes.length > 0 ? autoSizes : prev.sizes,
+        variants: autoVariants.length > 0 ? autoVariants : prev.variants,
+        weight: autoWeight > 0 ? autoWeight : prev.weight,
+        weightUnit: autoWeight > 0 ? autoWeightUnit : prev.weightUnit,
+        countryOfOrigin: autoOrigin,
+        tags: autoTags || prev.tags,
+        productType: autoProductType || prev.productType,
+        cost: baseCostAli > 0 ? baseCostAli : prev.cost,
+        price: baseRetail > 0 ? baseRetail : prev.price,
+        compareAtPrice: baseRetail > 0 ? Math.ceil(baseRetail * 1.3 * 100) / 100 : prev.compareAtPrice,
+        pricingCpa: 5,
+        pricingMargin: 60,
+        pricingShipping: 3.99,
+      }));
+
+      // Aplica cores
+      if (autoColors.length > 0) setColors(autoColors);
+    }
   }, [project]);
 
   // ─── Check for existing draft on mount ────────────────────
