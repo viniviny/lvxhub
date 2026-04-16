@@ -78,9 +78,9 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
   if (compact) {
     return (
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <div className="rounded-lg border border-[hsl(215,20%,16%)] bg-[hsl(215,25%,10%)] h-full flex flex-col">
+        <div className="rounded-lg border border-border bg-card h-full flex flex-col">
           <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/20 transition-colors rounded-t-lg">
-            <span className="text-[11px] font-semibold text-[hsl(215,10%,45%)] uppercase tracking-wider">SEO</span>
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">SEO</span>
             <div className="flex items-center gap-1.5">
               {!isOpen && (
                 <span className="text-[10px] text-muted-foreground">
@@ -94,36 +94,36 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
           <CollapsibleContent className="px-3 pb-3 space-y-2.5 flex-1">
             <div>
               <div className="flex items-center justify-between mb-0.5">
-                <Label className="text-[10px] font-medium text-[hsl(215,10%,45%)]">Título SEO</Label>
+                <Label className="text-[10px] font-medium text-muted-foreground">Título SEO</Label>
                 <span className={`text-[9px] font-medium ${titleColor}`}>{titleLen}/70 {titleStatus}</span>
               </div>
               <Input
                 value={seoTitle}
                 onChange={e => onTitleChange(e.target.value.slice(0, 100))}
                 placeholder="Título para buscadores"
-                className="bg-[hsl(215,25%,8%)] border-[hsl(215,20%,16%)] text-[11px] h-[34px]"
+                className="bg-background border-border text-[11px] h-[34px]"
                 maxLength={100}
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-0.5">
-                <Label className="text-[10px] font-medium text-[hsl(215,10%,45%)]">Meta descrição</Label>
+                <Label className="text-[10px] font-medium text-muted-foreground">Meta descrição</Label>
                 <span className={`text-[9px] font-medium ${descColor}`}>{descLen}/160 {descStatus}</span>
               </div>
               <Textarea
                 value={seoDesc}
                 onChange={e => onDescriptionChange(e.target.value.slice(0, 200))}
                 placeholder="Descrição para resultados de busca"
-                className="bg-[hsl(215,25%,8%)] border-[hsl(215,20%,16%)] resize-none text-[11px] min-h-0"
+                className="bg-background border-border resize-none text-[11px] min-h-0"
                 style={{ height: '48px' }}
                 maxLength={200}
               />
             </div>
 
             <div>
-              <Label className="text-[9px] font-medium text-[hsl(215,10%,40%)] mb-0.5 block">Preview Google</Label>
-              <div className="bg-[hsl(215,30%,6%)] rounded-md p-2.5 border border-[hsl(215,20%,16%)] space-y-0.5">
+              <Label className="text-[9px] font-medium text-muted-foreground mb-0.5 block">Preview Google</Label>
+              <div className="bg-secondary rounded-md p-2.5 border border-border space-y-0.5">
                 <p className="text-[9px] text-muted-foreground truncate">
                   {storeDomain || 'your-store.myshopify.com'} › products › {handle}
                 </p>
@@ -142,7 +142,7 @@ export function SEOCard({ title, description, storeDomain, productTitle, onTitle
                   <button
                     onClick={handleOptimize}
                     disabled={isOptimizing || !productTitle || aiDisabled}
-                    className="flex items-center justify-center gap-1.5 w-full h-[30px] rounded-md text-[10px] font-medium border border-border text-muted-foreground hover:border-primary/50 hover:text-[hsl(213,97%,67%)] disabled:opacity-40 transition-all"
+                    className="flex items-center justify-center gap-1.5 w-full h-[30px] rounded-md text-[10px] font-medium border border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground disabled:opacity-40 transition-all"
                   >
                     {isOptimizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                     Otimizar SEO com IA

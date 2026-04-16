@@ -980,13 +980,13 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] sticky top-0 z-10 h-[52px]">
+      <header className="border-b border-border bg-background sticky top-0 z-10 h-[52px]">
         <div className="w-full h-full px-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="font-display text-base font-semibold text-[hsl(var(--info))] flex items-center gap-1.5">
+            <h1 className="font-display text-base font-semibold text-foreground flex items-center gap-1.5">
               <Zap className="w-4.5 h-4.5" />Publify
             </h1>
-            <span className="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full border border-[hsl(var(--info)/0.3)] bg-[hsl(var(--sidebar-primary)/0.15)] text-[hsl(var(--info))]">
+            <span className="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full border border-border bg-secondary text-muted-foreground">
               beta
             </span>
           </div>
@@ -994,7 +994,7 @@ const Index = () => {
             <SaveStatusIndicator status={saveStatus} />
             <DraftSavedIndicator status={draftStatus} />
             {publishedCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-[hsl(var(--sidebar-primary)/0.1)] text-[hsl(var(--info))]">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-foreground">
                 <Zap className="w-3 h-3" />{publishedCount}
               </span>
             )}
@@ -1007,8 +1007,8 @@ const Index = () => {
                 onAddStore={handleAddStore}
               />
             )}
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-[hsl(var(--sidebar-foreground))] hover:text-foreground" onClick={() => setShowOnboarding(true)} title="Como funciona?"><HelpCircle className="w-4 h-4" /></Button>
-            {stores.length > 0 && <Button variant="ghost" size="icon" className="h-8 w-8 text-[hsl(var(--sidebar-foreground))] hover:text-foreground" onClick={() => setShowManagement(true)} title="Gerenciar lojas"><Settings className="w-4 h-4" /></Button>}
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => setShowOnboarding(true)} title="Como funciona?"><HelpCircle className="w-4 h-4" /></Button>
+            {stores.length > 0 && <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => setShowManagement(true)} title="Gerenciar lojas"><Settings className="w-4 h-4" /></Button>}
             <UserMenu />
           </div>
         </div>
@@ -1594,7 +1594,7 @@ const Index = () => {
                                         }}
                                         className={`flex items-center gap-1 px-2.5 h-[26px] rounded-full text-[10px] font-medium transition-all border ${
                                           isOn
-                                            ? 'border-primary bg-primary/10 text-[hsl(213,97%,67%)]'
+                                            ? 'border-foreground bg-foreground/5 text-foreground'
                                             : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30'
                                         }`}
                                       >

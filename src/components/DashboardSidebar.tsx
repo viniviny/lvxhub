@@ -23,10 +23,10 @@ export function DashboardSidebar({
   currentView, onViewChange,
 }: DashboardSidebarProps) {
   return (
-    <aside className="w-[200px] flex-shrink-0 border-r border-[hsl(var(--sidebar-border))] bg-[hsl(var(--sidebar-background))] min-h-[calc(100vh-52px)] hidden lg:flex flex-col">
+    <aside className="w-[200px] flex-shrink-0 border-r border-border bg-background min-h-[calc(100vh-52px)] hidden lg:flex flex-col">
       {/* Navigation */}
       <nav className="flex-1 px-3 pt-5">
-        <span className="text-[10px] font-semibold text-[hsl(var(--sidebar-foreground))] uppercase tracking-[0.08em] mb-2 block px-1">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.08em] mb-2 block px-1">
           menu
         </span>
         <ul className="space-y-0.5">
@@ -38,11 +38,11 @@ export function DashboardSidebar({
                   onClick={() => onViewChange(item.id)}
                   className={`w-full flex items-center gap-2.5 px-3 h-[36px] rounded-lg text-[13px] font-medium transition-all duration-150 ${
                     isActive
-                      ? 'nav-active-border bg-[hsl(var(--sidebar-primary)/0.15)] text-[hsl(210,29%,90%)]'
-                      : 'text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(0,0%,100%,0.04)] hover:text-[hsl(210,20%,82%)]'
+                      ? 'nav-active-border bg-secondary text-foreground'
+                      : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                   }`}
                 >
-                  <span className={isActive ? 'text-[hsl(var(--info))]' : ''}>
+                  <span className={isActive ? 'text-foreground' : ''}>
                     {item.icon}
                   </span>
                   {item.label}

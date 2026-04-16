@@ -193,8 +193,8 @@ export function AIFieldButtons({ type, brief, title, language, languageCode, cou
                 disabled
                   ? 'border-border bg-secondary/50 text-muted-foreground/40 cursor-not-allowed'
                   : showSuccess
-                    ? 'border-[hsl(var(--chart-2))] bg-[hsl(var(--chart-2))]/15 text-[hsl(var(--chart-2))]'
-                    : 'border-primary/50 bg-primary/15 text-[hsl(213,97%,67%)] hover:bg-primary/25'
+                    ? 'border-[hsl(var(--success))] bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]'
+                    : 'border-foreground/20 bg-foreground/5 text-foreground hover:bg-foreground/10'
               }`}
             >
               {isGenerating ? (
