@@ -446,7 +446,35 @@ Do NOT substitute, simplify, or deviate. The generated background must be virtua
         presetImages.push({ base64: bgPresetImage, mimeType: bgPresetMimeType, label: 'BACKGROUND STYLE' });
       }
 
-      const imageResult = await callGeminiImage(GEMINI_API_KEY, fullPrompt, referenceImage, referenceMimeType, presetImages.length > 0 ? presetImages : undefined);
+      // Generate with validation loop (max 2 retries)
+      const hasReferences = presetImages.length > 0 || (referenceImage && referenceMimeType);
+      const MAX_ATTEMPTS = hasReferences ? 3 : 1;
+      let imageResult: { base64: string; mimeType: string } | null = null;
+
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        const result = await callGeminiImage(GEMINI_API_KEY, fullPrompt, referenceImage, referenceMimeType, presetImages.length > 0 ? presetImages : undefined);
+
+        if (attempt < MAX_ATTEMPTS && hasReferences) {
+          const validation = await validateGeneratedImage(
+            GEMINI_API_KEY, result.base64, result.mimeType,
+            presetImages.length > 0 ? presetImages : undefined,
+            referenceImage, referenceMimeType
+          );
+
+          if (!validation.isValid) {
+            console.log(`Attempt ${attempt}/${MAX_ATTEMPTS} rejected: ${validation.reason || 'mismatch'}. Retrying...`);
+            continue;
+          }
+        }
+
+        imageResult = result;
+        break;
+      }
+
+      if (!imageResult) {
+        // Last attempt — accept whatever we get
+        imageResult = await callGeminiImage(GEMINI_API_KEY, fullPrompt, referenceImage, referenceMimeType, presetImages.length > 0 ? presetImages : undefined);
+      }
 
       // Try to upload to Supabase Storage
       const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
