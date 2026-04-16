@@ -177,6 +177,7 @@ async function callGeminiText(apiKey: string, model: string, messages: { role: s
     console.error(`Gemini ${model} error:`, res.status, errText);
     if (res.status === 429) throw { status: 429, message: 'Rate limit exceeded' };
     if (res.status === 403) throw { status: 403, message: 'Invalid API key or access denied' };
+    if (res.status === 503) throw { status: 503, message: 'Model temporarily unavailable due to high demand' };
     throw { status: res.status, message: errText };
   }
 
@@ -227,6 +228,7 @@ async function callGeminiImage(
     console.error(`Gemini image error:`, res.status, errText);
     if (res.status === 429) throw { status: 429, message: 'Rate limit exceeded' };
     if (res.status === 403) throw { status: 403, message: 'Invalid API key' };
+    if (res.status === 503) throw { status: 503, message: 'Model temporarily unavailable due to high demand' };
     throw { status: res.status, message: errText };
   }
 
@@ -516,18 +518,23 @@ PREMIUM BRAND IDENTITY — THIS IS NON-NEGOTIABLE:
     const message = e?.message || (e instanceof Error ? e.message : 'Internal error');
 
     if (status === 429) {
-      return new Response(JSON.stringify({ error: 'Limite de requisições excedido. Tente novamente em alguns segundos.', status: 429 }), {
-        status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      return new Response(JSON.stringify({ error: 'Limite de requisições excedido. Tente novamente em alguns segundos.' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
     if (status === 402 || status === 403) {
-      return new Response(JSON.stringify({ error: 'Chave API inválida ou sem permissão.', status }), {
-        status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      return new Response(JSON.stringify({ error: 'Chave API inválida ou sem permissão.' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (status === 503 || (typeof message === 'string' && message.includes('503'))) {
+      return new Response(JSON.stringify({ error: 'O modelo de IA está temporariamente sobrecarregado. Tente novamente em alguns instantes.' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    return new Response(JSON.stringify({ error: message }), {
-      status, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    return new Response(JSON.stringify({ error: 'Erro interno ao processar sua solicitação. Tente novamente.' }), {
+      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
