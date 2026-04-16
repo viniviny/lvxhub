@@ -298,7 +298,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const modelDesc = getModelDescriptor(selectedModel, customPresets);
     const bgDesc = getBackgroundDescriptor(selectedBackground, customPresets);
     const hasPresets = !!(modelDesc || bgDesc);
-    const enrichedPrompt = buildPremiumPrompt(prompt, modelDesc, bgDesc);
+    const enrichedPrompt = buildPremiumPrompt(effectivePrompt, modelDesc, bgDesc);
     const modelImgUrl = getModelImage(selectedModel, customPresets);
     const bgImgUrl = getBackgroundImage(selectedBackground, customPresets);
     const [modelImageData, bgImageData] = await Promise.all([
