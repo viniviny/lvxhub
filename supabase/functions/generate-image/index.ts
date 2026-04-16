@@ -101,9 +101,9 @@ serve(async (req) => {
     // Build text prompt
     let textPrompt: string;
     if (hasReference) {
-      textPrompt = `${angleInstruction ? angleInstruction + '\n\n' : ''}This is the exact product to photograph. Use it as your only reference. Keep all details: colors, patterns, cuts, buttons, zippers, fabric texture exactly as shown in the reference. Generate a professional studio e-commerce photo of this product. ${angleInstruction ? 'Remember: strictly follow the camera angle specified above.' : ''} Product description: ${prompt}. ${ratioInstruction} White seamless background. Soft diffused studio lighting. Sharp detail throughout. Premium fashion catalog quality. Do not change any product details. No text, no logos, no watermarks.`;
+      textPrompt = `${angleInstruction ? angleInstruction + '\n\n' : ''}This is the exact product to photograph. Use it as your only reference. Keep all details: colors, patterns, cuts, buttons, zippers, fabric texture exactly as shown in the reference. Generate a professional studio e-commerce photo of this product. ${angleInstruction ? 'Remember: strictly follow the camera angle specified above.' : ''} Product description: ${prompt}. ${ratioInstruction} CRITICAL: Show the ENTIRE product in frame — never crop or cut off any part. Include full garment from top to bottom with generous margins. White seamless background. Soft diffused studio lighting. Sharp detail throughout. Premium fashion catalog quality. Do not change any product details. No text, no logos, no watermarks.`;
     } else {
-      textPrompt = `${angleInstruction ? angleInstruction + '\n\n' : ''}Generate a professional e-commerce product photo: ${fullPrompt}. ${angleInstruction ? 'Remember: strictly follow the camera angle specified above.' : ''}`;
+      textPrompt = `${angleInstruction ? angleInstruction + '\n\n' : ''}Generate a professional e-commerce product photo: ${fullPrompt}. CRITICAL: Show the ENTIRE product in frame — never crop or cut off any part of the garment. Include full product from top to bottom with generous margins around all edges. ${angleInstruction ? 'Remember: strictly follow the camera angle specified above.' : ''}`;
     }
     contentParts.push({ type: 'text', text: textPrompt });
 
