@@ -105,25 +105,52 @@ async function imageUrlToBase64(url: string): Promise<{ base64: string; mimeType
 }
 
 function buildPremiumPrompt(userPrompt: string, modelDesc: string, bgDesc: string): string {
-  const base = userPrompt.trim();
-  const parts = [base, modelDesc, bgDesc].filter(Boolean);
-  if (!modelDesc && !bgDesc) return parts.join('. ');
-  const bgFidelityRule = bgDesc ? `\n\nBACKGROUND FIDELITY RULE: The background MUST be EXACTLY as described — replicate the setting, colors, lighting, and atmosphere faithfully. Do NOT substitute, simplify, or deviate from the specified background. If a reference image was provided for the background, the result must be visually identical to that reference.` : '';
-  const premiumDirectives = `
+  const productDesc = userPrompt.trim() || 'High-end fashion product';
+  
+  const backgroundSection = bgDesc || 'Clean white studio background';
+  const modelSection = modelDesc || 'No model — product only';
 
-PHOTOGRAPHY DIRECTION:
-Create this as a premium fashion editorial photograph — the kind you'd see in a Zara, COS, Mr Porter, or Acne Studios campaign.
+  return `You are a professional e-commerce product photographer specialized in high-end Shopify stores.
+Generate a product image that is consistent, clean, and commercially usable.
 
-The model must INTERACT with the product naturally and strategically to highlight its best features. Choose a pose that feels purposeful and DIFFERENT each time: adjusting a collar, hands in pockets showing drape, walking mid-stride, leaning casually, turning to show the cut, rolling sleeves, mid-laugh candid moment — whatever best showcases THIS specific product. NEVER a stiff arms-at-sides mannequin pose.
+━━━ MANDATORY RULES (STRICT) ━━━
+- The product must ALWAYS be fully visible (no cropping)
+- The product must NEVER be cut off at any edge
+- The model (if present) must NEVER be cut off incorrectly
+- The framing must ALWAYS include the FULL product with generous margins
+- The product must be the main focus at all times
+- BACKGROUND: ${backgroundSection}
+- MODEL: ${modelSection}
+- DO NOT change the product design
+- DO NOT hallucinate new features on the product
+- DO NOT alter colors — keep exact color fidelity
 
-The model's face must be photorealistic with natural skin texture, visible pores, and realistic eye reflections. Expression should match the product's mood — relaxed for casual, sharp for formal, edgy for streetwear. Each image must feel like a unique candid editorial moment captured by a top fashion photographer.
+━━━ FRAMING RULES ━━━
+- Use centered composition with safe margins around the product
+- Do NOT zoom excessively — show the full silhouette
+- Do NOT crop edges — every part of the product must be visible
+- Leave breathing room on all sides
 
-The product is the absolute HERO — sharpest element in frame, accurate color and texture, every construction detail visible. The viewer must want to buy it immediately.
+━━━ PRODUCT CONSISTENCY ━━━
+- Keep exact shape, color, and material as described
+- Maintain realistic proportions
+- Keep texture fidelity — fabric weave, stitching, buttons must be accurate
 
-CRITICAL FRAMING RULE: The ENTIRE product must be visible in the frame — never crop or cut off any part of the garment. Show the product from top to bottom, including collar, hem, sleeves, and all edges. Leave adequate breathing room around the product. If the model is wearing the product, frame the shot to include the full garment with generous margins. The product must NEVER be cut off at any edge of the image.
-${bgFidelityRule}
-Quiet confidence, understated luxury, effortless sophistication. Never overdone, never cheap-looking.`;
-  return parts.join('. ') + premiumDirectives;
+━━━ STYLE ━━━
+- High-end fashion editorial photography (Zara, COS, Mr Porter level)
+- Clean composition with professional soft lighting
+- Realistic shadows and depth
+- Premium look — understated luxury, never cheap-looking
+- 8K ultra-high resolution, razor sharp detail
+
+━━━ PRODUCT DESCRIPTION ━━━
+${productDesc}
+
+━━━ NEGATIVE CONSTRAINTS (AVOID) ━━━
+cropped product, cut off product, zoomed in too much, missing parts, distorted proportions, wrong background, inconsistent background, multiple backgrounds, messy composition, low quality, blurry, extra limbs, broken anatomy, unrealistic fabric, duplicated product, plastic skin, uncanny symmetry
+
+━━━ FINAL INSTRUCTION ━━━
+Generate a clean, centered, high-end product image that strictly follows ALL rules above. The ENTIRE product must be visible with generous margins.`;
 }
 
 export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange, initialPrompt, aliSourceImages }: ImageGenerationStepProps) {
