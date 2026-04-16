@@ -763,19 +763,8 @@ const Index = () => {
     } catch { return false; }
   };
 
-  const handleNewProduct = async () => {
-    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setEditingShopifyProductId(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced'); resetUnderstanding(); setUsedTitleNames([]); clearSpecs(); clearDraft();
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    projectRestoredRef.current = false;
-    savedToProjectRef.current = new Set();
-    savedToLibraryRef.current = new Set();
-    deletedProjectImageUrlsRef.current = new Set();
-    await createNewProject();
-  };
-
-  const handleOpenAliImport = async () => {
-    const { projectId } = aliImport;
-    setAliImport(prev => ({ ...prev, open: false }));
+  // ─── Reset all local state (clears previous project data) ──
+  const resetAllState = () => {
     setForm(initialForm);
     setImageFile(null);
     setImagePreview(null);
@@ -798,6 +787,17 @@ const Index = () => {
     savedToProjectRef.current = new Set();
     savedToLibraryRef.current = new Set();
     deletedProjectImageUrlsRef.current = new Set();
+  };
+
+  const handleNewProduct = async () => {
+    resetAllState();
+    await createNewProject();
+  };
+
+  const handleOpenAliImport = async () => {
+    const { projectId } = aliImport;
+    setAliImport(prev => ({ ...prev, open: false }));
+    resetAllState();
     const { loadProjectFromBackend, setLastOpenedProjectId } = await import('@/services/projectService');
     const imported = await loadProjectFromBackend(projectId);
     if (imported) {
@@ -808,12 +808,7 @@ const Index = () => {
   };
 
   const handleOpenImported = async (projectId: string) => {
-    setForm(initialForm); setImageFile(null); setImagePreview(null); setGeneratedImages([]); setPublishResult(null); setEditingShopifyProductId(null); setWizardStep(1); setCompletedSteps(new Set()); setColors([]); setSeoTitle(''); setSeoDescription(''); setOptimizeImages(false); setImageQualityPreset('balanced'); resetUnderstanding(); setUsedTitleNames([]); clearSpecs(); clearDraft();
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    projectRestoredRef.current = false;
-    savedToProjectRef.current = new Set();
-    savedToLibraryRef.current = new Set();
-    deletedProjectImageUrlsRef.current = new Set();
+    resetAllState();
     const { loadProjectFromBackend, setLastOpenedProjectId } = await import('@/services/projectService');
     const imported = await loadProjectFromBackend(projectId);
     if (imported) {
@@ -824,23 +819,20 @@ const Index = () => {
   };
 
   const handleEditPublishedProduct = (product: import('@/hooks/usePublishedProducts').PublishedProduct) => {
-    // Load published product data into the wizard form
-    setForm(prev => ({
-      ...prev,
+    // Fully reset all previous project data first
+    resetAllState();
+
+    // Load published product data into a clean form
+    const newFormData = {
+      ...initialForm,
       title: product.title || '',
       description: product.description || '',
       price: product.local_price || product.base_price || 0,
       collection: product.collection || '',
       sizes: (product.sizes || []) as ProductSize[],
-    }));
-    syncFormToProject({
-      ...form,
-      title: product.title || '',
-      description: product.description || '',
-      price: product.local_price || product.base_price || 0,
-      collection: product.collection || '',
-      sizes: (product.sizes || []) as ProductSize[],
-    });
+    };
+    setForm(newFormData);
+    syncFormToProject(newFormData);
 
     // Load image if available
     if (product.image_url) {
@@ -853,7 +845,6 @@ const Index = () => {
       }]);
     }
 
-    setPublishResult(null);
     setEditingShopifyProductId(product.shopify_product_id || null);
     setWizardStep(4);
     setCompletedSteps(new Set([1, 2, 3]));
