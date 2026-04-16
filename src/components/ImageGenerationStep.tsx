@@ -654,7 +654,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         {/* Sticky generate button */}
         <div className="p-3 border-t border-border bg-card/80 backdrop-blur-sm space-y-1.5">
           {isGenerating && genStartTime && <GenerationCountdown startTime={genStartTime} totalImages={totalToGenerate} completedCount={generatedCount} />}
-          <Button onClick={isGenerating ? undefined : generateImages} <Button onClick={isGenerating ? undefined : generateImages} disabled={isGenerating || selectedAngles.size === 0} className="w-full font-display font-semibold h-10 text-xs"> className="w-full font-display font-semibold h-10 text-xs">
+          <Button onClick={isGenerating ? undefined : generateImages} disabled={isGenerating || selectedAngles.size === 0} className="w-full font-display font-semibold h-10 text-xs">
             {isGenerating ? (<><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Gerando {generatedCount}/{totalToGenerate}...</>) : safeImages.length > 0 ? (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Regenerar tudo</>) : (<><Sparkles className="w-3.5 h-3.5 mr-1.5" />Gerar {selectedCount} {selectedCount === 1 ? 'imagem' : 'imagens'}</>)}
           </Button>
           <p className="text-[9px] text-muted-foreground/60 text-center">~30s por imagem</p>
