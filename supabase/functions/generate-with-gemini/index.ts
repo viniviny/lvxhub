@@ -310,13 +310,26 @@ ${hasModel ? `Pick ONE pose naturally from this pool — do NOT repeat across ge
 - standing with weight shifted to one leg
 - slow movement posture (cinematic feel)
 
-EXPRESSION: Pick one — neutral, calm/confident, introspective, subtle seriousness, effortless/relaxed, slight focus (never smiling widely).
+FACIAL EXPRESSION (HIGH-END MENSWEAR):
+Pick ONE expression — vary across generations, NEVER repeat:
+- neutral editorial (primary — default premium look)
+- calm confidence
+- introspective / thoughtful
+- subtle serious luxury
+- effortless relaxed
+- side gaze (not always looking at camera)
+- walking focus expression
+
+EXPRESSION RULES:
+- Expression must be subtle and natural — no exaggerated emotion, no big smile, no forced face, no empty/lifeless look
+- Relaxed facial muscles, natural eyes, balanced gaze
+- The model must look like a real fashion model from a premium menswear campaign
 
 IMPORTANT:
 - Avoid exaggerated fashion poses or dramatic expressions
 - Keep everything natural and effortless — luxury uses subtlety, not exaggeration
-- Each image must feel like a DIFFERENT moment
-- NEVER repeat the same pose across generations
+- Each image must feel like a DIFFERENT moment with a DIFFERENT pose AND expression
+- NEVER repeat the same pose or expression across generations
 - NEVER use stiff or mannequin-like poses` : '- Clean product presentation, professional angles'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━
