@@ -317,6 +317,15 @@ The background MUST be EXACTLY as shown in the reference image — replicate the
 Do NOT substitute, simplify, or deviate. The generated background must be virtually identical to the reference.`;
       }
 
+      // Build preset reference images array
+      const presetImages: { base64: string; mimeType: string; label: string }[] = [];
+      if (modelPresetImage && modelPresetMimeType) {
+        presetImages.push({ base64: modelPresetImage, mimeType: modelPresetMimeType, label: 'MODEL TYPE' });
+      }
+      if (bgPresetImage && bgPresetMimeType) {
+        presetImages.push({ base64: bgPresetImage, mimeType: bgPresetMimeType, label: 'BACKGROUND STYLE' });
+      }
+
       const imageResult = await callGeminiImage(GEMINI_API_KEY, fullPrompt, referenceImage, referenceMimeType, presetImages.length > 0 ? presetImages : undefined);
 
       // Try to upload to Supabase Storage
