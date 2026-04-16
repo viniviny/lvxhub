@@ -74,9 +74,8 @@ export function ProductForm({ onGenerateImage, isGenerating, hasImage }: Product
   };
 
   const handleGenerate = () => {
-    if (!form.imagePrompt.trim()) return;
     if (!validate()) return;
-    onGenerateImage(form.imagePrompt);
+    onGenerateImage(form.imagePrompt || 'Professional e-commerce product photo, white background, studio lighting');
   };
 
   // Strip HTML tags from text input
@@ -182,7 +181,7 @@ export function ProductForm({ onGenerateImage, isGenerating, hasImage }: Product
 
       <Button
         onClick={handleGenerate}
-        disabled={isGenerating || !form.imagePrompt.trim()}
+        disabled={isGenerating}
         className="w-full font-display font-semibold"
       >
         {isGenerating ? (
