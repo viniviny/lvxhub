@@ -273,12 +273,15 @@ async function callGeminiImage(
 Your goal is to create a premium product image with strong visual quality and creative direction.
 
 ━━━━━━━━━━━━━━━━━━━━━━━
-MODEL USAGE (VERY IMPORTANT)
-${hasModel ? `- Use the provided model image ONLY as a reference for: face, hairstyle, body type, proportions
-- DO NOT use the background from the model image
-- DO NOT replicate the original pose from the model image
-- DO NOT copy the original scene from the model image
-- The model must be recreated in a NEW scene` : '- No model — show product only (invisible mannequin or flat lay)'}
+MODEL IDENTITY VS EXPRESSION (CRITICAL)
+${hasModel ? `- Use the provided model image ONLY as IDENTITY reference: face structure, facial features, hair, body type, proportions
+- DO NOT copy the facial expression from the reference image
+- DO NOT replicate the original emotion or pose
+- DO NOT copy the background or scene from the model image
+- Generate a NEW facial expression based on fashion editorial direction
+- The expression must be DIFFERENT from the reference — improve it to professional model standard
+- The final face must look like the SAME PERSON but with a DIFFERENT expression and pose
+- FORBIDDEN: cloning the face exactly as-is, keeping the same emotion from the reference` : '- No model — show product only (invisible mannequin or flat lay)'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━
 BACKGROUND (MANDATORY)
