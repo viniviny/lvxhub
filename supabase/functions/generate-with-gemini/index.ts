@@ -588,7 +588,24 @@ Do NOT substitute, simplify, or deviate. The generated background must be virtua
       let userPrompt = '';
 
       if (type === 'title') {
-        const allUsedNames = Array.isArray(usedNames) ? usedNames : [];
+        // Busca títulos já publicados para evitar repetição
+        let publishedTitles: string[] = [];
+        try {
+          const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+          const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+          const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+          const adminClient = createClient(supabaseUrl, serviceKey);
+          const { data: published } = await adminClient
+            .from('published_products')
+            .select('title')
+            .order('created_at', { ascending: false })
+            .limit(100);
+          publishedTitles = (published || []).map((p: any) => p.title).filter(Boolean);
+        } catch(e) {
+          publishedTitles = [];
+        }
+
+        const allUsedNames = [...(Array.isArray(usedNames) ? usedNames : []), ...publishedTitles];
         const usedList = allUsedNames.length > 0
           ? `\n\nPREVIOUSLY USED TITLES — DO NOT REPEAT OR USE SIMILAR TO ANY OF THESE:\n${allUsedNames.join('\n')}`
           : '';
