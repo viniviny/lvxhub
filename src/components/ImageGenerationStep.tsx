@@ -119,6 +119,8 @@ The model's face must be photorealistic with natural skin texture, visible pores
 
 The product is the absolute HERO — sharpest element in frame, accurate color and texture, every construction detail visible. The viewer must want to buy it immediately.
 
+CRITICAL FRAMING RULE: The ENTIRE product must be visible in the frame — never crop or cut off any part of the garment. Show the product from top to bottom, including collar, hem, sleeves, and all edges. Leave adequate breathing room around the product. If the model is wearing the product, frame the shot to include the full garment with generous margins. The product must NEVER be cut off at any edge of the image.
+
 Quiet confidence, understated luxury, effortless sophistication. Never overdone, never cheap-looking.`;
   return parts.join('. ') + premiumDirectives;
 }
