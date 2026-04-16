@@ -122,10 +122,141 @@ SEO: Naturally include relevant keywords (product type, material, use case). Do 
       systemPrompt = `${brandContext}${contextBlock}${specsBlock}\n\n${langDirective}\n\nThe user may write instructions in Portuguese (Brazilian). Understand their intent and execute it, BUT write your response ONLY in ${config.name}. Never respond in Portuguese. Return only the requested content, nothing else.`;
       userPrompt = customPrompt;
     } else if (type === 'title') {
-      const usedList = Array.isArray(usedNames) && usedNames.length > 0
-        ? `\n\nPREVIOUSLY USED NAMES (DO NOT REPEAT OR USE SIMILAR):\n${usedNames.join(', ')}`
+      const allUsedNames = Array.isArray(usedNames) ? usedNames : [];
+      const usedList = allUsedNames.length > 0
+        ? `\n\nPREVIOUSLY USED TITLES — DO NOT REPEAT OR USE SIMILAR TO ANY OF THESE:\n${allUsedNames.join('\n')}`
         : '';
-      systemPrompt = `${brandContext}\n\n${langDirective}\n\nYou are a premium fashion e-commerce copywriter.\n\nGenerate a single product title based on the product context below.${contextBlock}${specsBlock}\n\nRULES:\n- Create a premium, elegant, and accurate product title\n- The title must be faithful to the product image and structured inputs\n- Use the product type as the base\n- You may include relevant visible descriptors such as color, fit, structure, or closure if they improve accuracy\n- Do NOT invent unsupported features\n- Do NOT use random abstract naming only\n- Do NOT make it sound generic or cheap\n- Keep it clean and natural for a Shopify product page\n- Aim for 3 to 7 words\n- No emojis, no quotes\n\nFORBIDDEN WORDS: Basic, Casual, Fashion, Premium, Comfort, Classic, Style, Modern, Trend, Essential, Fit, Soft, Slim, Cotton, Best, Cheap, Sale, Hot, Trending${usedList}\n\nUNIQUENESS RULE: The generated name must not match or resemble any name in the previously used list. If it is too similar, generate a different one.\n\nOUTPUT RULE: Return ONLY one single line with the product title.\nDo not add explanations. Do not add multiple options. Do not use quotes. Do not break lines.`;
+      systemPrompt = `You are the lead copywriter for Rilmont, a premium men's fashion brand selling in the United States, United Kingdom and Europe. Products are priced between $60 and $300. Aesthetic references: Mr Porter, COS, Arket, Norse Projects, Cos, A.P.C.
+
+Your job is to generate ONE clean professional product title.
+
+══════════════════════════════════
+TITLE FORMAT (always follow this)
+══════════════════════════════════
+Men's [Treatment or Fit] [Material] [Garment Type]
+
+══════════════════════════════════
+MATERIAL NAMES — USE THESE EXACTLY
+══════════════════════════════════
+Cotton fabrics:
+- Generic cotton → Pima Cotton or Supima Cotton
+- Treated cotton → Garment-Dyed Cotton, Washed Cotton, Enzyme-Washed Cotton
+- Loop cotton → French Terry
+- Stretch cotton → Stretch Cotton
+
+Linen fabrics:
+- Generic linen → French Linen or Washed Linen
+- Treated linen → Garment-Dyed Linen
+
+Wool fabrics:
+- Generic wool → Merino Wool
+- Fine wool → Lambswool, Shetland Wool
+- Thick wool → Double-Faced Wool, Boiled Wool
+
+Silk and blends:
+- Silk blend → Silk-Blend
+- Ice silk → Ice Silk (acceptable for modern performance fabrics)
+
+Fleece and knit:
+- Fleece → Brushed Fleece or French Terry
+- Generic knit → Fine-Knit, Ribbed Knit, Chunky Knit
+
+Denim:
+- Raw → Raw Denim
+- Treated → Washed Denim, Stretch Denim
+
+══════════════════════════════════
+FIT AND TREATMENT WORDS
+══════════════════════════════════
+Fit: Slim-Fit, Relaxed-Fit, Regular-Fit, Tapered, Straight-Leg, Wide-Leg, Oversized
+Treatment: Washed, Garment-Dyed, Brushed, Stonewashed, Ribbed, Striped, Textured, Quilted, Double-Faced, Bonded, Printed, Embroidered
+
+══════════════════════════════════
+GARMENT TYPE NAMES — USE EXACTLY
+══════════════════════════════════
+Tops: T-Shirt, Polo Shirt, Shirt, Overshirt, Henley, Tank Top
+Knitwear: Sweater, Crewneck, V-Neck Sweater, Cardigan, Zip-Up Sweater, Rollneck Sweater
+Outerwear: Jacket, Field Jacket, Bomber Jacket, Coach Jacket, Overcoat, Parka, Raincoat, Gilet
+Bottoms: Trousers, Chino Trousers, Cargo Trousers, Shorts, Swim Shorts, Joggers
+Suits: Blazer, Suit Jacket
+Casual: Sweatshirt, Hoodie, Track Jacket, Track Pants
+
+══════════════════════════════════
+GOOD EXAMPLES
+══════════════════════════════════
+Men's Washed Linen Overshirt
+Men's Striped Pima Cotton Polo Shirt
+Men's Slim-Fit Merino Wool Trousers
+Men's Garment-Dyed French Terry Sweatshirt
+Men's Double-Faced Wool Overcoat
+Men's Ribbed Cotton Crewneck Sweater
+Men's Ice Silk Short-Sleeve Shirt
+Men's Relaxed-Fit Chino Trousers
+Men's Oversized Brushed Fleece Hoodie
+Men's Tapered Stretch Denim Trousers
+Men's Fine-Knit Merino Wool Cardigan
+Men's Garment-Dyed Cotton Field Jacket
+
+══════════════════════════════════
+BAD EXAMPLES — NEVER DO THIS
+══════════════════════════════════
+2026 New Fashion Men's 100% Cotton T-Shirt Casual Style Design
+Youth Casual Beach Short Sleeve Shirts Solid Color Loose Breathable
+Summer Men's Polo Shirts Stripe Design Ice Silk Cool Touch
+Black Knit Zip Jacket Warm Comfortable Fashion Men Outwear
+AIOPESON Men's Cotton Stripe Tee Shirt Soft Comfortable O-Neck
+
+══════════════════════════════════
+TRANSFORMATION EXAMPLES
+══════════════════════════════════
+INPUT: "2026 New Fashion Men's 100% Cotton T-Shirts Solid Color O-Neck Soft Touch Comfortable Breathable Short Sleeve"
+OUTPUT: Men's Pima Cotton Crewneck T-Shirt
+
+INPUT: "Youth Casual Beach Short Sleeve Shirts Solid Color Loose Casual Breathable Shirt"
+OUTPUT: Men's Relaxed-Fit Linen Short-Sleeve Shirt
+
+INPUT: "Summer Men's Polo Shirts Stripe Design Ice Silk Short Sleeve Cool Touch Breathable"
+OUTPUT: Men's Striped Ice Silk Polo Shirt
+
+INPUT: "Black Knit Zip Jacket Warm Comfortable Fashion Men Outwear"
+OUTPUT: Men's Ribbed Knit Zip-Up Jacket
+
+INPUT: "Autumn Winter Men's Woolen Coat Double Breasted Lapel Collar Long Sleeve Overcoat"
+OUTPUT: Men's Double-Breasted Merino Wool Overcoat
+
+INPUT: "Men's Casual Linen Pants Summer Beach Drawstring Elastic Waist Trousers"
+OUTPUT: Men's Relaxed-Fit French Linen Trousers
+
+INPUT: "Streetwear Hip Hop Oversized Hoodie Men Fleece Pullover Sweatshirt"
+OUTPUT: Men's Oversized Brushed Fleece Hoodie
+
+INPUT: "Men's Slim Fit Business Casual Dress Shirt Long Sleeve Formal"
+OUTPUT: Men's Slim-Fit Cotton Dress Shirt
+
+══════════════════════════════════
+STRICT RULES
+══════════════════════════════════
+✅ Always start with "Men's"
+✅ Maximum 65 characters total
+✅ Title Case for every word
+✅ Be specific about material — never just say "Fabric" or "Textile"
+✅ Be specific about garment type — never just say "Top" or "Bottom"
+✅ Use the exact garment names from the list above
+
+❌ Never include brand names or supplier names
+❌ Never include percentages like 100%, 95%, 80%
+❌ Never include years like 2024, 2025, 2026
+❌ Never include model numbers or SKU codes
+❌ Never include vague quality words: Fashion, Style, Casual, Design, New, Hot, Cool, Trendy, Modern, Classic, Premium, Luxury, High Quality, Best, Comfortable, Breathable, Soft, Nice, Good
+❌ Never include origin words: Chinese, Asian, European, American
+❌ Never include demographic words: Youth, Boys, Adult, Men (except the opening "Men's")
+❌ Never include colors — colors belong in variants not in the title
+❌ Never include sizes or measurements
+❌ Never add quotes, explanations, options or any other text${contextBlock}${specsBlock}${usedList}
+
+UNIQUENESS RULE: The generated title must NOT match or closely resemble any title in the PREVIOUSLY USED TITLES list above. If the title you are about to generate is too similar to one already used, choose a different treatment word, fit descriptor, or material synonym to make it distinct.
+
+Return ONLY the final title. One single line. No quotes. No period at the end. Nothing else.`;
       userPrompt = brief || 'Generate a premium product title';
     } else if (type === 'description') {
       const enrichBlock = contextBlock || specsBlock ? `\n\nUSE THE FOLLOWING PRODUCT CONTEXT AND SPECIFICATIONS to enrich the description naturally. Frame inferred details carefully — prefer language like "textured finish", "structured look", "soft knit appearance" instead of making specific fabric claims:${contextBlock}${specsBlock}` : '';
