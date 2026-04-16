@@ -332,7 +332,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const modelDesc = getModelDescriptor(selectedModel, customPresets);
     const bgDesc = getBackgroundDescriptor(selectedBackground, customPresets);
     const hasPresets = !!(modelDesc || bgDesc);
-    const enrichedPrompt = buildPremiumPrompt(effectivePrompt, modelDesc, bgDesc);
+    const angleLabels = angles.map(a => ANGLE_OPTIONS.find(o => o.id === a)?.label || a).join(', ');
+    const enrichedPromptBase = (angle: string) => buildPremiumPrompt(effectivePrompt, modelDesc, bgDesc, ANGLE_OPTIONS.find(o => o.id === angle)?.label || angle, activeRatio);
     const modelImgUrl = getModelImage(selectedModel, customPresets);
     const bgImgUrl = getBackgroundImage(selectedBackground, customPresets);
     const [modelImageData, bgImageData] = await Promise.all([
@@ -347,6 +348,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           const match = referenceImage.match(/^data:([^;]+);base64,(.+)$/);
           if (match) { refMimeType = match[1]; refBase64 = match[2]; }
         }
+        const enrichedPrompt = enrichedPromptBase(angle);
         const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
           body: {
             mode: 'generate-image', prompt: enrichedPrompt, angle,
@@ -395,7 +397,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const modelDesc = getModelDescriptor(selectedModel, customPresets);
     const bgDesc = getBackgroundDescriptor(selectedBackground, customPresets);
     const hasPresets = !!(modelDesc || bgDesc);
-    const enrichedPrompt = buildPremiumPrompt(effectivePrompt, modelDesc, bgDesc);
+    const enrichedPrompt = buildPremiumPrompt(effectivePrompt, modelDesc, bgDesc, ANGLE_OPTIONS.find(o => o.id === target.angle)?.label || target.angle, activeRatio);
     const modelImgUrl = getModelImage(selectedModel, customPresets);
     const bgImgUrl = getBackgroundImage(selectedBackground, customPresets);
     const [modelImageData, bgImageData] = await Promise.all([
