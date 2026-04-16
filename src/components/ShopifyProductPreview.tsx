@@ -343,8 +343,8 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
                       onClick={() => handleDeviceChange(d.type)}
                       className={`w-9 h-[30px] rounded-2xl flex items-center justify-center transition-all duration-150 ${
                         active
-                          ? 'bg-[hsl(220,20%,14%)] text-[hsl(220,14%,90%)] border border-[hsl(213,80%,56%)] shadow-sm'
-                          : 'text-[hsl(215,8%,55%)] hover:text-[hsl(220,14%,80%)]'
+                          ? 'bg-secondary text-foreground border border-border shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -362,7 +362,7 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
           <select
             value={zoom}
             onChange={e => setZoom(Number(e.target.value))}
-            className="text-[11px] bg-secondary/60 border border-[hsl(215,14%,19%)] text-muted-foreground rounded-full px-2 py-1 cursor-pointer focus:outline-none"
+            className="text-[11px] bg-secondary border border-border text-muted-foreground rounded-full px-2 py-1 cursor-pointer focus:outline-none"
           >
             <option value={50}>50%</option>
             <option value={75}>75%</option>
@@ -372,7 +372,7 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
             <TooltipTrigger asChild>
               <button
                 onClick={() => setIsFullscreen(true)}
-                className="w-[30px] h-[30px] rounded-full flex items-center justify-center bg-secondary/60 border border-[hsl(215,14%,19%)] text-[hsl(215,8%,55%)] hover:text-[hsl(220,14%,90%)] hover:border-[hsl(213,80%,56%)] transition-all duration-150"
+                className="w-[30px] h-[30px] rounded-full flex items-center justify-center bg-secondary border border-border text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all duration-150"
               >
                 <Maximize2 className="w-3.5 h-3.5" />
               </button>
@@ -411,12 +411,12 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
       {/* Fullscreen overlay */}
       {isFullscreen && (
         <div
-          className="fixed inset-0 z-50 bg-[hsl(220,20%,7%)] flex flex-col"
+          className="fixed inset-0 z-50 bg-background flex flex-col"
           style={{ animation: 'fade-in 0.25s ease-out' }}
         >
           {/* Fullscreen toolbar */}
-          <div className="flex items-center justify-between px-5 py-3 border-b border-[hsl(215,14%,19%)]">
-            <div className="inline-flex items-center bg-secondary/60 border border-[hsl(215,14%,19%)] rounded-full p-[3px] gap-0">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border">
+            <div className="inline-flex items-center bg-secondary border border-border rounded-full p-[3px] gap-0">
               {devices.map(d => {
                 const Icon = d.icon;
                 const active = device === d.type;
@@ -427,8 +427,8 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
                         onClick={() => handleDeviceChange(d.type)}
                         className={`w-9 h-[30px] rounded-2xl flex items-center justify-center transition-all duration-150 ${
                           active
-                            ? 'bg-[hsl(220,20%,14%)] text-[hsl(220,14%,90%)] border border-[hsl(213,80%,56%)] shadow-sm'
-                            : 'text-[hsl(215,8%,55%)] hover:text-[hsl(220,14%,80%)]'
+                            ? 'bg-secondary text-foreground border border-border shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
                         }`}
                       >
                         <Icon className="w-4 h-4" />
@@ -446,7 +446,7 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
               <select
                 value={zoom}
                 onChange={e => setZoom(Number(e.target.value))}
-                className="text-[11px] bg-secondary/60 border border-[hsl(215,14%,19%)] text-muted-foreground rounded-full px-2 py-1 cursor-pointer focus:outline-none"
+                className="text-[11px] bg-secondary border border-border text-muted-foreground rounded-full px-2 py-1 cursor-pointer focus:outline-none"
               >
                 <option value={50}>50%</option>
                 <option value={75}>75%</option>
@@ -456,7 +456,7 @@ export function ShopifyProductPreview(props: ShopifyProductPreviewProps) {
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => setIsFullscreen(false)}
-                    className="w-[30px] h-[30px] rounded-full flex items-center justify-center bg-secondary/60 border border-[hsl(215,14%,19%)] text-[hsl(215,8%,55%)] hover:text-red-400 hover:border-red-400/50 transition-all duration-150"
+                    className="w-[30px] h-[30px] rounded-full flex items-center justify-center bg-secondary border border-border text-muted-foreground hover:text-destructive hover:border-destructive/50 transition-all duration-150"
                   >
                     <X className="w-4 h-4" />
                   </button>
