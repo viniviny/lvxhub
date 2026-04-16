@@ -294,23 +294,43 @@ PRODUCT RULES
 - No cropping — show the ENTIRE product
 
 ━━━━━━━━━━━━━━━━━━━━━━━
-CREATIVE FREEDOM (IMPORTANT)
-${hasModel ? `- Create natural fashion poses — editorial movements, relaxed or confident posture
-- Realistic fashion expressions that match the product mood
-- The pose must look natural and high-end
-- NEVER use stiff or mannequin-like poses
-- Each generation should have a DIFFERENT pose` : '- Clean product presentation, professional angles'}
+CREATIVE DIRECTION — POSES (USE AS INSPIRATION, NOT EXACT COPY)
+${hasModel ? `Pick ONE pose naturally from this pool — do NOT repeat across generations:
+- walking naturally (subtle motion, relaxed arms)
+- standing straight with relaxed posture
+- slight lean against wall or surface
+- hands in pockets (one or both)
+- adjusting clothing (collar, zipper, sleeves)
+- sitting casually (chair, bench, minimal surface)
+- turning slightly sideways (3/4 angle)
+- looking down naturally (introspective mood)
+- mid-step motion (editorial walking shot)
+- relaxed crossed arms (confident but minimal)
+- one hand touching neck or chin
+- standing with weight shifted to one leg
+- slow movement posture (cinematic feel)
+
+EXPRESSION: Pick one — neutral, calm/confident, introspective, subtle seriousness, effortless/relaxed, slight focus (never smiling widely).
+
+IMPORTANT:
+- Avoid exaggerated fashion poses or dramatic expressions
+- Keep everything natural and effortless — luxury uses subtlety, not exaggeration
+- Each image must feel like a DIFFERENT moment
+- NEVER repeat the same pose across generations
+- NEVER use stiff or mannequin-like poses` : '- Clean product presentation, professional angles'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━
 STYLE
 - Premium fashion photography — clean composition, natural lighting, soft shadows
 - High-end editorial look (Zara, COS, Massimo Dutti quality)
 - Photorealistic with natural skin texture, visible pores, realistic eye reflections
+- Minimalism preferred — elegance through restraint
 
 ━━━━━━━━━━━━━━━━━━━━━━━
 NEGATIVE (AVOID)
 - using original background from model image
-- stiff or repeated poses
+- stiff, repeated, or exaggerated poses
+- dramatic expressions
 - low quality, blurry
 - distorted anatomy or unrealistic fabric
 - cropped or cut product
