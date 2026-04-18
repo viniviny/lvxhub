@@ -399,7 +399,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const elapsed = ((Date.now() - now) / 1000).toFixed(0);
     if (newImages.length > 0) toast.success(`${newImages.length} imagens geradas em ${elapsed}s ✓`);
     setTimeout(() => { setCompletedAngles(new Set()); }, 2500);
-  }, [prompt, promptMode, selectedAngles, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
+  }, [prompt, promptMode, selectedAngles, customAngleText, referenceImages, images, onImagesChange, activeRatio]);
 
   const regenerateImage = useCallback(async (imageId: string) => {
     const existingImages = sanitizeGeneratedImages(images);
@@ -419,17 +419,21 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     ]);
     setGeneratingAngles(new Set([target.angle]));
     try {
-      let refBase64: string | undefined;
-      let refMimeType: string | undefined;
-      if (referenceImage) {
-        const match = referenceImage.match(/^data:([^;]+);base64,(.+)$/);
-        if (match) { refMimeType = match[1]; refBase64 = match[2]; }
-      }
+      const parsedRefs = referenceImages
+        .map(d => {
+          const m = d.match(/^data:([^;]+);base64,(.+)$/);
+          return m ? { mimeType: m[1], base64: m[2] } : null;
+        })
+        .filter((r): r is { mimeType: string; base64: string } => r !== null);
+      const primaryRef = parsedRefs[0];
+      const additionalRefs = parsedRefs.slice(1);
       const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
         body: {
           mode: 'generate-image', prompt: enrichedPrompt, angle: target.angle,
           customAngleText: target.angle === 'personalizado' ? customAngleText : undefined,
-          isCustomPrompt: promptMode === 'custom', referenceImage: refBase64, referenceMimeType: refMimeType,
+          isCustomPrompt: promptMode === 'custom',
+          referenceImage: primaryRef?.base64, referenceMimeType: primaryRef?.mimeType,
+          additionalReferences: additionalRefs.length > 0 ? additionalRefs : undefined,
           aspectRatio: activeRatio, hasPresets,
           modelPresetImage: modelImageData?.base64, modelPresetMimeType: modelImageData?.mimeType,
           bgPresetImage: bgImageData?.base64, bgPresetMimeType: bgImageData?.mimeType,
@@ -440,7 +444,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
       onImagesChange(updated);
       toast.success('Imagem regenerada!');
     } catch { toast.error('Erro ao regenerar imagem'); } finally { setGeneratingAngles(new Set()); }
-  }, [prompt, promptMode, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
+  }, [prompt, promptMode, customAngleText, referenceImages, images, onImagesChange, activeRatio]);
 
   const removeImage = (imageId: string) => {
     const updated = sanitizeGeneratedImages(images).filter(img => img.id !== imageId);
