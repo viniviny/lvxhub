@@ -30,6 +30,7 @@ const GEMINI_TEXT_MODEL = 'gemini-2.5-flash';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 type StyleId = 'realistic' | 'ecommerce' | 'lifestyle' | 'ads' | 'fashion';
+type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
 
 const STYLE_INSTRUCTIONS: Record<StyleId, string> = {
   realistic: 'Premium photorealistic image. Ultra-sharp 8K detail, natural soft lighting, cinematic depth of field, realistic textures, true-to-life colors. Editorial commercial quality.',
@@ -45,6 +46,13 @@ const STYLE_LABELS: Record<StyleId, string> = {
   lifestyle: 'Lifestyle moderno',
   ads: 'Publicidade / Ads',
   fashion: 'Studio fashion',
+};
+
+const RATIO_INSTRUCTIONS: Record<AspectRatio, string> = {
+  '1:1': 'MANDATORY OUTPUT FORMAT: Square 1:1 aspect ratio. Compose subject centered and balanced for square framing.',
+  '4:5': 'MANDATORY OUTPUT FORMAT: Portrait 4:5 aspect ratio (vertical, slightly taller than wide). Optimized for social feed.',
+  '16:9': 'MANDATORY OUTPUT FORMAT: Landscape 16:9 aspect ratio (wide horizontal). Optimized for banners, web headers, and YouTube. Compose with horizontal flow and negative space on the sides.',
+  '9:16': 'MANDATORY OUTPUT FORMAT: Vertical 9:16 aspect ratio (tall portrait, mobile full-screen). Optimized for Stories and Reels. Compose subject vertically with full-frame impact.',
 };
 
 async function enhancePrompt(apiKey: string, userPrompt: string, style: StyleId): Promise<string> {
@@ -160,6 +168,7 @@ serve(async (req) => {
     const imageReference: string | undefined = body.imageReference;
     const imageReferenceMimeType: string | undefined = body.imageReferenceMimeType;
     const variations = Math.min(Math.max(parseInt(body.variations) || 1, 1), 4);
+    const aspectRatio: AspectRatio = (body.aspectRatio as AspectRatio) || '1:1';
 
     if (!prompt || prompt.length < 3) {
       return new Response(JSON.stringify({ error: 'Prompt obrigatório (mínimo 3 caracteres)' }), {
@@ -179,10 +188,16 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    if (!RATIO_INSTRUCTIONS[aspectRatio]) {
+      return new Response(JSON.stringify({ error: 'Formato inválido' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // 1. Enhance prompt automatically
     const enhanced = await enhancePrompt(GEMINI_API_KEY, prompt, style);
-    const finalPrompt = `${enhanced}\n\nSTYLE DIRECTION: ${STYLE_INSTRUCTIONS[style]}`;
+    const finalPrompt = `${enhanced}\n\nSTYLE DIRECTION: ${STYLE_INSTRUCTIONS[style]}\n\n${RATIO_INSTRUCTIONS[aspectRatio]}`;
 
     // 2. Generate N variations in parallel
     const tasks = Array.from({ length: variations }, (_, i) =>
@@ -208,7 +223,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ images, enhancedPrompt: enhanced, style, count: images.length }),
+      JSON.stringify({ images, enhancedPrompt: enhanced, style, aspectRatio, count: images.length }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (err: any) {

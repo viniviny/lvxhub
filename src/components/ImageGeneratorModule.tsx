@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, Loader2, Upload, X, Download, RefreshCw, BookmarkPlus, Image as ImageIcon, Wand2 } from 'lucide-react';
+import { Sparkles, Loader2, Upload, X, Download, RefreshCw, BookmarkPlus, Image as ImageIcon, Wand2, Square, Smartphone, Monitor, RectangleVertical } from 'lucide-react';
 import { toast } from 'sonner';
 
 type StyleId = 'realistic' | 'ecommerce' | 'lifestyle' | 'ads' | 'fashion';
+type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
 
 const STYLES: { id: StyleId; label: string; desc: string }[] = [
   { id: 'realistic', label: 'Realista premium', desc: '8K cinematográfico, foco editorial' },
@@ -16,6 +17,13 @@ const STYLES: { id: StyleId; label: string; desc: string }[] = [
   { id: 'lifestyle', label: 'Lifestyle moderno', desc: 'Cena natural, mood de marca' },
   { id: 'ads', label: 'Publicidade / Ads', desc: 'Alto impacto, otimizado para conversão' },
   { id: 'fashion', label: 'Studio fashion', desc: 'Editorial Vogue/Zara' },
+];
+
+const RATIOS: { id: AspectRatio; label: string; hint: string; icon: React.ComponentType<{ className?: string }>; aspectClass: string }[] = [
+  { id: '1:1', label: '1:1', hint: 'Quadrado / feed', icon: Square, aspectClass: 'aspect-square' },
+  { id: '4:5', label: '4:5', hint: 'Feed vertical', icon: RectangleVertical, aspectClass: 'aspect-[4/5]' },
+  { id: '16:9', label: '16:9', hint: 'Banner / web', icon: Monitor, aspectClass: 'aspect-[16/9]' },
+  { id: '9:16', label: '9:16', hint: 'Story / Reels', icon: Smartphone, aspectClass: 'aspect-[9/16]' },
 ];
 
 async function fileToBase64(file: File): Promise<{ base64: string; mimeType: string }> {
@@ -36,6 +44,7 @@ export function ImageGeneratorModule() {
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState<StyleId>('realistic');
   const [variations, setVariations] = useState<1 | 2 | 4>(1);
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1');
   const [reference, setReference] = useState<{ base64: string; mimeType: string; preview: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<string[]>([]);
@@ -72,6 +81,7 @@ export function ImageGeneratorModule() {
           prompt: prompt.trim(),
           style,
           variations,
+          aspectRatio,
           imageReference: reference?.base64,
           imageReferenceMimeType: reference?.mimeType,
         },
@@ -105,6 +115,7 @@ export function ImageGeneratorModule() {
           prompt: prompt.trim() + ' — different angle and composition',
           style,
           variations: 1,
+          aspectRatio,
           imageReference: b64,
           imageReferenceMimeType: mt,
         },
@@ -237,6 +248,37 @@ export function ImageGeneratorModule() {
           </div>
         </div>
 
+        {/* Aspect ratio */}
+        <div>
+          <Label className="text-sm font-medium text-foreground">Formato</Label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1.5">
+            {RATIOS.map((r) => {
+              const Icon = r.icon;
+              const active = aspectRatio === r.id;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setAspectRatio(r.id)}
+                  className={`flex items-center gap-2 px-3 h-12 rounded-md text-sm font-medium transition-all border text-left ${
+                    active
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background border-border text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  <div className="flex flex-col leading-tight min-w-0">
+                    <span className="font-semibold">{r.label}</span>
+                    <span className={`text-[10px] ${active ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                      {r.hint}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Reference image */}
         <div>
           <Label className="text-sm font-medium text-foreground">Imagem de referência (opcional)</Label>
@@ -291,27 +333,40 @@ export function ImageGeneratorModule() {
       </div>
 
       {/* Results gallery */}
-      {(loading && results.length === 0) && (
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {Array.from({ length: variations }).map((_, i) => (
-            <div key={i} className="aspect-square rounded-lg border border-border bg-secondary animate-pulse flex items-center justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ))}
-        </div>
-      )}
+      {(() => {
+        const aspectClass = RATIOS.find((r) => r.id === aspectRatio)?.aspectClass || 'aspect-square';
+        const isWide = aspectRatio === '16:9';
+        const gridCols = isWide ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2';
+        return (
+          <>
+            {(loading && results.length === 0) && (
+              <div className={`mt-6 grid ${gridCols} gap-4`}>
+                {Array.from({ length: variations }).map((_, i) => (
+                  <div key={i} className={`${aspectClass} rounded-lg border border-border bg-secondary animate-pulse flex items-center justify-center`}>
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        );
+      })()}
 
-      {results.length > 0 && (
-        <div className="mt-6">
-          {enhancedPrompt && (
-            <div className="mb-4 p-3 bg-secondary rounded-md text-xs text-muted-foreground">
-              <span className="font-semibold text-foreground">Prompt aprimorado:</span> {enhancedPrompt}
-            </div>
-          )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {results.map((url, idx) => (
-              <div key={idx} className="group relative rounded-lg overflow-hidden border border-border bg-secondary">
-                <img src={url} alt={`Gerada ${idx + 1}`} className="w-full aspect-square object-cover" />
+      {results.length > 0 && (() => {
+        const aspectClass = RATIOS.find((r) => r.id === aspectRatio)?.aspectClass || 'aspect-square';
+        const isWide = aspectRatio === '16:9';
+        const gridCols = isWide ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2';
+        return (
+          <div className="mt-6">
+            {enhancedPrompt && (
+              <div className="mb-4 p-3 bg-secondary rounded-md text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">Prompt aprimorado:</span> {enhancedPrompt}
+              </div>
+            )}
+            <div className={`grid ${gridCols} gap-4`}>
+              {results.map((url, idx) => (
+                <div key={idx} className="group relative rounded-lg overflow-hidden border border-border bg-secondary">
+                  <img src={url} alt={`Gerada ${idx + 1}`} className={`w-full ${aspectClass} object-cover`} />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 opacity-0 group-hover:opacity-100 transition flex gap-2">
                   <Button
                     size="sm"
@@ -349,7 +404,8 @@ export function ImageGeneratorModule() {
             ))}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {!loading && results.length === 0 && (
         <div className="mt-6 glass-card p-10 text-center">
