@@ -100,14 +100,28 @@ async function generateOne(
   }
 
   const url = `${GEMINI_BASE}/${GEMINI_IMAGE_MODEL}:generateContent?key=${apiKey}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts }],
-      generationConfig: { responseModalities: ['IMAGE'] },
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 110000); // 110s per call (under 150s edge limit)
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts }],
+        generationConfig: { responseModalities: ['IMAGE'] },
+      }),
+      signal: controller.signal,
+    });
+  } catch (e: any) {
+    clearTimeout(timeout);
+    if (e?.name === 'AbortError') {
+      console.error('Gemini timeout after 110s');
+      throw { status: 504, message: 'Geração demorou demais. Tente reduzir o número de variações.' };
+    }
+    throw e;
+  }
+  clearTimeout(timeout);
 
   if (!res.ok) {
     const errText = await res.text();
