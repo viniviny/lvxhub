@@ -36,17 +36,17 @@
 
     --radius: 0.625rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 33%;
-    --sidebar-primary: 0 0% 7%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 93%;
-    --sidebar-accent-foreground: 0 0% 7%;
-    --sidebar-border: 0 0% 88%;
-    --sidebar-ring: 0 0% 7%;
-    --sidebar-card: 0 0% 96%;
-    --sidebar-card-border: 0 0% 88%;
-    --sidebar-card-hover: 0 0% 7%;
+    --sidebar-background: 0 0% 12%;
+    --sidebar-foreground: 0 0% 75%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 12%;
+    --sidebar-accent: 0 0% 18%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 20%;
+    --sidebar-ring: 0 0% 100%;
+    --sidebar-card: 0 0% 15%;
+    --sidebar-card-border: 0 0% 22%;
+    --sidebar-card-hover: 0 0% 100%;
 
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
