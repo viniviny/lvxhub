@@ -453,7 +453,7 @@ serve(async (req) => {
 
     // ═══ MODE: generate-image ═══
     if (mode === 'generate-image') {
-      const { prompt, angle, customAngleText, isCustomPrompt, referenceImage, referenceMimeType, aspectRatio, hasPresets, modelPresetImage, modelPresetMimeType, bgPresetImage, bgPresetMimeType } = body;
+      const { prompt, angle, customAngleText, isCustomPrompt, referenceImage, referenceMimeType, aspectRatio, hasPresets, modelPresetImage, modelPresetMimeType, bgPresetImage, bgPresetMimeType, additionalReferences } = body;
       if (!prompt) {
         return new Response(JSON.stringify({ error: 'prompt is required' }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
