@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, X, ImageIcon, Check, Sparkles, Loader2 } from 'lucide-react';
+import { Plus, X, ImageIcon, Check, Sparkles, Loader2, Layers } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { BulkVariantGenerator } from './BulkVariantGenerator';
 
 export interface ProductColor {
   id: string;
@@ -48,8 +49,37 @@ export function ColorManager({ colors, onColorsChange, generatedImages = [], asp
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const coverImage = generatedImages.find(i => i.isCover) || generatedImages[0] || null;
+
+  const saveBulkToLibrary = async (color: ProductColor, imageUrl: string, refLabel: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await (supabase as any).from('image_library').insert({
+        user_id: user.id,
+        url: imageUrl,
+        name: `${color.name} — variante`,
+        product_name: 'Variante de cor',
+        angle: refLabel,
+        tags: ['color-variant', color.name.toLowerCase(), refLabel],
+        status: 'rascunho',
+      });
+    } catch (e) {
+      console.warn('lib save failed', e);
+    }
+  };
+
+  const handleBulkVariant = (colorId: string, imageUrl: string, refLabel: string) => {
+    const color = colors.find(c => c.id === colorId);
+    if (!color) return;
+    // Set as primary if color has none yet
+    if (!color.imageUrl) {
+      onColorsChange(colors.map(c => c.id === colorId ? { ...c, imageUrl } : c));
+    }
+    saveBulkToLibrary(color, imageUrl, refLabel);
+  };
 
   const addColor = () => {
     if (!name.trim()) return;
@@ -119,11 +149,23 @@ export function ColorManager({ colors, onColorsChange, generatedImages = [], asp
     <div className="glass-card p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="font-display font-semibold text-[13px] text-foreground">Cor</h3>
-        {!adding && (
-          <Button variant="ghost" size="sm" className="h-7 text-[11px] text-muted-foreground" onClick={() => setAdding(true)}>
-            <Plus className="w-3 h-3 mr-1" />Adicionar cor
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {colors.length > 0 && coverImage && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-[11px] text-primary hover:text-primary"
+              onClick={() => setBulkOpen(true)}
+            >
+              <Layers className="w-3 h-3 mr-1" />Gerar em massa
+            </Button>
+          )}
+          {!adding && (
+            <Button variant="ghost" size="sm" className="h-7 text-[11px] text-muted-foreground" onClick={() => setAdding(true)}>
+              <Plus className="w-3 h-3 mr-1" />Adicionar cor
+            </Button>
+          )}
+        </div>
       </div>
 
       {colors.length > 0 && (
@@ -227,6 +269,16 @@ export function ColorManager({ colors, onColorsChange, generatedImages = [], asp
           Gere a imagem do produto na Etapa 1 para habilitar a geração de variantes de cor.
         </p>
       )}
+
+      <BulkVariantGenerator
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        colors={colors}
+        baseImageUrl={coverImage?.url || null}
+        galleryImages={generatedImages.map(i => ({ id: i.id, url: i.url }))}
+        aspectRatio={aspectRatio}
+        onVariantGenerated={handleBulkVariant}
+      />
     </div>
   );
 }
