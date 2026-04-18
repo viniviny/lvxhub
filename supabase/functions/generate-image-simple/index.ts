@@ -168,6 +168,7 @@ serve(async (req) => {
     const imageReference: string | undefined = body.imageReference;
     const imageReferenceMimeType: string | undefined = body.imageReferenceMimeType;
     const variations = Math.min(Math.max(parseInt(body.variations) || 1, 1), 4);
+    const aspectRatio: AspectRatio = (body.aspectRatio as AspectRatio) || '1:1';
 
     if (!prompt || prompt.length < 3) {
       return new Response(JSON.stringify({ error: 'Prompt obrigatório (mínimo 3 caracteres)' }), {
@@ -187,10 +188,16 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    if (!RATIO_INSTRUCTIONS[aspectRatio]) {
+      return new Response(JSON.stringify({ error: 'Formato inválido' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // 1. Enhance prompt automatically
     const enhanced = await enhancePrompt(GEMINI_API_KEY, prompt, style);
-    const finalPrompt = `${enhanced}\n\nSTYLE DIRECTION: ${STYLE_INSTRUCTIONS[style]}`;
+    const finalPrompt = `${enhanced}\n\nSTYLE DIRECTION: ${STYLE_INSTRUCTIONS[style]}\n\n${RATIO_INSTRUCTIONS[aspectRatio]}`;
 
     // 2. Generate N variations in parallel
     const tasks = Array.from({ length: variations }, (_, i) =>
