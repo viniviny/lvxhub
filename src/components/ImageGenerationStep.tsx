@@ -184,6 +184,12 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const [generatedCount, setGeneratedCount] = useState(0);
   const [totalToGenerate, setTotalToGenerate] = useState(0);
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
+  const addReferenceImage = useCallback((dataUrl: string) => {
+    setReferenceImages(prev => prev.includes(dataUrl) ? prev : [...prev, dataUrl].slice(0, 6));
+  }, []);
+  const removeReferenceAt = useCallback((idx: number) => {
+    setReferenceImages(prev => prev.filter((_, i) => i !== idx));
+  }, []);
   const [genStartTime, setGenStartTime] = useState<number | null>(null);
   const [angleStartTimes, setAngleStartTimes] = useState<Record<string, number>>({});
   const [completedAngles, setCompletedAngles] = useState<Set<ImageAngle>>(new Set());
