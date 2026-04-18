@@ -29,6 +29,34 @@ interface LibraryImage {
 type ViewSize = 'small' | 'large';
 type SortOrder = 'newest' | 'oldest';
 type StatusFilter = 'all' | 'rascunho' | 'publicado' | 'erro';
+type OriginFilter = 'all' | 'generator' | 'product';
+
+const isGenerator = (img: LibraryImage) => (img.tags || []).includes('image-generator');
+
+function groupByDate(images: LibraryImage[]) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const yesterday = today - 86400000;
+  const weekAgo = today - 7 * 86400000;
+  const monthAgo = today - 30 * 86400000;
+
+  const groups: Record<string, LibraryImage[]> = {
+    'Hoje': [],
+    'Ontem': [],
+    'Esta semana': [],
+    'Este mês': [],
+    'Mais antigos': [],
+  };
+  images.forEach(img => {
+    const t = new Date(img.created_at).getTime();
+    if (t >= today) groups['Hoje'].push(img);
+    else if (t >= yesterday) groups['Ontem'].push(img);
+    else if (t >= weekAgo) groups['Esta semana'].push(img);
+    else if (t >= monthAgo) groups['Este mês'].push(img);
+    else groups['Mais antigos'].push(img);
+  });
+  return Object.entries(groups).filter(([, items]) => items.length > 0);
+}
 
 export function ImageLibrary() {
   const { user } = useAuth();
