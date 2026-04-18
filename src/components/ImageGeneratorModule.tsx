@@ -18,7 +18,6 @@ import {
   Smartphone,
   Monitor,
   RectangleVertical,
-  Palette,
   Layers,
   Ratio,
   ChevronDown,
@@ -30,16 +29,7 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-type StyleId = 'realistic' | 'ecommerce' | 'lifestyle' | 'ads' | 'fashion';
 type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
-
-const STYLES: { id: StyleId; label: string; desc: string }[] = [
-  { id: 'realistic', label: 'Realista premium', desc: '8K cinematográfico, foco editorial' },
-  { id: 'ecommerce', label: 'E-commerce clean (fundo branco)', desc: 'Padrão Amazon/Shopify' },
-  { id: 'lifestyle', label: 'Lifestyle moderno', desc: 'Cena natural, mood de marca' },
-  { id: 'ads', label: 'Publicidade / Ads', desc: 'Alto impacto, otimizado para conversão' },
-  { id: 'fashion', label: 'Studio fashion', desc: 'Editorial Vogue/Zara' },
-];
 
 const RATIOS: { id: AspectRatio; label: string; hint: string; icon: React.ComponentType<{ className?: string }>; aspectClass: string }[] = [
   { id: '1:1', label: '1:1', hint: 'Quadrado / feed', icon: Square, aspectClass: 'aspect-square' },
@@ -64,7 +54,6 @@ async function fileToBase64(file: File): Promise<{ base64: string; mimeType: str
 
 export function ImageGeneratorModule() {
   const [prompt, setPrompt] = useState('');
-  const [style, setStyle] = useState<StyleId>('realistic');
   const [variations, setVariations] = useState<1 | 2 | 4>(1);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1');
   const [reference, setReference] = useState<{ base64: string; mimeType: string; preview: string } | null>(null);
@@ -135,7 +124,6 @@ export function ImageGeneratorModule() {
       const { data, error } = await supabase.functions.invoke('generate-image-simple', {
         body: {
           prompt: prompt.trim(),
-          style,
           variations,
           aspectRatio,
           imageReference: reference?.base64,
@@ -174,7 +162,6 @@ export function ImageGeneratorModule() {
       const { data, error } = await supabase.functions.invoke('generate-image-simple', {
         body: {
           prompt: prompt.trim() + ' — different angle and composition',
-          style,
           variations: 1,
           aspectRatio,
           imageReference: b64,

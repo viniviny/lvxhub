@@ -8,10 +8,10 @@
  *
  * Inputs (JSON body):
  *   - prompt: string (obrigatório) — descrição do que gerar
- *   - style: string — um dos: realistic, ecommerce, lifestyle, ads, fashion
  *   - imageReference?: string — base64 da imagem de referência (opcional)
  *   - imageReferenceMimeType?: string
  *   - variations?: number — 1 a 4 (padrão 1)
+ *   - aspectRatio?: '1:1' | '4:5' | '16:9' | '9:16'
  *
  * Saída: { images: string[] (data URLs base64), enhancedPrompt: string }
  * ═══════════════════════════════════════════════════════════════════════
@@ -29,24 +29,7 @@ const GEMINI_IMAGE_MODEL = 'gemini-3.1-flash-image-preview';
 const GEMINI_TEXT_MODEL = 'gemini-2.5-flash';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-type StyleId = 'realistic' | 'ecommerce' | 'lifestyle' | 'ads' | 'fashion';
 type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
-
-const STYLE_INSTRUCTIONS: Record<StyleId, string> = {
-  realistic: 'Premium photorealistic image. Ultra-sharp 8K detail, natural soft lighting, cinematic depth of field, realistic textures, true-to-life colors. Editorial commercial quality.',
-  ecommerce: 'Clean e-commerce product photography. Pure white seamless background (#FFFFFF), soft even studio lighting, no shadows under product, centered composition, sharp focus, true-color accuracy. Marketplace-ready (Amazon/Shopify standard).',
-  lifestyle: 'Modern lifestyle scene. Real-world contextual environment, natural daylight, candid composition, aspirational mood, soft warm tones, premium minimalist aesthetic. Brand campaign quality.',
-  ads: 'High-impact advertising visual. Bold composition, dramatic lighting, vibrant saturated colors, strong focal point, eye-catching framing optimized for paid social and display ads. Conversion-focused.',
-  fashion: 'High-end studio fashion photography. Editorial pose, dramatic studio lighting, neutral seamless backdrop, magazine-cover composition, premium textile detail, Vogue/Zara campaign aesthetic.',
-};
-
-const STYLE_LABELS: Record<StyleId, string> = {
-  realistic: 'Realista premium',
-  ecommerce: 'E-commerce clean',
-  lifestyle: 'Lifestyle moderno',
-  ads: 'Publicidade / Ads',
-  fashion: 'Studio fashion',
-};
 
 const RATIO_INSTRUCTIONS: Record<AspectRatio, string> = {
   '1:1': 'MANDATORY OUTPUT FORMAT: Square 1:1 aspect ratio. Compose subject centered and balanced for square framing.',
@@ -55,9 +38,9 @@ const RATIO_INSTRUCTIONS: Record<AspectRatio, string> = {
   '9:16': 'MANDATORY OUTPUT FORMAT: Vertical 9:16 aspect ratio (tall portrait, mobile full-screen). Optimized for Stories and Reels. Compose subject vertically with full-frame impact.',
 };
 
-async function enhancePrompt(apiKey: string, userPrompt: string, style: StyleId): Promise<string> {
+async function enhancePrompt(apiKey: string, userPrompt: string): Promise<string> {
   const system = `You are a senior prompt engineer for commercial product image generation.
-Improve the user prompt to maximize visual quality for the "${STYLE_LABELS[style]}" style.
+Improve the user prompt to maximize visual quality.
 Keep the original intent but add: composition, lighting, materials, mood, camera angle, and quality keywords.
 Return ONLY the improved prompt as plain text — no explanations, no quotes, no markdown.`;
 
@@ -95,13 +78,13 @@ async function generateOne(
   });
 
   if (imageReference && imageReferenceMimeType) {
-    parts.unshift({ text: '[REFERENCE IMAGE — use this as visual inspiration for subject, colors, style]' });
+    parts.unshift({ text: '[REFERENCE IMAGE — use this as visual inspiration for subject and colors]' });
     parts.push({ inlineData: { mimeType: imageReferenceMimeType, data: imageReference } });
   }
 
   const url = `${GEMINI_BASE}/${GEMINI_IMAGE_MODEL}:generateContent?key=${apiKey}`;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 110000); // 110s per call (under 150s edge limit)
+  const timeout = setTimeout(() => controller.abort(), 110000);
   let res: Response;
   try {
     res = await fetch(url, {
@@ -154,8 +137,6 @@ serve(async (req) => {
       });
     }
 
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
 
     if (!GEMINI_API_KEY) {
@@ -189,7 +170,6 @@ serve(async (req) => {
 
     const body = await req.json();
     const prompt: string = (body.prompt || '').toString().trim();
-    const style: StyleId = (body.style as StyleId) || 'realistic';
     const imageReference: string | undefined = body.imageReference;
     const imageReferenceMimeType: string | undefined = body.imageReferenceMimeType;
     const variations = Math.min(Math.max(parseInt(body.variations) || 1, 1), 4);
@@ -207,12 +187,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    if (!STYLE_INSTRUCTIONS[style]) {
-      return new Response(JSON.stringify({ error: 'Estilo inválido' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
     if (!RATIO_INSTRUCTIONS[aspectRatio]) {
       return new Response(JSON.stringify({ error: 'Formato inválido' }), {
         status: 400,
@@ -221,8 +195,8 @@ serve(async (req) => {
     }
 
     // 1. Enhance prompt automatically
-    const enhanced = await enhancePrompt(GEMINI_API_KEY, prompt, style);
-    const finalPrompt = `${enhanced}\n\nSTYLE DIRECTION: ${STYLE_INSTRUCTIONS[style]}\n\n${RATIO_INSTRUCTIONS[aspectRatio]}`;
+    const enhanced = await enhancePrompt(GEMINI_API_KEY, prompt);
+    const finalPrompt = `${enhanced}\n\n${RATIO_INSTRUCTIONS[aspectRatio]}`;
 
     // 2. Generate N variations in parallel
     const tasks = Array.from({ length: variations }, (_, i) =>
@@ -248,7 +222,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ images, enhancedPrompt: enhanced, style, aspectRatio, count: images.length }),
+      JSON.stringify({ images, enhancedPrompt: enhanced, aspectRatio, count: images.length }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (err: any) {
