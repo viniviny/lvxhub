@@ -221,8 +221,35 @@ export function ImageLibrary() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="font-display text-2xl font-bold text-foreground">Biblioteca de Imagens</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">{images.length} imagen{images.length !== 1 ? 's' : ''} gerada{images.length !== 1 ? 's' : ''}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{images.length} imagen{images.length !== 1 ? 's' : ''} no total</p>
         </div>
+      </div>
+
+      {/* Origin tabs */}
+      <div className="flex items-center gap-1 mb-4 p-1 bg-secondary/50 rounded-lg w-fit">
+        {[
+          { id: 'all' as const, label: 'Tudo', icon: ImageIcon, count: images.length },
+          { id: 'generator' as const, label: 'Image Generator', icon: Sparkles, count: generatorCount },
+          { id: 'product' as const, label: 'Produtos', icon: Package, count: productCount },
+        ].map(tab => {
+          const Icon = tab.icon;
+          const active = filterOrigin === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setFilterOrigin(tab.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                active ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              {tab.label}
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-secondary text-foreground' : 'bg-muted text-muted-foreground'}`}>
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Toolbar */}
