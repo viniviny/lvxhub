@@ -348,20 +348,25 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
       modelImgUrl ? imageUrlToBase64(modelImgUrl) : Promise.resolve(null),
       bgImgUrl ? imageUrlToBase64(bgImgUrl) : Promise.resolve(null),
     ]);
+    // Convert all reference images to base64 once
+    const parsedRefs = referenceImages
+      .map(d => {
+        const m = d.match(/^data:([^;]+);base64,(.+)$/);
+        return m ? { mimeType: m[1], base64: m[2] } : null;
+      })
+      .filter((r): r is { mimeType: string; base64: string } => r !== null);
+    const primaryRef = parsedRefs[0];
+    const additionalRefs = parsedRefs.slice(1);
     const promises = angles.map(async (angle) => {
       try {
-        let refBase64: string | undefined;
-        let refMimeType: string | undefined;
-        if (referenceImage) {
-          const match = referenceImage.match(/^data:([^;]+);base64,(.+)$/);
-          if (match) { refMimeType = match[1]; refBase64 = match[2]; }
-        }
         const enrichedPrompt = enrichedPromptBase(angle);
         const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
           body: {
             mode: 'generate-image', prompt: enrichedPrompt, angle,
             customAngleText: angle === 'personalizado' ? customAngleText : undefined,
-            isCustomPrompt, referenceImage: refBase64, referenceMimeType: refMimeType,
+            isCustomPrompt,
+            referenceImage: primaryRef?.base64, referenceMimeType: primaryRef?.mimeType,
+            additionalReferences: additionalRefs.length > 0 ? additionalRefs : undefined,
             aspectRatio: activeRatio, hasPresets,
             modelPresetImage: modelImageData?.base64, modelPresetMimeType: modelImageData?.mimeType,
             bgPresetImage: bgImageData?.base64, bgPresetMimeType: bgImageData?.mimeType,
@@ -373,7 +378,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         if (!imageUrl) { toast.error(`Nenhuma imagem retornada (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`); return null; }
         const newImage: GeneratedImage = { id: crypto.randomUUID(), angle, url: imageUrl, isCover: false, justCompleted: true };
         newImages.push(newImage);
-        logUsage({ service: 'image-generation', action: `Gerar imagem (${angle})`, metadata: { model: 'gemini-2.5-flash-preview-05-20', provider: 'Google Gemini Direct' } });
+        logUsage({ service: 'image-generation', action: `Gerar imagem (${angle})`, metadata: { model: 'gemini-2.5-flash-preview-05-20', provider: 'Google Gemini Direct', refsCount: parsedRefs.length } });
         setGeneratedCount(prev => prev + 1);
         setCompletedAngles(prev => new Set(prev).add(angle));
         setGeneratingAngles(prev => { const next = new Set(prev); next.delete(angle); return next; });
