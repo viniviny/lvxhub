@@ -224,7 +224,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         if (!file) continue;
         if (file.size > 10 * 1024 * 1024) { toast.error('Arquivo muito grande. Máx. 10MB.'); return; }
         const reader = new FileReader();
-        reader.onload = () => setReferenceImage(reader.result as string);
+        reader.onload = () => addReferenceImage(reader.result as string);
         reader.readAsDataURL(file);
         return;
       }
@@ -250,7 +250,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           const blob = await item.getType(imageType);
           if (blob.size > 10 * 1024 * 1024) { toast.error('Arquivo muito grande. Máx. 10MB.'); return; }
           const reader = new FileReader();
-          reader.onload = () => setReferenceImage(reader.result as string);
+          reader.onload = () => addReferenceImage(reader.result as string);
           reader.readAsDataURL(blob);
           return;
         }
