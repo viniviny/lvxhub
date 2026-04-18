@@ -169,8 +169,11 @@ serve(async (req) => {
     const images = results.filter((x): x is string => !!x);
 
     if (images.length === 0) {
-      return new Response(JSON.stringify({ error: 'Nenhuma imagem foi gerada. Tente novamente.' }), {
-        status: 500,
+      // Surface the first failure reason (e.g. 402 credits) instead of a generic 500
+      const firstErr = (results as any[]).find((r) => r && typeof r === 'object' && r.message);
+      const msg = firstErr?.message || 'Nenhuma imagem foi gerada. Verifique seus créditos no Lovable AI (Settings → Workspace → Usage).';
+      return new Response(JSON.stringify({ error: msg }), {
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
