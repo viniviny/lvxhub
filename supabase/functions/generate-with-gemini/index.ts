@@ -574,6 +574,121 @@ Do NOT substitute, simplify, or deviate. The generated background must be virtua
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    // ═══ MODE: generate-color-variant ═══
+    // Generates the SAME product in a different color, keeping model identity,
+    // background and lighting consistent. Pose, angle and expression vary.
+    if (mode === 'generate-color-variant') {
+      const {
+        baseImage,            // base64 of the cover/reference image (REQUIRED)
+        baseMimeType,         // mime type of base image
+        colorReferenceImage,  // optional base64 of a color swatch / reference
+        colorReferenceMimeType,
+        colorName,            // e.g. "Azul marinho"
+        colorHex,             // e.g. "#1B2A4E"
+        aspectRatio,
+      } = body;
+
+      if (!baseImage || !baseMimeType) {
+        return new Response(JSON.stringify({ error: 'baseImage and baseMimeType are required' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (!colorName && !colorHex && !colorReferenceImage) {
+        return new Response(JSON.stringify({ error: 'Provide colorName, colorHex or colorReferenceImage' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const colorDescriptor = [colorName, colorHex ? `(exact hex ${colorHex})` : '']
+        .filter(Boolean).join(' ');
+
+      const variantPrompt = `COLOR VARIANT GENERATION — STRICT RULES
+
+GOAL
+Generate the EXACT SAME product as in the [PRODUCT REFERENCE], but recolored to: ${colorDescriptor || 'the color shown in the [COLOR REFERENCE] image'}.
+
+ABSOLUTE RULES
+- The product must remain IDENTICAL in structure, fabric, cut, stitching, buttons, zippers, prints, logos, proportions and silhouette.
+- ONLY the color of the product changes. Do NOT alter design, material or details.
+- Do NOT invent new colors. Do NOT mix colors. Do NOT add gradients or patterns that are not in the reference.
+${colorReferenceImage ? '- The new color must MATCH the [COLOR REFERENCE] image exactly.' : ''}
+${colorHex ? `- The new color must match hex ${colorHex} as closely as physically plausible on the fabric.` : ''}
+
+CONSISTENCY (KEEP IDENTICAL TO REFERENCE)
+- Same model identity (face, hair, body, skin tone) if a person is present
+- Same background, setting and atmosphere
+- Same lighting style, color temperature and shadow direction
+- Same camera quality and photographic style (premium fashion editorial)
+
+VARIATION (MUST DIFFER FROM REFERENCE)
+- Different pose
+- Different camera angle / framing
+- Different facial expression (subtle, natural, never exaggerated)
+${aspectRatio && RATIO_PROMPTS[aspectRatio] ? `\n${RATIO_PROMPTS[aspectRatio]}` : ''}
+
+NEGATIVE
+- Do not change the garment design or proportions
+- Do not change background or lighting
+- Do not produce a flat color swatch — produce a full photographic shot
+- Do not crop or cut the product
+- No text, no watermark, no logo overlay
+
+VARIETY SEED #${Math.floor(Math.random() * 9999)}
+
+Generate a realistic, premium editorial photo of the SAME product recolored as specified, with a unique pose, angle and expression.`;
+
+      const presetImages: { base64: string; mimeType: string; label: string }[] = [];
+      if (colorReferenceImage && colorReferenceMimeType) {
+        presetImages.push({
+          base64: colorReferenceImage,
+          mimeType: colorReferenceMimeType,
+          label: 'COLOR REFERENCE',
+        });
+      }
+
+      const imageResult = await callGeminiImage(
+        GEMINI_API_KEY,
+        variantPrompt,
+        baseImage,
+        baseMimeType,
+        presetImages.length > 0 ? presetImages : undefined,
+      );
+
+      // Try to upload to Supabase Storage
+      const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+      const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+      if (SUPABASE_URL && SERVICE_ROLE_KEY) {
+        try {
+          const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+          const ext = imageResult.mimeType.includes('png') ? 'png' : 'webp';
+          const safeName = (colorName || 'variant').toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 24);
+          const fileName = `variant-${safeName}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+          const imageBytes = Uint8Array.from(atob(imageResult.base64), c => c.charCodeAt(0));
+          const { error: uploadError } = await supabase.storage
+            .from('product-images')
+            .upload(fileName, imageBytes, { contentType: imageResult.mimeType, upsert: false });
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage.from('product-images').getPublicUrl(fileName);
+            return new Response(JSON.stringify({
+              imageUrl: urlData.publicUrl,
+              format: ext,
+              size: imageBytes.length,
+              stored: true,
+            }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+          }
+        } catch (e) {
+          console.warn('Storage upload failed, returning base64:', e);
+        }
+      }
+
+      return new Response(JSON.stringify({
+        imageUrl: `data:${imageResult.mimeType};base64,${imageResult.base64}`,
+        format: 'base64',
+        stored: false,
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // ═══ MODE: generate-text ═══
     if (mode === 'generate-text') {
       const { type, brief, title, language, languageCode, countryName, customPrompt, tone, usedNames, gender, productContext, productSpecs } = body;
