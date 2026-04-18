@@ -115,6 +115,7 @@ export function ImageGeneratorModule() {
           prompt: prompt.trim() + ' — different angle and composition',
           style,
           variations: 1,
+          aspectRatio,
           imageReference: b64,
           imageReferenceMimeType: mt,
         },
