@@ -162,6 +162,12 @@ export function ImageGeneratorModule() {
     }
     setLoading(true);
     try {
+      const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+      if (sessionErr || !sessionData.session) {
+        toast.error('Sessão expirada. Faça login novamente.');
+        window.location.href = '/login';
+        return;
+      }
       const match = sourceUrl.match(/^data:(.*?);base64,(.*)$/);
       if (!match) throw new Error('Formato de imagem inválido');
       const [, mt, b64] = match;
