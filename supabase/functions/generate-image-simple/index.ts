@@ -1,9 +1,6 @@
 /**
- * ═══════════════════════════════════════════════════════════════════════
  * Edge Function: generate-image-simple
- * ═══════════════════════════════════════════════════════════════════════
- * Image Generator module — uses Lovable AI Gateway (Nano Banana).
- * ═══════════════════════════════════════════════════════════════════════
+ * Image Generator — Gemini API direta (gemini-3.1-flash-image).
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -13,8 +10,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const LOVABLE_AI_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
-const IMAGE_MODEL = 'google/gemini-3.1-flash-image-preview';
+const GEMINI_IMAGE_MODEL = 'gemini-3.1-flash-image';
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
 
@@ -32,35 +29,28 @@ async function generateOne(
   imageReferenceMimeType?: string,
   variationSeed?: number,
 ): Promise<string | null> {
-  const userContent: any[] = [
-    {
-      type: 'text',
-      text: `${finalPrompt}\n\nMANDATORY: Commercial-grade quality, sharp focus, professional lighting, no watermarks, no text overlays.${variationSeed !== undefined ? `\nVARIATION SEED #${variationSeed} — produce a UNIQUE composition.` : ''}`,
-    },
-  ];
+  const parts: any[] = [];
+  parts.push({
+    text: `${finalPrompt}\n\nMANDATORY: Commercial-grade quality, sharp focus, professional lighting, no watermarks, no text overlays.${variationSeed !== undefined ? `\nVARIATION SEED #${variationSeed} — produce a UNIQUE composition.` : ''}`,
+  });
 
   if (imageReference && imageReferenceMimeType) {
-    userContent.push({
-      type: 'image_url',
-      image_url: { url: `data:${imageReferenceMimeType};base64,${imageReference}` },
-    });
+    parts.unshift({ text: '[REFERENCE IMAGE — use this as visual inspiration for subject and colors]' });
+    parts.push({ inlineData: { mimeType: imageReferenceMimeType, data: imageReference } });
   }
 
+  const url = `${GEMINI_BASE}/${GEMINI_IMAGE_MODEL}:generateContent?key=${apiKey}`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 110000);
 
   let res: Response;
   try {
-    res = await fetch(LOVABLE_AI_URL, {
+    res = await fetch(url, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: IMAGE_MODEL,
-        messages: [{ role: 'user', content: userContent }],
-        modalities: ['image', 'text'],
+        contents: [{ role: 'user', parts }],
+        generationConfig: { responseModalities: ['IMAGE'] },
       }),
       signal: controller.signal,
     });
@@ -75,19 +65,21 @@ async function generateOne(
 
   if (!res.ok) {
     const errText = await res.text();
-    console.error('Lovable AI error:', res.status, errText);
+    console.error('Gemini image error:', res.status, errText);
     if (res.status === 429) throw { status: 429, message: 'Limite de requisições atingido. Tente novamente em instantes.' };
-    if (res.status === 402) throw { status: 402, message: 'Créditos insuficientes na sua workspace Lovable AI.' };
+    if (res.status === 402) throw { status: 402, message: 'Créditos insuficientes.' };
     throw { status: res.status, message: errText };
   }
 
   const data = await res.json();
-  const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-  if (!imageUrl) {
+  const candidate = data.candidates?.[0];
+  const imagePart = candidate?.content?.parts?.find((p: any) => p.inlineData?.data);
+  if (!imagePart) {
     console.error('No image in response:', JSON.stringify(data).slice(0, 500));
     return null;
   }
-  return imageUrl;
+  const mimeType = imagePart.inlineData.mimeType || 'image/png';
+  return `data:${mimeType};base64,${imagePart.inlineData.data}`;
 }
 
 serve(async (req) => {
@@ -102,9 +94,9 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY não configurada' }), {
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) {
+      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY não configurada' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -117,7 +109,7 @@ serve(async (req) => {
       const now = Math.floor(Date.now() / 1000);
       if (payload.exp && payload.exp < now) throw new Error('expired');
       if (!payload.sub) throw new Error('no sub');
-    } catch (e) {
+    } catch {
       return new Response(JSON.stringify({ error: 'Sessão inválida' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -152,26 +144,24 @@ serve(async (req) => {
 
     const finalPrompt = `${prompt}\n\n${RATIO_INSTRUCTIONS[aspectRatio]}`;
 
-    // Generate N variations in parallel
     const tasks = Array.from({ length: variations }, (_, i) =>
       generateOne(
-        LOVABLE_API_KEY,
+        GEMINI_API_KEY,
         finalPrompt,
         imageReference,
         imageReferenceMimeType,
         variations > 1 ? Math.floor(Math.random() * 99999) + i : undefined,
       ).catch((e) => {
         console.error(`Variation ${i} failed:`, e);
-        return e; // keep the error object so we can surface its message
+        return e;
       }),
     );
     const results = await Promise.all(tasks);
     const images = results.filter((x): x is string => typeof x === 'string' && !!x);
 
     if (images.length === 0) {
-      // Surface the first failure reason (e.g. 402 credits) instead of a generic 500
       const firstErr = (results as any[]).find((r) => r && typeof r === 'object' && r.message);
-      const msg = firstErr?.message || 'Nenhuma imagem foi gerada. Verifique seus créditos no Lovable AI (Settings → Workspace → Usage).';
+      const msg = firstErr?.message || 'Nenhuma imagem foi gerada. Tente novamente.';
       return new Response(JSON.stringify({ error: msg }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
