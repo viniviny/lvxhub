@@ -786,11 +786,11 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
               onSetCover={setCover}
               onBulkRemove={bulkRemove}
               onUseAsReference={async (url) => {
-                if (url.startsWith('data:')) { setReferenceImage(url); toast.success('Referência definida!'); return; }
+                if (url.startsWith('data:')) { addReferenceImage(url); toast.success('Adicionada às referências!'); return; }
                 try {
                   const res = await fetch(url); const blob = await res.blob();
                   const reader = new FileReader();
-                  reader.onload = () => { setReferenceImage(reader.result as string); toast.success('Referência definida!'); };
+                  reader.onload = () => { addReferenceImage(reader.result as string); toast.success('Adicionada às referências!'); };
                   reader.readAsDataURL(blob);
                 } catch { toast.error('Erro ao carregar referência.'); }
               }}
