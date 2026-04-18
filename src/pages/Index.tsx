@@ -13,6 +13,7 @@ import { useProductUnderstanding } from '@/hooks/useProductUnderstanding';
 import { useProductSpecs } from '@/hooks/useProductSpecs';
 import { ProductHistory } from '@/components/ProductHistory';
 import { ImageLibrary } from '@/components/ImageLibrary';
+import { ImageGeneratorModule } from '@/components/ImageGeneratorModule';
 import { StoreSelector } from '@/components/StoreSelector';
 import { useStoreContext } from '@/hooks/useStoreContext';
 import type { MarketConfig, ShopifyStore } from '@/hooks/useStoreManager';
@@ -1768,6 +1769,9 @@ const Index = () => {
 
             {/* LIBRARY VIEW */}
             {currentView === 'library' && <ImageLibrary />}
+
+            {/* IMAGE GENERATOR VIEW */}
+            {currentView === 'image-generator' && <ImageGeneratorModule />}
 
             {/* STORES VIEW */}
             {currentView === 'stores' && (

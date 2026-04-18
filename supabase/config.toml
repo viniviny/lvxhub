@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.generate-with-gemini]
 verify_jwt = false
+
+[functions.generate-image-simple]
+verify_jwt = false
