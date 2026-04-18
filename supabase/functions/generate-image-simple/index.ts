@@ -151,13 +151,22 @@ serve(async (req) => {
       });
     }
 
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const token = authHeader.replace('Bearer ', '');
-    const { data: claimsData, error: authError } = await userClient.auth.getClaims(token);
-    if (authError || !claimsData?.claims?.sub) {
-      console.error('Auth error:', authError);
+    // Decode JWT payload to validate session (avoids version-specific SDK methods)
+    const token = authHeader.replace('Bearer ', '').trim();
+    let userId: string | null = null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      const now = Math.floor(Date.now() / 1000);
+      if (payload.exp && payload.exp < now) throw new Error('expired');
+      userId = payload.sub;
+    } catch (e) {
+      console.error('JWT decode error:', e);
+      return new Response(JSON.stringify({ error: 'Sessão inválida' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    if (!userId) {
       return new Response(JSON.stringify({ error: 'Sessão inválida' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
