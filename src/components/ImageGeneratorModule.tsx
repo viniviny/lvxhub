@@ -404,7 +404,8 @@ export function ImageGeneratorModule() {
             ))}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {!loading && results.length === 0 && (
         <div className="mt-6 glass-card p-10 text-center">
