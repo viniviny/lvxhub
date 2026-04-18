@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Search, Download, Trash2, Tag, Pencil, Check, X, Image as ImageIcon,
-  CheckSquare, Square, Grid3X3, LayoutGrid, Eye, ArrowUpDown, Store, Filter
+  CheckSquare, Square, Grid3X3, LayoutGrid, ArrowUpDown, Store, Filter, Sparkles, Package
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -29,6 +29,34 @@ interface LibraryImage {
 type ViewSize = 'small' | 'large';
 type SortOrder = 'newest' | 'oldest';
 type StatusFilter = 'all' | 'rascunho' | 'publicado' | 'erro';
+type OriginFilter = 'all' | 'generator' | 'product';
+
+const isGenerator = (img: LibraryImage) => (img.tags || []).includes('image-generator');
+
+function groupByDate(images: LibraryImage[]) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const yesterday = today - 86400000;
+  const weekAgo = today - 7 * 86400000;
+  const monthAgo = today - 30 * 86400000;
+
+  const groups: Record<string, LibraryImage[]> = {
+    'Hoje': [],
+    'Ontem': [],
+    'Esta semana': [],
+    'Este mês': [],
+    'Mais antigos': [],
+  };
+  images.forEach(img => {
+    const t = new Date(img.created_at).getTime();
+    if (t >= today) groups['Hoje'].push(img);
+    else if (t >= yesterday) groups['Ontem'].push(img);
+    else if (t >= weekAgo) groups['Esta semana'].push(img);
+    else if (t >= monthAgo) groups['Este mês'].push(img);
+    else groups['Mais antigos'].push(img);
+  });
+  return Object.entries(groups).filter(([, items]) => items.length > 0);
+}
 
 export function ImageLibrary() {
   const { user } = useAuth();
@@ -38,6 +66,7 @@ export function ImageLibrary() {
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<StatusFilter>('all');
   const [filterStore, setFilterStore] = useState<string>('all');
+  const [filterOrigin, setFilterOrigin] = useState<OriginFilter>('all');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -67,9 +96,12 @@ export function ImageLibrary() {
 
   useEffect(() => { fetchImages(); }, [fetchImages]);
 
-  // Get all unique tags and stores
-  const allTags = Array.from(new Set(images.flatMap(i => i.tags || [])));
+  // Get all unique tags and stores (exclude internal origin tag)
+  const allTags = Array.from(new Set(images.flatMap(i => i.tags || []))).filter(t => t !== 'image-generator');
   const allStores = Array.from(new Set(images.map(i => i.store_domain).filter(Boolean))) as string[];
+
+  const generatorCount = images.filter(isGenerator).length;
+  const productCount = images.length - generatorCount;
 
   // Filter images
   const filtered = images.filter(img => {
@@ -79,8 +111,12 @@ export function ImageLibrary() {
     const matchTag = !filterTag || img.tags?.includes(filterTag);
     const matchStatus = filterStatus === 'all' || (img.status || 'rascunho') === filterStatus;
     const matchStore = filterStore === 'all' || img.store_domain === filterStore;
-    return matchSearch && matchTag && matchStatus && matchStore;
+    const matchOrigin = filterOrigin === 'all' ||
+      (filterOrigin === 'generator' ? isGenerator(img) : !isGenerator(img));
+    return matchSearch && matchTag && matchStatus && matchStore && matchOrigin;
   });
+
+  const grouped = groupByDate(filtered);
 
   const toggleSelect = (id: string) => {
     setSelected(prev => {
@@ -185,8 +221,35 @@ export function ImageLibrary() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="font-display text-2xl font-bold text-foreground">Biblioteca de Imagens</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">{images.length} imagen{images.length !== 1 ? 's' : ''} gerada{images.length !== 1 ? 's' : ''}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{images.length} imagen{images.length !== 1 ? 's' : ''} no total</p>
         </div>
+      </div>
+
+      {/* Origin tabs */}
+      <div className="flex items-center gap-1 mb-4 p-1 bg-secondary/50 rounded-lg w-fit">
+        {[
+          { id: 'all' as const, label: 'Tudo', icon: ImageIcon, count: images.length },
+          { id: 'generator' as const, label: 'Image Generator', icon: Sparkles, count: generatorCount },
+          { id: 'product' as const, label: 'Produtos', icon: Package, count: productCount },
+        ].map(tab => {
+          const Icon = tab.icon;
+          const active = filterOrigin === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setFilterOrigin(tab.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                active ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              {tab.label}
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? 'bg-secondary text-foreground' : 'bg-muted text-muted-foreground'}`}>
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Toolbar */}
@@ -263,9 +326,9 @@ export function ImageLibrary() {
 
         {/* Row 2: Tag filter chips + active filter count */}
         <div className="flex items-center gap-2 flex-wrap">
-          {(filterStatus !== 'all' || filterStore !== 'all' || filterTag) && (
+          {(filterStatus !== 'all' || filterStore !== 'all' || filterTag || filterOrigin !== 'all' || search) && (
             <button
-              onClick={() => { setFilterStatus('all'); setFilterStore('all'); setFilterTag(null); setSearch(''); }}
+              onClick={() => { setFilterStatus('all'); setFilterStore('all'); setFilterTag(null); setSearch(''); setFilterOrigin('all'); }}
               className="text-[11px] text-destructive hover:text-destructive/80 transition-colors"
             >
               Limpar filtros
@@ -318,7 +381,7 @@ export function ImageLibrary() {
 
       {/* Image Grid */}
       {loading ? (
-        <div className="grid gap-3 ${gridCols}">
+        <div className={`grid gap-3 ${gridCols}`}>
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="aspect-square rounded-lg bg-secondary animate-pulse" />
           ))}
@@ -327,132 +390,154 @@ export function ImageLibrary() {
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <ImageIcon className="w-12 h-12 text-muted-foreground/30 mb-3" />
           <h3 className="text-lg font-semibold text-foreground mb-1">
-            {search || filterTag ? 'Nenhuma imagem encontrada' : 'Biblioteca vazia'}
+            {search || filterTag || filterOrigin !== 'all' ? 'Nenhuma imagem encontrada' : 'Biblioteca vazia'}
           </h3>
           <p className="text-sm text-muted-foreground max-w-sm">
-            {search || filterTag
+            {search || filterTag || filterOrigin !== 'all'
               ? 'Tente ajustar os filtros de busca.'
-              : 'As imagens geradas para seus produtos aparecerão aqui automaticamente.'}
+              : 'Imagens geradas para seus produtos e no Image Generator aparecerão aqui automaticamente.'}
           </p>
         </div>
       ) : (
-        <div className={`grid gap-3 ${gridCols}`}>
-          {filtered.map(img => {
-            const isSelected = selected.has(img.id);
-            const isEditing = editingId === img.id;
+        <div className="space-y-6">
+          {grouped.map(([groupName, items]) => (
+            <div key={groupName}>
+              <div className="flex items-center gap-2 mb-2.5 sticky top-0 bg-background/95 backdrop-blur-sm py-1 z-10">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{groupName}</h3>
+                <span className="text-[10px] text-muted-foreground">·</span>
+                <span className="text-[10px] text-muted-foreground">{items.length} {items.length === 1 ? 'imagem' : 'imagens'}</span>
+                <div className="flex-1 h-px bg-border ml-2" />
+              </div>
+              <div className={`grid gap-3 ${gridCols}`}>
+                {items.map(img => {
+                  const isSelected = selected.has(img.id);
+                  const isEditing = editingId === img.id;
+                  const fromGenerator = isGenerator(img);
 
-            return (
-              <div
-                key={img.id}
-                className={`group relative rounded-lg overflow-hidden border transition-all ${
-                  isSelected
-                    ? 'border-primary ring-2 ring-primary/30'
-                    : 'border-border hover:border-muted-foreground/30'
-                }`}
-              >
-                {/* Image */}
-                <div
-                  className="aspect-square bg-secondary cursor-pointer"
-                  onClick={() => setPreviewImage(img)}
-                >
-                  <img src={img.url} alt={img.name} className="w-full h-full object-contain" loading="lazy" />
-                </div>
-
-                {/* Select checkbox */}
-                <button
-                  onClick={e => { e.stopPropagation(); toggleSelect(img.id); }}
-                  className={`absolute top-2 left-2 w-6 h-6 rounded-md flex items-center justify-center transition-all ${
-                    isSelected
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-black/40 text-white opacity-0 group-hover:opacity-100'
-                  }`}
-                >
-                  {isSelected ? <Check className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
-                </button>
-
-                {/* Quick actions */}
-                <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={e => { e.stopPropagation(); handleDownload(img); }}
-                    className="w-7 h-7 rounded-md bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={e => { e.stopPropagation(); startEdit(img); }}
-                    className="w-7 h-7 rounded-md bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={e => { e.stopPropagation(); handleDelete([img.id]); }}
-                    className="w-7 h-7 rounded-md bg-black/40 text-white flex items-center justify-center hover:bg-red-600/80 transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                {/* Info footer */}
-                <div className="p-2 bg-background">
-                  {isEditing ? (
-                    <div className="space-y-1.5">
-                      <Input
-                        value={editName}
-                        onChange={e => setEditName(e.target.value)}
-                        className="h-7 text-xs bg-secondary"
-                        placeholder="Nome da imagem"
-                        autoFocus
-                      />
-                      <Input
-                        value={editTags}
-                        onChange={e => setEditTags(e.target.value)}
-                        className="h-7 text-xs bg-secondary"
-                        placeholder="Tags (separadas por vírgula)"
-                      />
-                      <div className="flex gap-1">
-                        <Button size="sm" className="h-6 text-[10px] flex-1" onClick={saveEdit}>
-                          <Check className="w-3 h-3 mr-0.5" />Salvar
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setEditingId(null)}>
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-xs font-medium text-foreground truncate flex-1">
-                          {img.name || img.angle || 'Sem nome'}
-                        </p>
-                        {(img.status || 'rascunho') === 'publicado' && (
-                          <span className="shrink-0 text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]">Publicado</span>
-                        )}
-                        {(img.status || 'rascunho') === 'erro' && (
-                          <span className="shrink-0 text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive">Erro</span>
-                        )}
-                        {(img.status || 'rascunho') === 'rascunho' && (
-                          <span className="shrink-0 text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">Rascunho</span>
-                        )}
-                      </div>
-                      {img.product_name && (
-                        <p className="text-[10px] text-muted-foreground truncate">{img.product_name}</p>
-                      )}
-                      {img.tags && img.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {img.tags.slice(0, 3).map(tag => (
-                            <Badge key={tag} variant="secondary" className="text-[9px] px-1 py-0 h-4">{tag}</Badge>
-                          ))}
-                          {img.tags.length > 3 && (
-                            <span className="text-[9px] text-muted-foreground">+{img.tags.length - 3}</span>
-                          )}
+                  return (
+                    <div
+                      key={img.id}
+                      className={`group relative rounded-lg overflow-hidden border transition-all ${
+                        isSelected
+                          ? 'border-primary ring-2 ring-primary/30'
+                          : 'border-border hover:border-muted-foreground/30'
+                      }`}
+                    >
+                      {/* Origin badge */}
+                      {fromGenerator && (
+                        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/90 text-primary-foreground text-[9px] font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Sparkles className="w-2.5 h-2.5" />
+                          AI Generator
                         </div>
                       )}
-                    </>
-                  )}
-                </div>
+
+                      {/* Image */}
+                      <div
+                        className="aspect-square bg-secondary cursor-pointer"
+                        onClick={() => setPreviewImage(img)}
+                      >
+                        <img src={img.url} alt={img.name} className="w-full h-full object-contain" loading="lazy" />
+                      </div>
+
+                      {/* Select checkbox */}
+                      <button
+                        onClick={e => { e.stopPropagation(); toggleSelect(img.id); }}
+                        className={`absolute top-2 left-2 w-6 h-6 rounded-md flex items-center justify-center transition-all ${
+                          isSelected
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-black/40 text-white opacity-0 group-hover:opacity-100'
+                        }`}
+                      >
+                        {isSelected ? <Check className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+                      </button>
+
+                      {/* Quick actions */}
+                      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={e => { e.stopPropagation(); handleDownload(img); }}
+                          className="w-7 h-7 rounded-md bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={e => { e.stopPropagation(); startEdit(img); }}
+                          className="w-7 h-7 rounded-md bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={e => { e.stopPropagation(); handleDelete([img.id]); }}
+                          className="w-7 h-7 rounded-md bg-black/40 text-white flex items-center justify-center hover:bg-destructive/80 transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* Info footer */}
+                      <div className="p-2 bg-background">
+                        {isEditing ? (
+                          <div className="space-y-1.5">
+                            <Input
+                              value={editName}
+                              onChange={e => setEditName(e.target.value)}
+                              className="h-7 text-xs bg-secondary"
+                              placeholder="Nome da imagem"
+                              autoFocus
+                            />
+                            <Input
+                              value={editTags}
+                              onChange={e => setEditTags(e.target.value)}
+                              className="h-7 text-xs bg-secondary"
+                              placeholder="Tags (separadas por vírgula)"
+                            />
+                            <div className="flex gap-1">
+                              <Button size="sm" className="h-6 text-[10px] flex-1" onClick={saveEdit}>
+                                <Check className="w-3 h-3 mr-0.5" />Salvar
+                              </Button>
+                              <Button variant="ghost" size="sm" className="h-6 text-[10px]" onClick={() => setEditingId(null)}>
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-1.5">
+                              {fromGenerator && <Sparkles className="w-3 h-3 text-primary shrink-0" />}
+                              <p className="text-xs font-medium text-foreground truncate flex-1">
+                                {img.name || img.angle || 'Sem nome'}
+                              </p>
+                              {(img.status || 'rascunho') === 'publicado' && (
+                                <span className="shrink-0 text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]">Publicado</span>
+                              )}
+                              {(img.status || 'rascunho') === 'erro' && (
+                                <span className="shrink-0 text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive">Erro</span>
+                              )}
+                              {(img.status || 'rascunho') === 'rascunho' && !fromGenerator && (
+                                <span className="shrink-0 text-[8px] font-semibold px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">Rascunho</span>
+                              )}
+                            </div>
+                            {img.product_name && !fromGenerator && (
+                              <p className="text-[10px] text-muted-foreground truncate">{img.product_name}</p>
+                            )}
+                            {img.tags && img.tags.filter(t => t !== 'image-generator').length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {img.tags.filter(t => t !== 'image-generator').slice(0, 3).map(tag => (
+                                  <Badge key={tag} variant="secondary" className="text-[9px] px-1 py-0 h-4">{tag}</Badge>
+                                ))}
+                                {img.tags.filter(t => t !== 'image-generator').length > 3 && (
+                                  <span className="text-[9px] text-muted-foreground">+{img.tags.filter(t => t !== 'image-generator').length - 3}</span>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
 
