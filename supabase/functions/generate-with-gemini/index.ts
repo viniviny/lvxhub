@@ -381,8 +381,11 @@ ${prompt}` });
     if (presetImages && presetImages.length > 0) {
       for (const pi of presetImages) {
         const isBg = pi.label === 'BACKGROUND STYLE';
+        const isStyle = pi.label === 'STYLE REFERENCE';
         const instruction = isBg
           ? `[MANDATORY BACKGROUND REFERENCE — ${pi.label}] You MUST replicate this EXACT background environment, setting, colors, textures, lighting, and atmosphere. The generated image background must be virtually identical to this reference. Do NOT change the background style, do NOT simplify it, do NOT substitute it with a different setting. Copy it faithfully.`
+          : isStyle
+          ? `[STYLE REFERENCE — ${pi.label}] Use this image ONLY as INSPIRATION for pose, framing, lighting, mood and composition. Do NOT copy it literally. Do NOT replace the product with anything from this image. The actual product comes from the [PRODUCT REFERENCE] only.`
           : `[VISUAL REFERENCE — ${pi.label}] Study this reference image carefully. Match the same type/style but ELEVATE the quality to premium fashion photography level. Better lighting, richer detail, more cinematic presence.`;
         parts.push({ text: instruction });
         parts.push({ inlineData: { mimeType: pi.mimeType, data: pi.base64 } });
