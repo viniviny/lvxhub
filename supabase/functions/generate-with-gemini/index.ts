@@ -583,9 +583,11 @@ Do NOT substitute, simplify, or deviate. The generated background must be virtua
         baseMimeType,         // mime type of base image
         colorReferenceImage,  // optional base64 of a color swatch / reference
         colorReferenceMimeType,
+        additionalReferences, // optional array of { base64, mimeType, label? } for extra style/context refs
         colorName,            // e.g. "Azul marinho"
         colorHex,             // e.g. "#1B2A4E"
         aspectRatio,
+        extraInstruction,     // optional free-text instruction (e.g. "front view, looking at camera")
       } = body;
 
       if (!baseImage || !baseMimeType) {
@@ -613,6 +615,7 @@ ABSOLUTE RULES
 - Do NOT invent new colors. Do NOT mix colors. Do NOT add gradients or patterns that are not in the reference.
 ${colorReferenceImage ? '- The new color must MATCH the [COLOR REFERENCE] image exactly.' : ''}
 ${colorHex ? `- The new color must match hex ${colorHex} as closely as physically plausible on the fabric.` : ''}
+${Array.isArray(additionalReferences) && additionalReferences.length > 0 ? '- Use the [STYLE REFERENCE] images as inspiration for pose, framing, mood and styling — but do NOT copy them literally.' : ''}
 
 CONSISTENCY (KEEP IDENTICAL TO REFERENCE)
 - Same model identity (face, hair, body, skin tone) if a person is present
@@ -625,6 +628,7 @@ VARIATION (MUST DIFFER FROM REFERENCE)
 - Different camera angle / framing
 - Different facial expression (subtle, natural, never exaggerated)
 ${aspectRatio && RATIO_PROMPTS[aspectRatio] ? `\n${RATIO_PROMPTS[aspectRatio]}` : ''}
+${extraInstruction ? `\nADDITIONAL DIRECTION: ${extraInstruction}` : ''}
 
 NEGATIVE
 - Do not change the garment design or proportions
@@ -644,6 +648,17 @@ Generate a realistic, premium editorial photo of the SAME product recolored as s
           mimeType: colorReferenceMimeType,
           label: 'COLOR REFERENCE',
         });
+      }
+      if (Array.isArray(additionalReferences)) {
+        for (const ref of additionalReferences) {
+          if (ref?.base64 && ref?.mimeType) {
+            presetImages.push({
+              base64: ref.base64,
+              mimeType: ref.mimeType,
+              label: ref.label || 'STYLE REFERENCE',
+            });
+          }
+        }
       }
 
       const imageResult = await callGeminiImage(
