@@ -44,6 +44,7 @@ export function ImageGeneratorModule() {
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState<StyleId>('realistic');
   const [variations, setVariations] = useState<1 | 2 | 4>(1);
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1');
   const [reference, setReference] = useState<{ base64: string; mimeType: string; preview: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<string[]>([]);
@@ -80,6 +81,7 @@ export function ImageGeneratorModule() {
           prompt: prompt.trim(),
           style,
           variations,
+          aspectRatio,
           imageReference: reference?.base64,
           imageReferenceMimeType: reference?.mimeType,
         },
