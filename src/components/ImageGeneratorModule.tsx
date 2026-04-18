@@ -98,7 +98,7 @@ export function ImageGeneratorModule() {
     };
   }, [lightboxIdx, closeLightbox, prevImage, nextImage]);
 
-  const currentStyle = STYLES.find((s) => s.id === style)!;
+  // style removed from UI
   const currentRatio = RATIOS.find((r) => r.id === aspectRatio)!;
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -236,8 +236,8 @@ export function ImageGeneratorModule() {
         storage_path: path,
         name: prompt.slice(0, 80) || 'Imagem gerada',
         product_name: 'Image Generator',
-        angle: currentStyle.label,
-        tags: ['image-generator', style, aspectRatio],
+        angle: currentRatio.label,
+        tags: ['image-generator', aspectRatio],
         status: 'rascunho',
         width: dims.w,
         height: dims.h,
@@ -346,39 +346,6 @@ export function ImageGeneratorModule() {
 
         {/* Hidden options as dropdowns */}
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
-          {/* STYLE */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs font-medium border border-border bg-background text-foreground hover:bg-secondary transition"
-              >
-                <Palette className="w-3.5 h-3.5 text-primary" />
-                <span className="text-muted-foreground">Estilo:</span>
-                <span className="truncate max-w-[140px]">{currentStyle.label}</span>
-                <ChevronDown className="w-3 h-3 opacity-60" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-72 p-1">
-              {STYLES.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setStyle(s.id)}
-                  className={cn(
-                    'w-full text-left px-2.5 py-2 rounded-sm text-xs transition flex items-start gap-2',
-                    style === s.id ? 'bg-accent text-accent-foreground' : 'hover:bg-secondary'
-                  )}
-                >
-                  <Check className={cn('w-3.5 h-3.5 mt-0.5 flex-shrink-0', style === s.id ? 'opacity-100 text-primary' : 'opacity-0')} />
-                  <div className="flex flex-col">
-                    <span className="font-semibold">{s.label}</span>
-                    <span className="text-[10px] text-muted-foreground">{s.desc}</span>
-                  </div>
-                </button>
-              ))}
-            </PopoverContent>
-          </Popover>
 
           {/* VARIATIONS */}
           <Popover>
