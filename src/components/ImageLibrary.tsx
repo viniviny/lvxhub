@@ -326,9 +326,9 @@ export function ImageLibrary() {
 
         {/* Row 2: Tag filter chips + active filter count */}
         <div className="flex items-center gap-2 flex-wrap">
-          {(filterStatus !== 'all' || filterStore !== 'all' || filterTag) && (
+          {(filterStatus !== 'all' || filterStore !== 'all' || filterTag || filterOrigin !== 'all' || search) && (
             <button
-              onClick={() => { setFilterStatus('all'); setFilterStore('all'); setFilterTag(null); setSearch(''); }}
+              onClick={() => { setFilterStatus('all'); setFilterStore('all'); setFilterTag(null); setSearch(''); setFilterOrigin('all'); }}
               className="text-[11px] text-destructive hover:text-destructive/80 transition-colors"
             >
               Limpar filtros
