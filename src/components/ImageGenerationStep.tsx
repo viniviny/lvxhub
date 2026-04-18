@@ -292,14 +292,16 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   };
 
   const handleReferenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
     const validTypes = ['image/png', 'image/jpeg', 'image/webp'];
-    if (!validTypes.includes(file.type)) { toast.error('Formato inválido. Use PNG, JPG ou WEBP.'); return; }
-    if (file.size > 10 * 1024 * 1024) { toast.error('Arquivo muito grande. Máx. 10MB.'); return; }
-    const reader = new FileReader();
-    reader.onload = () => setReferenceImage(reader.result as string);
-    reader.readAsDataURL(file);
+    files.forEach(file => {
+      if (!validTypes.includes(file.type)) { toast.error(`${file.name}: formato inválido (PNG/JPG/WEBP).`); return; }
+      if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name}: arquivo muito grande (máx 10MB).`); return; }
+      const reader = new FileReader();
+      reader.onload = () => addReferenceImage(reader.result as string);
+      reader.readAsDataURL(file);
+    });
     e.target.value = '';
   };
 
@@ -311,7 +313,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
       const blob = await res.blob();
       const reader = new FileReader();
       reader.onload = () => {
-        setReferenceImage(reader.result as string);
+        addReferenceImage(reader.result as string);
         toast.success('Referência definida!', { id: 'ali-ref' });
       };
       reader.onerror = () => toast.error('Erro ao carregar imagem', { id: 'ali-ref' });
