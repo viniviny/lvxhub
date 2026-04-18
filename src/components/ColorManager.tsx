@@ -269,6 +269,16 @@ export function ColorManager({ colors, onColorsChange, generatedImages = [], asp
           Gere a imagem do produto na Etapa 1 para habilitar a geração de variantes de cor.
         </p>
       )}
+
+      <BulkVariantGenerator
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        colors={colors}
+        baseImageUrl={coverImage?.url || null}
+        galleryImages={generatedImages.map(i => ({ id: i.id, url: i.url }))}
+        aspectRatio={aspectRatio}
+        onVariantGenerated={handleBulkVariant}
+      />
     </div>
   );
 }
