@@ -66,6 +66,7 @@ export function ImageLibrary() {
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<StatusFilter>('all');
   const [filterStore, setFilterStore] = useState<string>('all');
+  const [filterOrigin, setFilterOrigin] = useState<OriginFilter>('all');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
