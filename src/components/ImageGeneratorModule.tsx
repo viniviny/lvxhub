@@ -333,27 +333,40 @@ export function ImageGeneratorModule() {
       </div>
 
       {/* Results gallery */}
-      {(loading && results.length === 0) && (
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {Array.from({ length: variations }).map((_, i) => (
-            <div key={i} className="aspect-square rounded-lg border border-border bg-secondary animate-pulse flex items-center justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ))}
-        </div>
-      )}
+      {(() => {
+        const aspectClass = RATIOS.find((r) => r.id === aspectRatio)?.aspectClass || 'aspect-square';
+        const isWide = aspectRatio === '16:9';
+        const gridCols = isWide ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2';
+        return (
+          <>
+            {(loading && results.length === 0) && (
+              <div className={`mt-6 grid ${gridCols} gap-4`}>
+                {Array.from({ length: variations }).map((_, i) => (
+                  <div key={i} className={`${aspectClass} rounded-lg border border-border bg-secondary animate-pulse flex items-center justify-center`}>
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        );
+      })()}
 
-      {results.length > 0 && (
-        <div className="mt-6">
-          {enhancedPrompt && (
-            <div className="mb-4 p-3 bg-secondary rounded-md text-xs text-muted-foreground">
-              <span className="font-semibold text-foreground">Prompt aprimorado:</span> {enhancedPrompt}
-            </div>
-          )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {results.map((url, idx) => (
-              <div key={idx} className="group relative rounded-lg overflow-hidden border border-border bg-secondary">
-                <img src={url} alt={`Gerada ${idx + 1}`} className="w-full aspect-square object-cover" />
+      {results.length > 0 && (() => {
+        const aspectClass = RATIOS.find((r) => r.id === aspectRatio)?.aspectClass || 'aspect-square';
+        const isWide = aspectRatio === '16:9';
+        const gridCols = isWide ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2';
+        return (
+          <div className="mt-6">
+            {enhancedPrompt && (
+              <div className="mb-4 p-3 bg-secondary rounded-md text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">Prompt aprimorado:</span> {enhancedPrompt}
+              </div>
+            )}
+            <div className={`grid ${gridCols} gap-4`}>
+              {results.map((url, idx) => (
+                <div key={idx} className="group relative rounded-lg overflow-hidden border border-border bg-secondary">
+                  <img src={url} alt={`Gerada ${idx + 1}`} className={`w-full ${aspectClass} object-cover`} />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 opacity-0 group-hover:opacity-100 transition flex gap-2">
                   <Button
                     size="sm"
