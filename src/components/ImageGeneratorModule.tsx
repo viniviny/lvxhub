@@ -1,12 +1,32 @@
 import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, Loader2, Upload, X, Download, RefreshCw, BookmarkPlus, Image as ImageIcon, Wand2, Square, Smartphone, Monitor, RectangleVertical } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Sparkles,
+  Loader2,
+  Upload,
+  X,
+  Download,
+  RefreshCw,
+  BookmarkPlus,
+  Image as ImageIcon,
+  Wand2,
+  Square,
+  Smartphone,
+  Monitor,
+  RectangleVertical,
+  Palette,
+  Layers,
+  Ratio,
+  ChevronDown,
+  Check,
+  ImagePlus,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 type StyleId = 'realistic' | 'ecommerce' | 'lifestyle' | 'ads' | 'fashion';
 type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
@@ -51,6 +71,9 @@ export function ImageGeneratorModule() {
   const [enhancedPrompt, setEnhancedPrompt] = useState<string | null>(null);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const currentStyle = STYLES.find((s) => s.id === style)!;
+  const currentRatio = RATIOS.find((r) => r.id === aspectRatio)!;
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -106,7 +129,6 @@ export function ImageGeneratorModule() {
     }
     setLoading(true);
     try {
-      // Convert dataURL back to base64 + mime
       const match = sourceUrl.match(/^data:(.*?);base64,(.*)$/);
       if (!match) throw new Error('Formato de imagem inválido');
       const [, mt, b64] = match;
@@ -144,7 +166,6 @@ export function ImageGeneratorModule() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Não autenticado');
 
-      // Upload to storage
       const match = url.match(/^data:(.*?);base64,(.*)$/);
       if (!match) throw new Error('Formato inválido');
       const [, mt, b64] = match;
@@ -180,6 +201,10 @@ export function ImageGeneratorModule() {
     }
   };
 
+  const aspectClass = currentRatio.aspectClass;
+  const isWide = aspectRatio === '16:9';
+  const gridCols = isWide ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2';
+
   return (
     <div className="animate-fade-in max-w-5xl">
       <div className="mb-6">
@@ -191,173 +216,23 @@ export function ImageGeneratorModule() {
         </p>
       </div>
 
-      <div className="glass-card p-6 space-y-5">
-        {/* Prompt */}
-        <div>
-          <Label className="text-sm font-medium text-foreground">Descreva sua imagem</Label>
-          <Textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value.slice(0, 2000))}
-            placeholder="Ex.: Tênis de corrida masculino preto e laranja, sola translúcida, fotografado de perfil"
-            rows={3}
-            className="mt-1.5 resize-none"
-            maxLength={2000}
-          />
-          <p className="text-[11px] text-muted-foreground mt-1">{prompt.length}/2000</p>
-        </div>
-
-        {/* Style + Variations */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label className="text-sm font-medium text-foreground">Estilo</Label>
-            <Select value={style} onValueChange={(v) => setStyle(v as StyleId)}>
-              <SelectTrigger className="mt-1.5">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STYLES.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    <div className="flex flex-col">
-                      <span className="font-medium">{s.label}</span>
-                      <span className="text-[11px] text-muted-foreground">{s.desc}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium text-foreground">Variações</Label>
-            <div className="flex gap-2 mt-1.5">
-              {[1, 2, 4].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setVariations(n as 1 | 2 | 4)}
-                  className={`flex-1 h-10 rounded-md text-sm font-medium transition-all border ${
-                    variations === n
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-background border-border text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Aspect ratio */}
-        <div>
-          <Label className="text-sm font-medium text-foreground">Formato</Label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1.5">
-            {RATIOS.map((r) => {
-              const Icon = r.icon;
-              const active = aspectRatio === r.id;
-              return (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => setAspectRatio(r.id)}
-                  className={`flex items-center gap-2 px-3 h-12 rounded-md text-sm font-medium transition-all border text-left ${
-                    active
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-background border-border text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Icon className="w-4 h-4 flex-shrink-0" />
-                  <div className="flex flex-col leading-tight min-w-0">
-                    <span className="font-semibold">{r.label}</span>
-                    <span className={`text-[10px] ${active ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
-                      {r.hint}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Reference image */}
-        <div>
-          <Label className="text-sm font-medium text-foreground">Imagem de referência (opcional)</Label>
-          <div className="mt-1.5">
-            {reference ? (
-              <div className="flex items-center gap-3 p-2 border border-border rounded-md bg-background">
-                <img src={reference.preview} alt="ref" className="w-16 h-16 object-cover rounded" />
-                <div className="flex-1 text-xs text-muted-foreground">Referência carregada</div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setReference(null)}
-                  className="h-8 w-8 p-0"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full h-20 border border-dashed border-border rounded-md flex items-center justify-center gap-2 text-sm text-muted-foreground hover:bg-secondary transition"
+      {/* === RESULTS / PREVIEW (TOP) === */}
+      <div className="mb-6">
+        {loading && results.length === 0 && (
+          <div className={`grid ${gridCols} gap-4`}>
+            {Array.from({ length: variations }).map((_, i) => (
+              <div
+                key={i}
+                className={`${aspectClass} rounded-lg border border-border bg-secondary animate-pulse flex items-center justify-center`}
               >
-                <Upload className="w-4 h-4" /> Enviar imagem de referência
-              </button>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={handleFile}
-            />
-          </div>
-        </div>
-
-        <Button
-          onClick={handleGenerate}
-          disabled={loading || !prompt.trim()}
-          className="w-full font-display font-semibold h-11"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Gerando...
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-4 h-4 mr-2" /> Gerar imagem
-            </>
-          )}
-        </Button>
-      </div>
-
-      {/* Results gallery */}
-      {(() => {
-        const aspectClass = RATIOS.find((r) => r.id === aspectRatio)?.aspectClass || 'aspect-square';
-        const isWide = aspectRatio === '16:9';
-        const gridCols = isWide ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2';
-        return (
-          <>
-            {(loading && results.length === 0) && (
-              <div className={`mt-6 grid ${gridCols} gap-4`}>
-                {Array.from({ length: variations }).map((_, i) => (
-                  <div key={i} className={`${aspectClass} rounded-lg border border-border bg-secondary animate-pulse flex items-center justify-center`}>
-                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                  </div>
-                ))}
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
-            )}
-          </>
-        );
-      })()}
+            ))}
+          </div>
+        )}
 
-      {results.length > 0 && (() => {
-        const aspectClass = RATIOS.find((r) => r.id === aspectRatio)?.aspectClass || 'aspect-square';
-        const isWide = aspectRatio === '16:9';
-        const gridCols = isWide ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2';
-        return (
-          <div className="mt-6">
+        {results.length > 0 && (
+          <div>
             {enhancedPrompt && (
               <div className="mb-4 p-3 bg-secondary rounded-md text-xs text-muted-foreground">
                 <span className="font-semibold text-foreground">Prompt aprimorado:</span> {enhancedPrompt}
@@ -367,54 +242,215 @@ export function ImageGeneratorModule() {
               {results.map((url, idx) => (
                 <div key={idx} className="group relative rounded-lg overflow-hidden border border-border bg-secondary">
                   <img src={url} alt={`Gerada ${idx + 1}`} className={`w-full ${aspectClass} object-cover`} />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 opacity-0 group-hover:opacity-100 transition flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="flex-1 h-8 text-xs"
-                    onClick={() => handleDownload(url, idx)}
-                  >
-                    <Download className="w-3.5 h-3.5 mr-1" /> Baixar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="flex-1 h-8 text-xs"
-                    onClick={() => handleVariation(url)}
-                    disabled={loading}
-                  >
-                    <RefreshCw className="w-3.5 h-3.5 mr-1" /> Variar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="flex-1 h-8 text-xs"
-                    onClick={() => handleSave(url, idx)}
-                    disabled={savingIdx === idx}
-                  >
-                    {savingIdx === idx ? (
-                      <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
-                    ) : (
-                      <BookmarkPlus className="w-3.5 h-3.5 mr-1" />
-                    )}
-                    Salvar
-                  </Button>
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 opacity-0 group-hover:opacity-100 transition flex gap-2">
+                    <Button size="sm" variant="secondary" className="flex-1 h-8 text-xs" onClick={() => handleDownload(url, idx)}>
+                      <Download className="w-3.5 h-3.5 mr-1" /> Baixar
+                    </Button>
+                    <Button size="sm" variant="secondary" className="flex-1 h-8 text-xs" onClick={() => handleVariation(url)} disabled={loading}>
+                      <RefreshCw className="w-3.5 h-3.5 mr-1" /> Variar
+                    </Button>
+                    <Button size="sm" variant="secondary" className="flex-1 h-8 text-xs" onClick={() => handleSave(url, idx)} disabled={savingIdx === idx}>
+                      {savingIdx === idx ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />
+                      ) : (
+                        <BookmarkPlus className="w-3.5 h-3.5 mr-1" />
+                      )}
+                      Salvar
+                    </Button>
+                  </div>
                 </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!loading && results.length === 0 && (
+          <div className={`${aspectClass} max-h-[420px] glass-card flex flex-col items-center justify-center text-center p-10`}>
+            <ImageIcon className="w-12 h-12 text-muted-foreground mb-3" />
+            <p className="text-sm text-muted-foreground">Suas imagens geradas aparecerão aqui.</p>
+            <p className="text-[11px] text-muted-foreground mt-1">Descreva sua imagem abaixo e clique em Gerar.</p>
+          </div>
+        )}
+      </div>
+
+      {/* === COMPACT CONTROLS BAR === */}
+      <div className="glass-card p-4 space-y-3">
+        {/* Prompt */}
+        <Textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value.slice(0, 2000))}
+          placeholder="Descreva sua imagem... Ex.: Tênis de corrida masculino preto e laranja, sola translúcida, perfil"
+          rows={2}
+          className="resize-none border-0 bg-transparent focus-visible:ring-0 px-0 text-sm placeholder:text-muted-foreground"
+          maxLength={2000}
+        />
+
+        {/* Hidden options as dropdowns */}
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
+          {/* STYLE */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs font-medium border border-border bg-background text-foreground hover:bg-secondary transition"
+              >
+                <Palette className="w-3.5 h-3.5 text-primary" />
+                <span className="text-muted-foreground">Estilo:</span>
+                <span className="truncate max-w-[140px]">{currentStyle.label}</span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-72 p-1">
+              {STYLES.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setStyle(s.id)}
+                  className={cn(
+                    'w-full text-left px-2.5 py-2 rounded-sm text-xs transition flex items-start gap-2',
+                    style === s.id ? 'bg-accent text-accent-foreground' : 'hover:bg-secondary'
+                  )}
+                >
+                  <Check className={cn('w-3.5 h-3.5 mt-0.5 flex-shrink-0', style === s.id ? 'opacity-100 text-primary' : 'opacity-0')} />
+                  <div className="flex flex-col">
+                    <span className="font-semibold">{s.label}</span>
+                    <span className="text-[10px] text-muted-foreground">{s.desc}</span>
+                  </div>
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+
+          {/* VARIATIONS */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs font-medium border border-border bg-background text-foreground hover:bg-secondary transition"
+              >
+                <Layers className="w-3.5 h-3.5 text-primary" />
+                <span className="text-muted-foreground">Variações:</span>
+                <span>{variations}</span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-40 p-1">
+              {[1, 2, 4].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setVariations(n as 1 | 2 | 4)}
+                  className={cn(
+                    'w-full text-left px-2.5 py-1.5 rounded-sm text-xs transition flex items-center gap-2',
+                    variations === n ? 'bg-accent text-accent-foreground' : 'hover:bg-secondary'
+                  )}
+                >
+                  <Check className={cn('w-3.5 h-3.5 flex-shrink-0', variations === n ? 'opacity-100 text-primary' : 'opacity-0')} />
+                  <span className="font-medium">{n} imagem{n > 1 ? 'ns' : ''}</span>
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+
+          {/* ASPECT RATIO */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs font-medium border border-border bg-background text-foreground hover:bg-secondary transition"
+              >
+                <Ratio className="w-3.5 h-3.5 text-primary" />
+                <span className="text-muted-foreground">Formato:</span>
+                <span>{currentRatio.label}</span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-56 p-1">
+              {RATIOS.map((r) => {
+                const Icon = r.icon;
+                const active = aspectRatio === r.id;
+                return (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => setAspectRatio(r.id)}
+                    className={cn(
+                      'w-full text-left px-2.5 py-1.5 rounded-sm text-xs transition flex items-center gap-2',
+                      active ? 'bg-accent text-accent-foreground' : 'hover:bg-secondary'
+                    )}
+                  >
+                    <Icon className={cn('w-3.5 h-3.5 flex-shrink-0', active ? 'text-primary' : 'text-muted-foreground')} />
+                    <span className="font-semibold w-10">{r.label}</span>
+                    <span className="text-[10px] text-muted-foreground">{r.hint}</span>
+                  </button>
+                );
+              })}
+            </PopoverContent>
+          </Popover>
+
+          {/* REFERENCE IMAGE */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs font-medium border transition',
+                  reference
+                    ? 'border-primary bg-primary/10 text-foreground'
+                    : 'border-border bg-background text-foreground hover:bg-secondary'
+                )}
+              >
+                <ImagePlus className="w-3.5 h-3.5 text-primary" />
+                <span>{reference ? 'Referência ✓' : 'Referência'}</span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-64 p-3">
+              <Label className="text-[11px] text-muted-foreground">Imagem de referência (opcional)</Label>
+              <div className="mt-2">
+                {reference ? (
+                  <div className="flex items-center gap-2 p-2 border border-border rounded-md bg-background">
+                    <img src={reference.preview} alt="ref" className="w-12 h-12 object-cover rounded" />
+                    <div className="flex-1 text-[11px] text-muted-foreground">Carregada</div>
+                    <Button variant="ghost" size="sm" onClick={() => setReference(null)} className="h-7 w-7 p-0">
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full h-20 border border-dashed border-border rounded-md flex items-center justify-center gap-2 text-xs text-muted-foreground hover:bg-secondary transition"
+                  >
+                    <Upload className="w-3.5 h-3.5" /> Enviar imagem
+                  </button>
+                )}
+                <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={handleFile} />
               </div>
-            ))}
+            </PopoverContent>
+          </Popover>
+
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground">{prompt.length}/2000</span>
+            <Button
+              onClick={handleGenerate}
+              disabled={loading || !prompt.trim()}
+              size="sm"
+              className="font-display font-semibold h-8"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Gerando...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Gerar
+                </>
+              )}
+            </Button>
           </div>
         </div>
-        );
-      })()}
-
-      {!loading && results.length === 0 && (
-        <div className="mt-6 glass-card p-10 text-center">
-          <ImageIcon className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
-          <p className="text-sm text-muted-foreground">
-            Suas imagens geradas aparecerão aqui.
-          </p>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
