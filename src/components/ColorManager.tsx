@@ -49,8 +49,37 @@ export function ColorManager({ colors, onColorsChange, generatedImages = [], asp
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const coverImage = generatedImages.find(i => i.isCover) || generatedImages[0] || null;
+
+  const saveBulkToLibrary = async (color: ProductColor, imageUrl: string, refLabel: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await (supabase as any).from('image_library').insert({
+        user_id: user.id,
+        url: imageUrl,
+        name: `${color.name} — variante`,
+        product_name: 'Variante de cor',
+        angle: refLabel,
+        tags: ['color-variant', color.name.toLowerCase(), refLabel],
+        status: 'rascunho',
+      });
+    } catch (e) {
+      console.warn('lib save failed', e);
+    }
+  };
+
+  const handleBulkVariant = (colorId: string, imageUrl: string, refLabel: string) => {
+    const color = colors.find(c => c.id === colorId);
+    if (!color) return;
+    // Set as primary if color has none yet
+    if (!color.imageUrl) {
+      onColorsChange(colors.map(c => c.id === colorId ? { ...c, imageUrl } : c));
+    }
+    saveBulkToLibrary(color, imageUrl, refLabel);
+  };
 
   const addColor = () => {
     if (!name.trim()) return;
