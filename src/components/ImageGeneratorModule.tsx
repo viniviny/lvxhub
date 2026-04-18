@@ -64,7 +64,6 @@ async function fileToBase64(file: File): Promise<{ base64: string; mimeType: str
 
 export function ImageGeneratorModule() {
   const [prompt, setPrompt] = useState('');
-  const [style, setStyle] = useState<StyleId>('realistic');
   const [variations, setVariations] = useState<1 | 2 | 4>(1);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1');
   const [reference, setReference] = useState<{ base64: string; mimeType: string; preview: string } | null>(null);
@@ -135,7 +134,6 @@ export function ImageGeneratorModule() {
       const { data, error } = await supabase.functions.invoke('generate-image-simple', {
         body: {
           prompt: prompt.trim(),
-          style,
           variations,
           aspectRatio,
           imageReference: reference?.base64,
@@ -174,7 +172,6 @@ export function ImageGeneratorModule() {
       const { data, error } = await supabase.functions.invoke('generate-image-simple', {
         body: {
           prompt: prompt.trim() + ' — different angle and composition',
-          style,
           variations: 1,
           aspectRatio,
           imageReference: b64,
