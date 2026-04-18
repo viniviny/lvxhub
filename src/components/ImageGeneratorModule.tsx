@@ -125,6 +125,13 @@ export function ImageGeneratorModule() {
     setResults([]);
     setEnhancedPrompt(null);
     try {
+      // Ensure session is fresh (auto-refresh expired tokens)
+      const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+      if (sessionErr || !sessionData.session) {
+        toast.error('Sessão expirada. Faça login novamente.');
+        window.location.href = '/login';
+        return;
+      }
       const { data, error } = await supabase.functions.invoke('generate-image-simple', {
         body: {
           prompt: prompt.trim(),
@@ -155,6 +162,12 @@ export function ImageGeneratorModule() {
     }
     setLoading(true);
     try {
+      const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
+      if (sessionErr || !sessionData.session) {
+        toast.error('Sessão expirada. Faça login novamente.');
+        window.location.href = '/login';
+        return;
+      }
       const match = sourceUrl.match(/^data:(.*?);base64,(.*)$/);
       if (!match) throw new Error('Formato de imagem inválido');
       const [, mt, b64] = match;
