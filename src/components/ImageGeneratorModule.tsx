@@ -5,10 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sparkles, Loader2, Upload, X, Download, RefreshCw, BookmarkPlus, Image as ImageIcon, Wand2 } from 'lucide-react';
+import { Sparkles, Loader2, Upload, X, Download, RefreshCw, BookmarkPlus, Image as ImageIcon, Wand2, Square, Smartphone, Monitor, RectangleVertical } from 'lucide-react';
 import { toast } from 'sonner';
 
 type StyleId = 'realistic' | 'ecommerce' | 'lifestyle' | 'ads' | 'fashion';
+type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
 
 const STYLES: { id: StyleId; label: string; desc: string }[] = [
   { id: 'realistic', label: 'Realista premium', desc: '8K cinematográfico, foco editorial' },
@@ -16,6 +17,13 @@ const STYLES: { id: StyleId; label: string; desc: string }[] = [
   { id: 'lifestyle', label: 'Lifestyle moderno', desc: 'Cena natural, mood de marca' },
   { id: 'ads', label: 'Publicidade / Ads', desc: 'Alto impacto, otimizado para conversão' },
   { id: 'fashion', label: 'Studio fashion', desc: 'Editorial Vogue/Zara' },
+];
+
+const RATIOS: { id: AspectRatio; label: string; hint: string; icon: React.ComponentType<{ className?: string }>; aspectClass: string }[] = [
+  { id: '1:1', label: '1:1', hint: 'Quadrado / feed', icon: Square, aspectClass: 'aspect-square' },
+  { id: '4:5', label: '4:5', hint: 'Feed vertical', icon: RectangleVertical, aspectClass: 'aspect-[4/5]' },
+  { id: '16:9', label: '16:9', hint: 'Banner / web', icon: Monitor, aspectClass: 'aspect-[16/9]' },
+  { id: '9:16', label: '9:16', hint: 'Story / Reels', icon: Smartphone, aspectClass: 'aspect-[9/16]' },
 ];
 
 async function fileToBase64(file: File): Promise<{ base64: string; mimeType: string }> {
