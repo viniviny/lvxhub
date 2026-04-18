@@ -248,6 +248,37 @@ export function ImageGeneratorModule() {
           </div>
         </div>
 
+        {/* Aspect ratio */}
+        <div>
+          <Label className="text-sm font-medium text-foreground">Formato</Label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1.5">
+            {RATIOS.map((r) => {
+              const Icon = r.icon;
+              const active = aspectRatio === r.id;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setAspectRatio(r.id)}
+                  className={`flex items-center gap-2 px-3 h-12 rounded-md text-sm font-medium transition-all border text-left ${
+                    active
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background border-border text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  <div className="flex flex-col leading-tight min-w-0">
+                    <span className="font-semibold">{r.label}</span>
+                    <span className={`text-[10px] ${active ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                      {r.hint}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Reference image */}
         <div>
           <Label className="text-sm font-medium text-foreground">Imagem de referência (opcional)</Label>
