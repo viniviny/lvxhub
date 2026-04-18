@@ -98,7 +98,7 @@ export function ImageGeneratorModule() {
     };
   }, [lightboxIdx, closeLightbox, prevImage, nextImage]);
 
-  const currentRatio2 = RATIOS.find((r) => r.id === aspectRatio)!;
+  // style removed from UI
   const currentRatio = RATIOS.find((r) => r.id === aspectRatio)!;
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
