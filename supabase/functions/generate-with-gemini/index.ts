@@ -381,8 +381,11 @@ ${prompt}` });
     if (presetImages && presetImages.length > 0) {
       for (const pi of presetImages) {
         const isBg = pi.label === 'BACKGROUND STYLE';
+        const isStyle = pi.label === 'STYLE REFERENCE';
         const instruction = isBg
           ? `[MANDATORY BACKGROUND REFERENCE — ${pi.label}] You MUST replicate this EXACT background environment, setting, colors, textures, lighting, and atmosphere. The generated image background must be virtually identical to this reference. Do NOT change the background style, do NOT simplify it, do NOT substitute it with a different setting. Copy it faithfully.`
+          : isStyle
+          ? `[STYLE REFERENCE — ${pi.label}] Use this image ONLY as INSPIRATION for pose, framing, lighting, mood and composition. Do NOT copy it literally. Do NOT replace the product with anything from this image. The actual product comes from the [PRODUCT REFERENCE] only.`
           : `[VISUAL REFERENCE — ${pi.label}] Study this reference image carefully. Match the same type/style but ELEVATE the quality to premium fashion photography level. Better lighting, richer detail, more cinematic presence.`;
         parts.push({ text: instruction });
         parts.push({ inlineData: { mimeType: pi.mimeType, data: pi.base64 } });
@@ -453,7 +456,7 @@ serve(async (req) => {
 
     // ═══ MODE: generate-image ═══
     if (mode === 'generate-image') {
-      const { prompt, angle, customAngleText, isCustomPrompt, referenceImage, referenceMimeType, aspectRatio, hasPresets, modelPresetImage, modelPresetMimeType, bgPresetImage, bgPresetMimeType } = body;
+      const { prompt, angle, customAngleText, isCustomPrompt, referenceImage, referenceMimeType, aspectRatio, hasPresets, modelPresetImage, modelPresetMimeType, bgPresetImage, bgPresetMimeType, additionalReferences } = body;
       if (!prompt) {
         return new Response(JSON.stringify({ error: 'prompt is required' }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -505,6 +508,22 @@ Do NOT substitute, simplify, or deviate. The generated background must be virtua
       }
       if (bgPresetImage && bgPresetMimeType) {
         presetImages.push({ base64: bgPresetImage, mimeType: bgPresetMimeType, label: 'BACKGROUND STYLE' });
+      }
+      // Additional references = inspiration for pose/mood/composition (not the product itself)
+      if (Array.isArray(additionalReferences)) {
+        for (const ref of additionalReferences) {
+          if (ref?.base64 && ref?.mimeType) {
+            presetImages.push({ base64: ref.base64, mimeType: ref.mimeType, label: 'STYLE REFERENCE' });
+          }
+        }
+      }
+      const hasStyleRefs = presetImages.some(p => p.label === 'STYLE REFERENCE');
+      if (hasStyleRefs) {
+        fullPrompt += `\n\nSTYLE REFERENCES (INSPIRATION ONLY):
+- Use the [STYLE REFERENCE] images ONLY as inspiration for pose, framing, lighting, mood and composition.
+- Do NOT copy them literally. Do NOT replace the product with anything from them.
+- The product identity (from [PRODUCT REFERENCE]) MUST remain 100% intact: same shape, color, fabric, design, details.
+- Mix the style cues across the references to create a fresh, premium editorial result.`;
       }
 
       // Generate with validation loop (max 2 retries)

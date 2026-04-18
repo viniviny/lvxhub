@@ -183,7 +183,13 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const lastUsedPromptRef = useRef<string>('');
   const [generatedCount, setGeneratedCount] = useState(0);
   const [totalToGenerate, setTotalToGenerate] = useState(0);
-  const [referenceImage, setReferenceImage] = useState<string | null>(null);
+  const [referenceImages, setReferenceImages] = useState<string[]>([]);
+  const addReferenceImage = useCallback((dataUrl: string) => {
+    setReferenceImages(prev => prev.includes(dataUrl) ? prev : [...prev, dataUrl].slice(0, 6));
+  }, []);
+  const removeReferenceAt = useCallback((idx: number) => {
+    setReferenceImages(prev => prev.filter((_, i) => i !== idx));
+  }, []);
   const [genStartTime, setGenStartTime] = useState<number | null>(null);
   const [angleStartTimes, setAngleStartTimes] = useState<Record<string, number>>({});
   const [completedAngles, setCompletedAngles] = useState<Set<ImageAngle>>(new Set());
@@ -218,7 +224,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         if (!file) continue;
         if (file.size > 10 * 1024 * 1024) { toast.error('Arquivo muito grande. Máx. 10MB.'); return; }
         const reader = new FileReader();
-        reader.onload = () => setReferenceImage(reader.result as string);
+        reader.onload = () => addReferenceImage(reader.result as string);
         reader.readAsDataURL(file);
         return;
       }
@@ -244,7 +250,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           const blob = await item.getType(imageType);
           if (blob.size > 10 * 1024 * 1024) { toast.error('Arquivo muito grande. Máx. 10MB.'); return; }
           const reader = new FileReader();
-          reader.onload = () => setReferenceImage(reader.result as string);
+          reader.onload = () => addReferenceImage(reader.result as string);
           reader.readAsDataURL(blob);
           return;
         }
@@ -286,14 +292,16 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   };
 
   const handleReferenceUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
     const validTypes = ['image/png', 'image/jpeg', 'image/webp'];
-    if (!validTypes.includes(file.type)) { toast.error('Formato inválido. Use PNG, JPG ou WEBP.'); return; }
-    if (file.size > 10 * 1024 * 1024) { toast.error('Arquivo muito grande. Máx. 10MB.'); return; }
-    const reader = new FileReader();
-    reader.onload = () => setReferenceImage(reader.result as string);
-    reader.readAsDataURL(file);
+    files.forEach(file => {
+      if (!validTypes.includes(file.type)) { toast.error(`${file.name}: formato inválido (PNG/JPG/WEBP).`); return; }
+      if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name}: arquivo muito grande (máx 10MB).`); return; }
+      const reader = new FileReader();
+      reader.onload = () => addReferenceImage(reader.result as string);
+      reader.readAsDataURL(file);
+    });
     e.target.value = '';
   };
 
@@ -305,7 +313,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
       const blob = await res.blob();
       const reader = new FileReader();
       reader.onload = () => {
-        setReferenceImage(reader.result as string);
+        addReferenceImage(reader.result as string);
         toast.success('Referência definida!', { id: 'ali-ref' });
       };
       reader.onerror = () => toast.error('Erro ao carregar imagem', { id: 'ali-ref' });
@@ -340,20 +348,25 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
       modelImgUrl ? imageUrlToBase64(modelImgUrl) : Promise.resolve(null),
       bgImgUrl ? imageUrlToBase64(bgImgUrl) : Promise.resolve(null),
     ]);
+    // Convert all reference images to base64 once
+    const parsedRefs = referenceImages
+      .map(d => {
+        const m = d.match(/^data:([^;]+);base64,(.+)$/);
+        return m ? { mimeType: m[1], base64: m[2] } : null;
+      })
+      .filter((r): r is { mimeType: string; base64: string } => r !== null);
+    const primaryRef = parsedRefs[0];
+    const additionalRefs = parsedRefs.slice(1);
     const promises = angles.map(async (angle) => {
       try {
-        let refBase64: string | undefined;
-        let refMimeType: string | undefined;
-        if (referenceImage) {
-          const match = referenceImage.match(/^data:([^;]+);base64,(.+)$/);
-          if (match) { refMimeType = match[1]; refBase64 = match[2]; }
-        }
         const enrichedPrompt = enrichedPromptBase(angle);
         const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
           body: {
             mode: 'generate-image', prompt: enrichedPrompt, angle,
             customAngleText: angle === 'personalizado' ? customAngleText : undefined,
-            isCustomPrompt, referenceImage: refBase64, referenceMimeType: refMimeType,
+            isCustomPrompt,
+            referenceImage: primaryRef?.base64, referenceMimeType: primaryRef?.mimeType,
+            additionalReferences: additionalRefs.length > 0 ? additionalRefs : undefined,
             aspectRatio: activeRatio, hasPresets,
             modelPresetImage: modelImageData?.base64, modelPresetMimeType: modelImageData?.mimeType,
             bgPresetImage: bgImageData?.base64, bgPresetMimeType: bgImageData?.mimeType,
@@ -365,7 +378,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         if (!imageUrl) { toast.error(`Nenhuma imagem retornada (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`); return null; }
         const newImage: GeneratedImage = { id: crypto.randomUUID(), angle, url: imageUrl, isCover: false, justCompleted: true };
         newImages.push(newImage);
-        logUsage({ service: 'image-generation', action: `Gerar imagem (${angle})`, metadata: { model: 'gemini-2.5-flash-preview-05-20', provider: 'Google Gemini Direct' } });
+        logUsage({ service: 'image-generation', action: `Gerar imagem (${angle})`, metadata: { model: 'gemini-2.5-flash-preview-05-20', provider: 'Google Gemini Direct', refsCount: parsedRefs.length } });
         setGeneratedCount(prev => prev + 1);
         setCompletedAngles(prev => new Set(prev).add(angle));
         setGeneratingAngles(prev => { const next = new Set(prev); next.delete(angle); return next; });
@@ -386,7 +399,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const elapsed = ((Date.now() - now) / 1000).toFixed(0);
     if (newImages.length > 0) toast.success(`${newImages.length} imagens geradas em ${elapsed}s ✓`);
     setTimeout(() => { setCompletedAngles(new Set()); }, 2500);
-  }, [prompt, promptMode, selectedAngles, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
+  }, [prompt, promptMode, selectedAngles, customAngleText, referenceImages, images, onImagesChange, activeRatio]);
 
   const regenerateImage = useCallback(async (imageId: string) => {
     const existingImages = sanitizeGeneratedImages(images);
@@ -406,17 +419,21 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     ]);
     setGeneratingAngles(new Set([target.angle]));
     try {
-      let refBase64: string | undefined;
-      let refMimeType: string | undefined;
-      if (referenceImage) {
-        const match = referenceImage.match(/^data:([^;]+);base64,(.+)$/);
-        if (match) { refMimeType = match[1]; refBase64 = match[2]; }
-      }
+      const parsedRefs = referenceImages
+        .map(d => {
+          const m = d.match(/^data:([^;]+);base64,(.+)$/);
+          return m ? { mimeType: m[1], base64: m[2] } : null;
+        })
+        .filter((r): r is { mimeType: string; base64: string } => r !== null);
+      const primaryRef = parsedRefs[0];
+      const additionalRefs = parsedRefs.slice(1);
       const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
         body: {
           mode: 'generate-image', prompt: enrichedPrompt, angle: target.angle,
           customAngleText: target.angle === 'personalizado' ? customAngleText : undefined,
-          isCustomPrompt: promptMode === 'custom', referenceImage: refBase64, referenceMimeType: refMimeType,
+          isCustomPrompt: promptMode === 'custom',
+          referenceImage: primaryRef?.base64, referenceMimeType: primaryRef?.mimeType,
+          additionalReferences: additionalRefs.length > 0 ? additionalRefs : undefined,
           aspectRatio: activeRatio, hasPresets,
           modelPresetImage: modelImageData?.base64, modelPresetMimeType: modelImageData?.mimeType,
           bgPresetImage: bgImageData?.base64, bgPresetMimeType: bgImageData?.mimeType,
@@ -427,7 +444,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
       onImagesChange(updated);
       toast.success('Imagem regenerada!');
     } catch { toast.error('Erro ao regenerar imagem'); } finally { setGeneratingAngles(new Set()); }
-  }, [prompt, promptMode, customAngleText, referenceImage, images, onImagesChange, activeRatio]);
+  }, [prompt, promptMode, customAngleText, referenceImages, images, onImagesChange, activeRatio]);
 
   const removeImage = (imageId: string) => {
     const updated = sanitizeGeneratedImages(images).filter(img => img.id !== imageId);
@@ -473,10 +490,12 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
 
       {/* ═══ LEFT COLUMN — Reference & Upload ═══ */}
       <div className="flex flex-col gap-2 overflow-y-auto pr-1 custom-scrollbar">
-        {/* Reference image section */}
+        {/* Reference images section (multi) */}
         <div className="glass-card p-2.5 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.12em]">Referência</span>
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.12em]">
+              Referências {referenceImages.length > 0 && <span className="text-primary normal-case font-semibold">· {referenceImages.length}/6</span>}
+            </span>
             <div className="flex gap-1">
               <button onClick={() => refImageInputRef.current?.click()} className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors">
                 <Upload className="w-2.5 h-2.5" /> Subir
@@ -485,21 +504,38 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
                 <ClipboardPaste className="w-2.5 h-2.5" /> Colar
               </button>
             </div>
-            <input ref={refImageInputRef} type="file" accept=".png,.jpg,.jpeg,.webp" onChange={handleReferenceUpload} className="hidden" />
+            <input ref={refImageInputRef} type="file" accept=".png,.jpg,.jpeg,.webp" multiple onChange={handleReferenceUpload} className="hidden" />
           </div>
 
-          {referenceImage ? (
-            <div className="relative rounded-lg overflow-hidden border border-border aspect-square">
-              <img src={referenceImage} alt="Referência" className="w-full h-full object-contain bg-black/5" />
-              <button onClick={() => setReferenceImage(null)} className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 backdrop-blur-sm text-white flex items-center justify-center hover:bg-destructive transition-colors">
-                <X className="w-3 h-3" />
-              </button>
-              <span className="absolute bottom-1 left-1 text-[8px] px-1.5 py-0.5 rounded bg-black/50 backdrop-blur-sm text-white/90">Ativa</span>
+          {referenceImages.length > 0 ? (
+            <div className="space-y-1.5">
+              <div className="grid grid-cols-3 gap-1">
+                {referenceImages.map((src, idx) => (
+                  <div key={idx} className={`group relative rounded-md overflow-hidden border aspect-square ${idx === 0 ? 'border-primary/60 ring-1 ring-primary/30' : 'border-border'}`}>
+                    <img src={src} alt={`Referência ${idx + 1}`} className="w-full h-full object-contain bg-black/5" />
+                    <button onClick={() => removeReferenceAt(idx)} className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-black/70 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-destructive transition-all">
+                      <X className="w-2.5 h-2.5" />
+                    </button>
+                    <span className="absolute bottom-0.5 left-0.5 text-[7px] px-1 py-[1px] rounded bg-black/60 text-white/90 leading-none">
+                      {idx === 0 ? '★ Produto' : `Estilo ${idx}`}
+                    </span>
+                  </div>
+                ))}
+                {referenceImages.length < 6 && (
+                  <button onClick={() => refImageInputRef.current?.click()}
+                    className="aspect-square rounded-md border border-dashed border-border/60 flex items-center justify-center text-muted-foreground/50 hover:border-primary/50 hover:text-primary transition-colors">
+                    <Plus className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <p className="text-[8px] text-muted-foreground/70 leading-tight">
+                <span className="text-primary">★ 1ª = produto principal</span> · demais = inspiração de pose/estilo
+              </p>
             </div>
           ) : (
             <div className="border border-dashed border-border/60 rounded-lg aspect-square flex flex-col items-center justify-center gap-1.5 bg-secondary/20 hover:bg-secondary/40 transition-colors cursor-pointer" onClick={() => refImageInputRef.current?.click()}>
               <Camera className="w-5 h-5 text-muted-foreground/40" />
-              <span className="text-[9px] text-muted-foreground/60 text-center px-2">Envie uma foto real para guiar a IA</span>
+              <span className="text-[9px] text-muted-foreground/60 text-center px-2">Adicione fotos do produto e referências de pose/estilo</span>
             </div>
           )}
         </div>
@@ -750,11 +786,11 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
               onSetCover={setCover}
               onBulkRemove={bulkRemove}
               onUseAsReference={async (url) => {
-                if (url.startsWith('data:')) { setReferenceImage(url); toast.success('Referência definida!'); return; }
+                if (url.startsWith('data:')) { addReferenceImage(url); toast.success('Adicionada às referências!'); return; }
                 try {
                   const res = await fetch(url); const blob = await res.blob();
                   const reader = new FileReader();
-                  reader.onload = () => { setReferenceImage(reader.result as string); toast.success('Referência definida!'); };
+                  reader.onload = () => { addReferenceImage(reader.result as string); toast.success('Adicionada às referências!'); };
                   reader.readAsDataURL(blob);
                 } catch { toast.error('Erro ao carregar referência.'); }
               }}
