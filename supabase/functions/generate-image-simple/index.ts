@@ -223,7 +223,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ images, enhancedPrompt: enhanced, style, count: images.length }),
+      JSON.stringify({ images, enhancedPrompt: enhanced, style, aspectRatio, count: images.length }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (err: any) {
