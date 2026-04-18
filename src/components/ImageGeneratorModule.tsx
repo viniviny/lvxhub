@@ -18,7 +18,6 @@ import {
   Smartphone,
   Monitor,
   RectangleVertical,
-  Palette,
   Layers,
   Ratio,
   ChevronDown,
@@ -30,16 +29,7 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-type StyleId = 'realistic' | 'ecommerce' | 'lifestyle' | 'ads' | 'fashion';
 type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
-
-const STYLES: { id: StyleId; label: string; desc: string }[] = [
-  { id: 'realistic', label: 'Realista premium', desc: '8K cinematográfico, foco editorial' },
-  { id: 'ecommerce', label: 'E-commerce clean (fundo branco)', desc: 'Padrão Amazon/Shopify' },
-  { id: 'lifestyle', label: 'Lifestyle moderno', desc: 'Cena natural, mood de marca' },
-  { id: 'ads', label: 'Publicidade / Ads', desc: 'Alto impacto, otimizado para conversão' },
-  { id: 'fashion', label: 'Studio fashion', desc: 'Editorial Vogue/Zara' },
-];
 
 const RATIOS: { id: AspectRatio; label: string; hint: string; icon: React.ComponentType<{ className?: string }>; aspectClass: string }[] = [
   { id: '1:1', label: '1:1', hint: 'Quadrado / feed', icon: Square, aspectClass: 'aspect-square' },
