@@ -2,68 +2,28 @@
  * ═══════════════════════════════════════════════════════════════════════
  * Edge Function: generate-image-simple
  * ═══════════════════════════════════════════════════════════════════════
- *
- * Módulo "Image Generator" — geração simples de imagens comerciais por IA.
- * Funciona de forma independente do fluxo de publicação principal.
- *
- * Inputs (JSON body):
- *   - prompt: string (obrigatório) — descrição do que gerar
- *   - imageReference?: string — base64 da imagem de referência (opcional)
- *   - imageReferenceMimeType?: string
- *   - variations?: number — 1 a 4 (padrão 1)
- *   - aspectRatio?: '1:1' | '4:5' | '16:9' | '9:16'
- *
- * Saída: { images: string[] (data URLs base64), enhancedPrompt: string }
+ * Image Generator module — uses Lovable AI Gateway (Nano Banana).
  * ═══════════════════════════════════════════════════════════════════════
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image-preview';
-const GEMINI_TEXT_MODEL = 'gemini-2.5-flash';
-const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const LOVABLE_AI_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
+const IMAGE_MODEL = 'google/gemini-2.5-flash-image';
 
 type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
 
 const RATIO_INSTRUCTIONS: Record<AspectRatio, string> = {
-  '1:1': 'MANDATORY OUTPUT FORMAT: Square 1:1 aspect ratio. Compose subject centered and balanced for square framing.',
-  '4:5': 'MANDATORY OUTPUT FORMAT: Portrait 4:5 aspect ratio (vertical, slightly taller than wide). Optimized for social feed.',
-  '16:9': 'MANDATORY OUTPUT FORMAT: Landscape 16:9 aspect ratio (wide horizontal). Optimized for banners, web headers, and YouTube. Compose with horizontal flow and negative space on the sides.',
-  '9:16': 'MANDATORY OUTPUT FORMAT: Vertical 9:16 aspect ratio (tall portrait, mobile full-screen). Optimized for Stories and Reels. Compose subject vertically with full-frame impact.',
+  '1:1': 'OUTPUT FORMAT: Square 1:1 aspect ratio. Compose subject centered.',
+  '4:5': 'OUTPUT FORMAT: Portrait 4:5 aspect ratio (vertical). Optimized for social feed.',
+  '16:9': 'OUTPUT FORMAT: Landscape 16:9 (wide horizontal). Optimized for banners.',
+  '9:16': 'OUTPUT FORMAT: Vertical 9:16 (mobile full-screen). Optimized for Stories/Reels.',
 };
-
-async function enhancePrompt(apiKey: string, userPrompt: string): Promise<string> {
-  const system = `You are a senior prompt engineer for commercial product image generation.
-Improve the user prompt to maximize visual quality.
-Keep the original intent but add: composition, lighting, materials, mood, camera angle, and quality keywords.
-Return ONLY the improved prompt as plain text — no explanations, no quotes, no markdown.`;
-
-  try {
-    const url = `${GEMINI_BASE}/${GEMINI_TEXT_MODEL}:generateContent?key=${apiKey}`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          { role: 'user', parts: [{ text: `${system}\n\nUSER PROMPT:\n${userPrompt}` }] },
-        ],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 400 },
-      }),
-    });
-    if (!res.ok) return userPrompt;
-    const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    return text || userPrompt;
-  } catch {
-    return userPrompt;
-  }
-}
 
 async function generateOne(
   apiKey: string,
@@ -72,35 +32,42 @@ async function generateOne(
   imageReferenceMimeType?: string,
   variationSeed?: number,
 ): Promise<string | null> {
-  const parts: any[] = [];
-  parts.push({
-    text: `${finalPrompt}\n\nMANDATORY: Commercial-grade quality, sharp focus, professional lighting, no watermarks, no text overlays.${variationSeed !== undefined ? `\nVARIATION SEED #${variationSeed} — produce a UNIQUE composition different from other variations.` : ''}`,
-  });
+  const userContent: any[] = [
+    {
+      type: 'text',
+      text: `${finalPrompt}\n\nMANDATORY: Commercial-grade quality, sharp focus, professional lighting, no watermarks, no text overlays.${variationSeed !== undefined ? `\nVARIATION SEED #${variationSeed} — produce a UNIQUE composition.` : ''}`,
+    },
+  ];
 
   if (imageReference && imageReferenceMimeType) {
-    parts.unshift({ text: '[REFERENCE IMAGE — use this as visual inspiration for subject and colors]' });
-    parts.push({ inlineData: { mimeType: imageReferenceMimeType, data: imageReference } });
+    userContent.push({
+      type: 'image_url',
+      image_url: { url: `data:${imageReferenceMimeType};base64,${imageReference}` },
+    });
   }
 
-  const url = `${GEMINI_BASE}/${GEMINI_IMAGE_MODEL}:generateContent?key=${apiKey}`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 110000);
+
   let res: Response;
   try {
-    res = await fetch(url, {
+    res = await fetch(LOVABLE_AI_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        contents: [{ role: 'user', parts }],
-        generationConfig: { responseModalities: ['IMAGE'] },
+        model: IMAGE_MODEL,
+        messages: [{ role: 'user', content: userContent }],
+        modalities: ['image', 'text'],
       }),
       signal: controller.signal,
     });
   } catch (e: any) {
     clearTimeout(timeout);
     if (e?.name === 'AbortError') {
-      console.error('Gemini timeout after 110s');
-      throw { status: 504, message: 'Geração demorou demais. Tente reduzir o número de variações.' };
+      throw { status: 504, message: 'Geração demorou demais. Tente novamente.' };
     }
     throw e;
   }
@@ -108,21 +75,19 @@ async function generateOne(
 
   if (!res.ok) {
     const errText = await res.text();
-    console.error('Gemini image error:', res.status, errText);
+    console.error('Lovable AI error:', res.status, errText);
     if (res.status === 429) throw { status: 429, message: 'Limite de requisições atingido. Tente novamente em instantes.' };
-    if (res.status === 402) throw { status: 402, message: 'Créditos insuficientes.' };
+    if (res.status === 402) throw { status: 402, message: 'Créditos insuficientes na sua workspace Lovable AI.' };
     throw { status: res.status, message: errText };
   }
 
   const data = await res.json();
-  const candidate = data.candidates?.[0];
-  const imagePart = candidate?.content?.parts?.find((p: any) => p.inlineData?.data);
-  if (!imagePart) {
+  const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+  if (!imageUrl) {
     console.error('No image in response:', JSON.stringify(data).slice(0, 500));
     return null;
   }
-  const mimeType = imagePart.inlineData.mimeType || 'image/png';
-  return `data:${mimeType};base64,${imagePart.inlineData.data}`;
+  return imageUrl;
 }
 
 serve(async (req) => {
@@ -137,31 +102,22 @@ serve(async (req) => {
       });
     }
 
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-
-    if (!GEMINI_API_KEY) {
-      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY não configurada' }), {
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: 'LOVABLE_API_KEY não configurada' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Decode JWT payload to validate session (avoids version-specific SDK methods)
+    // Validate JWT
     const token = authHeader.replace('Bearer ', '').trim();
-    let userId: string | null = null;
     try {
       const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
       const now = Math.floor(Date.now() / 1000);
       if (payload.exp && payload.exp < now) throw new Error('expired');
-      userId = payload.sub;
+      if (!payload.sub) throw new Error('no sub');
     } catch (e) {
-      console.error('JWT decode error:', e);
-      return new Response(JSON.stringify({ error: 'Sessão inválida' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    if (!userId) {
       return new Response(JSON.stringify({ error: 'Sessão inválida' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -194,14 +150,12 @@ serve(async (req) => {
       });
     }
 
-    // 1. Enhance prompt automatically
-    const enhanced = await enhancePrompt(GEMINI_API_KEY, prompt);
-    const finalPrompt = `${enhanced}\n\n${RATIO_INSTRUCTIONS[aspectRatio]}`;
+    const finalPrompt = `${prompt}\n\n${RATIO_INSTRUCTIONS[aspectRatio]}`;
 
-    // 2. Generate N variations in parallel
+    // Generate N variations in parallel
     const tasks = Array.from({ length: variations }, (_, i) =>
       generateOne(
-        GEMINI_API_KEY,
+        LOVABLE_API_KEY,
         finalPrompt,
         imageReference,
         imageReferenceMimeType,
@@ -222,7 +176,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ images, enhancedPrompt: enhanced, aspectRatio, count: images.length }),
+      JSON.stringify({ images, enhancedPrompt: prompt, aspectRatio, count: images.length }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
   } catch (err: any) {
