@@ -183,7 +183,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const lastUsedPromptRef = useRef<string>('');
   const [generatedCount, setGeneratedCount] = useState(0);
   const [totalToGenerate, setTotalToGenerate] = useState(0);
-  const [referenceImage, setReferenceImage] = useState<string | null>(null);
+  const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [genStartTime, setGenStartTime] = useState<number | null>(null);
   const [angleStartTimes, setAngleStartTimes] = useState<Record<string, number>>({});
   const [completedAngles, setCompletedAngles] = useState<Set<ImageAngle>>(new Set());
