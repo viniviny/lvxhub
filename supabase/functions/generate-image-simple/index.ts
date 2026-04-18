@@ -14,7 +14,7 @@ const corsHeaders = {
 };
 
 const LOVABLE_AI_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
-const IMAGE_MODEL = 'google/gemini-2.5-flash-image';
+const IMAGE_MODEL = 'google/gemini-3.1-flash-image-preview';
 
 type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
 
