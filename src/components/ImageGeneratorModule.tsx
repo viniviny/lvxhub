@@ -209,13 +209,26 @@ export function ImageGeneratorModule() {
       const { data: pub } = supabase.storage.from('product-images').getPublicUrl(path);
       const publicUrl = pub.publicUrl;
 
+      // Get image dimensions
+      const dims = await new Promise<{ w: number; h: number }>((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+        img.onerror = () => resolve({ w: 0, h: 0 });
+        img.src = url;
+      });
+
       const { error: insErr } = await (supabase as any).from('image_library').insert({
         user_id: user.id,
         url: publicUrl,
         storage_path: path,
         name: prompt.slice(0, 80) || 'Imagem gerada',
-        tags: [style, 'image-generator'],
-        status: 'active',
+        product_name: 'Image Generator',
+        angle: currentStyle.label,
+        tags: ['image-generator', style, aspectRatio],
+        status: 'rascunho',
+        width: dims.w,
+        height: dims.h,
+        size_bytes: blob.size,
       });
       if (insErr) throw insErr;
       toast.success('Salvo na biblioteca!');
