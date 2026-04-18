@@ -506,6 +506,22 @@ Do NOT substitute, simplify, or deviate. The generated background must be virtua
       if (bgPresetImage && bgPresetMimeType) {
         presetImages.push({ base64: bgPresetImage, mimeType: bgPresetMimeType, label: 'BACKGROUND STYLE' });
       }
+      // Additional references = inspiration for pose/mood/composition (not the product itself)
+      if (Array.isArray(additionalReferences)) {
+        for (const ref of additionalReferences) {
+          if (ref?.base64 && ref?.mimeType) {
+            presetImages.push({ base64: ref.base64, mimeType: ref.mimeType, label: 'STYLE REFERENCE' });
+          }
+        }
+      }
+      const hasStyleRefs = presetImages.some(p => p.label === 'STYLE REFERENCE');
+      if (hasStyleRefs) {
+        fullPrompt += `\n\nSTYLE REFERENCES (INSPIRATION ONLY):
+- Use the [STYLE REFERENCE] images ONLY as inspiration for pose, framing, lighting, mood and composition.
+- Do NOT copy them literally. Do NOT replace the product with anything from them.
+- The product identity (from [PRODUCT REFERENCE]) MUST remain 100% intact: same shape, color, fabric, design, details.
+- Mix the style cues across the references to create a fresh, premium editorial result.`;
+      }
 
       // Generate with validation loop (max 2 retries)
       const hasReferences = presetImages.length > 0 || (referenceImage && referenceMimeType);
