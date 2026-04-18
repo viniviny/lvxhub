@@ -1527,7 +1527,7 @@ const Index = () => {
                           countryOfOrigin={form.countryOfOrigin}
                           onCountryOfOriginChange={v => setFormWithSave(prev => ({ ...prev, countryOfOrigin: v }))}
                         />
-                        <ColorManager colors={colors} onColorsChange={setColors} generatedImages={generatedImages} />
+                        <ColorManager colors={colors} onColorsChange={setColors} generatedImages={generatedImages} aspectRatio={aspectRatio} />
                       </div>
                     </div>
                   )}
