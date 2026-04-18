@@ -267,7 +267,14 @@ export function ImageGeneratorModule() {
             <div className={`grid ${gridCols} gap-4`}>
               {results.map((url, idx) => (
                 <div key={idx} className="group relative rounded-lg overflow-hidden border border-border bg-secondary">
-                  <img src={url} alt={`Gerada ${idx + 1}`} className={`w-full ${aspectClass} object-cover`} />
+                  <button
+                    type="button"
+                    onClick={() => setLightboxIdx(idx)}
+                    className="block w-full cursor-zoom-in"
+                    aria-label={`Abrir imagem ${idx + 1} em tela cheia`}
+                  >
+                    <img src={url} alt={`Gerada ${idx + 1}`} className={`w-full ${aspectClass} object-cover`} />
+                  </button>
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 opacity-0 group-hover:opacity-100 transition flex gap-2">
                     <Button size="sm" variant="secondary" className="flex-1 h-8 text-xs" onClick={() => handleDownload(url, idx)}>
                       <Download className="w-3.5 h-3.5 mr-1" /> Baixar
