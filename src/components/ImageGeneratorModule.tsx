@@ -72,7 +72,31 @@ export function ImageGeneratorModule() {
   const [results, setResults] = useState<string[]>([]);
   const [enhancedPrompt, setEnhancedPrompt] = useState<string | null>(null);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const closeLightbox = useCallback(() => setLightboxIdx(null), []);
+  const prevImage = useCallback(() => {
+    setLightboxIdx((i) => (i === null ? null : (i - 1 + results.length) % results.length));
+  }, [results.length]);
+  const nextImage = useCallback(() => {
+    setLightboxIdx((i) => (i === null ? null : (i + 1) % results.length));
+  }, [results.length]);
+
+  useEffect(() => {
+    if (lightboxIdx === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLightbox();
+      else if (e.key === 'ArrowLeft') prevImage();
+      else if (e.key === 'ArrowRight') nextImage();
+    };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [lightboxIdx, closeLightbox, prevImage, nextImage]);
 
   const currentStyle = STYLES.find((s) => s.id === style)!;
   const currentRatio = RATIOS.find((r) => r.id === aspectRatio)!;
