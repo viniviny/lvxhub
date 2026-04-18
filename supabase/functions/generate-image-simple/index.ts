@@ -30,6 +30,7 @@ const GEMINI_TEXT_MODEL = 'gemini-2.5-flash';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 type StyleId = 'realistic' | 'ecommerce' | 'lifestyle' | 'ads' | 'fashion';
+type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
 
 const STYLE_INSTRUCTIONS: Record<StyleId, string> = {
   realistic: 'Premium photorealistic image. Ultra-sharp 8K detail, natural soft lighting, cinematic depth of field, realistic textures, true-to-life colors. Editorial commercial quality.',
@@ -45,6 +46,13 @@ const STYLE_LABELS: Record<StyleId, string> = {
   lifestyle: 'Lifestyle moderno',
   ads: 'Publicidade / Ads',
   fashion: 'Studio fashion',
+};
+
+const RATIO_INSTRUCTIONS: Record<AspectRatio, string> = {
+  '1:1': 'MANDATORY OUTPUT FORMAT: Square 1:1 aspect ratio. Compose subject centered and balanced for square framing.',
+  '4:5': 'MANDATORY OUTPUT FORMAT: Portrait 4:5 aspect ratio (vertical, slightly taller than wide). Optimized for social feed.',
+  '16:9': 'MANDATORY OUTPUT FORMAT: Landscape 16:9 aspect ratio (wide horizontal). Optimized for banners, web headers, and YouTube. Compose with horizontal flow and negative space on the sides.',
+  '9:16': 'MANDATORY OUTPUT FORMAT: Vertical 9:16 aspect ratio (tall portrait, mobile full-screen). Optimized for Stories and Reels. Compose subject vertically with full-frame impact.',
 };
 
 async function enhancePrompt(apiKey: string, userPrompt: string, style: StyleId): Promise<string> {
