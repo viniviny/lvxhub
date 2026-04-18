@@ -162,11 +162,11 @@ serve(async (req) => {
         variations > 1 ? Math.floor(Math.random() * 99999) + i : undefined,
       ).catch((e) => {
         console.error(`Variation ${i} failed:`, e);
-        return null;
+        return e; // keep the error object so we can surface its message
       }),
     );
     const results = await Promise.all(tasks);
-    const images = results.filter((x): x is string => !!x);
+    const images = results.filter((x): x is string => typeof x === 'string' && !!x);
 
     if (images.length === 0) {
       // Surface the first failure reason (e.g. 402 credits) instead of a generic 500
