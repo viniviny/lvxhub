@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Search, Download, Trash2, Tag, Pencil, Check, X, Image as ImageIcon,
-  CheckSquare, Square, Grid3X3, LayoutGrid, Eye, ArrowUpDown, Store, Filter
+  CheckSquare, Square, Grid3X3, LayoutGrid, ArrowUpDown, Store, Filter, Sparkles, Package
 } from 'lucide-react';
 import { toast } from 'sonner';
 
