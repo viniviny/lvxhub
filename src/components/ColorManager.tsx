@@ -149,11 +149,23 @@ export function ColorManager({ colors, onColorsChange, generatedImages = [], asp
     <div className="glass-card p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="font-display font-semibold text-[13px] text-foreground">Cor</h3>
-        {!adding && (
-          <Button variant="ghost" size="sm" className="h-7 text-[11px] text-muted-foreground" onClick={() => setAdding(true)}>
-            <Plus className="w-3 h-3 mr-1" />Adicionar cor
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {colors.length > 0 && coverImage && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-[11px] text-primary hover:text-primary"
+              onClick={() => setBulkOpen(true)}
+            >
+              <Layers className="w-3 h-3 mr-1" />Gerar em massa
+            </Button>
+          )}
+          {!adding && (
+            <Button variant="ghost" size="sm" className="h-7 text-[11px] text-muted-foreground" onClick={() => setAdding(true)}>
+              <Plus className="w-3 h-3 mr-1" />Adicionar cor
+            </Button>
+          )}
+        </div>
       </div>
 
       {colors.length > 0 && (
