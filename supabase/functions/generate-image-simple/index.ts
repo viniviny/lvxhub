@@ -1,6 +1,9 @@
 /**
+ * ═══════════════════════════════════════════════════════════════════════
  * Edge Function: generate-image-simple
- * Image Generator — Gemini API direta (gemini-3.1-flash-image).
+ * ═══════════════════════════════════════════════════════════════════════
+ * Image Generator module — uses direct Gemini API (Nano Banana 2 / Pro).
+ * ═══════════════════════════════════════════════════════════════════════
  */
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -10,8 +13,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const GEMINI_IMAGE_MODEL = 'gemini-3.1-flash-image';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+// Modelo de imagem oficial Gemini (Nano Banana 2)
+const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image';
 
 type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
 
@@ -29,22 +33,25 @@ async function generateOne(
   imageReferenceMimeType?: string,
   variationSeed?: number,
 ): Promise<string | null> {
-  const parts: any[] = [];
-  parts.push({
-    text: `${finalPrompt}\n\nMANDATORY: Commercial-grade quality, sharp focus, professional lighting, no watermarks, no text overlays.${variationSeed !== undefined ? `\nVARIATION SEED #${variationSeed} — produce a UNIQUE composition.` : ''}`,
-  });
+  const promptText = `${finalPrompt}\n\nMANDATORY: Commercial-grade quality, sharp focus, professional lighting, no watermarks, no text overlays.${variationSeed !== undefined ? `\nVARIATION SEED #${variationSeed} — produce a UNIQUE composition.` : ''}`;
+
+  const parts: any[] = [{ text: promptText }];
 
   if (imageReference && imageReferenceMimeType) {
-    parts.unshift({ text: '[REFERENCE IMAGE — use this as visual inspiration for subject and colors]' });
-    parts.push({ inlineData: { mimeType: imageReferenceMimeType, data: imageReference } });
+    parts.push({
+      inlineData: {
+        mimeType: imageReferenceMimeType,
+        data: imageReference,
+      },
+    });
   }
 
-  const url = `${GEMINI_BASE}/${GEMINI_IMAGE_MODEL}:generateContent?key=${apiKey}`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 110000);
 
   let res: Response;
   try {
+    const url = `${GEMINI_BASE}/${GEMINI_IMAGE_MODEL}:generateContent?key=${apiKey}`;
     res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -65,21 +72,20 @@ async function generateOne(
 
   if (!res.ok) {
     const errText = await res.text();
-    console.error('Gemini image error:', res.status, errText);
+    console.error('Gemini API error:', res.status, errText);
     if (res.status === 429) throw { status: 429, message: 'Limite de requisições atingido. Tente novamente em instantes.' };
-    if (res.status === 402) throw { status: 402, message: 'Créditos insuficientes.' };
+    if (res.status === 403) throw { status: 403, message: 'Chave Gemini inválida ou sem permissão.' };
     throw { status: res.status, message: errText };
   }
 
   const data = await res.json();
-  const candidate = data.candidates?.[0];
-  const imagePart = candidate?.content?.parts?.find((p: any) => p.inlineData?.data);
+  const imagePart = data?.candidates?.[0]?.content?.parts?.find((p: any) => p?.inlineData?.data);
   if (!imagePart) {
-    console.error('No image in response:', JSON.stringify(data).slice(0, 500));
+    console.error('No image in Gemini response:', JSON.stringify(data).slice(0, 500));
     return null;
   }
-  const mimeType = imagePart.inlineData.mimeType || 'image/png';
-  return `data:${mimeType};base64,${imagePart.inlineData.data}`;
+  const mime = imagePart.inlineData.mimeType || 'image/png';
+  return `data:${mime};base64,${imagePart.inlineData.data}`;
 }
 
 serve(async (req) => {
@@ -109,7 +115,7 @@ serve(async (req) => {
       const now = Math.floor(Date.now() / 1000);
       if (payload.exp && payload.exp < now) throw new Error('expired');
       if (!payload.sub) throw new Error('no sub');
-    } catch {
+    } catch (e) {
       return new Response(JSON.stringify({ error: 'Sessão inválida' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -144,6 +150,7 @@ serve(async (req) => {
 
     const finalPrompt = `${prompt}\n\n${RATIO_INSTRUCTIONS[aspectRatio]}`;
 
+    // Generate N variations in parallel
     const tasks = Array.from({ length: variations }, (_, i) =>
       generateOne(
         GEMINI_API_KEY,
