@@ -484,6 +484,108 @@ export function ImageGeneratorModule() {
           </div>
         </div>
       </div>
+
+      {/* === FULLSCREEN LIGHTBOX === */}
+      {lightboxIdx !== null && results[lightboxIdx] && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-fade-in"
+          onClick={closeLightbox}
+        >
+          {/* Close */}
+          <button
+            type="button"
+            onClick={closeLightbox}
+            className="absolute top-4 right-4 z-10 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
+            aria-label="Fechar"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* Counter */}
+          <div className="absolute top-4 left-4 z-10 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-medium">
+            {lightboxIdx + 1} / {results.length}
+          </div>
+
+          {/* Prev */}
+          {results.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                prevImage();
+              }}
+              className="absolute left-4 z-10 h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
+              aria-label="Imagem anterior"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+          )}
+
+          {/* Image */}
+          <img
+            src={results[lightboxIdx]}
+            alt={`Imagem ${lightboxIdx + 1}`}
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          {/* Next */}
+          {results.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                nextImage();
+              }}
+              className="absolute right-4 z-10 h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
+              aria-label="Próxima imagem"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          )}
+
+          {/* Action bar */}
+          <div
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full p-1.5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 px-3 text-xs text-white hover:bg-white/20 hover:text-white rounded-full"
+              onClick={() => handleDownload(results[lightboxIdx], lightboxIdx)}
+            >
+              <Download className="w-3.5 h-3.5 mr-1.5" /> Baixar
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 px-3 text-xs text-white hover:bg-white/20 hover:text-white rounded-full"
+              onClick={() => {
+                handleVariation(results[lightboxIdx]);
+                closeLightbox();
+              }}
+              disabled={loading}
+            >
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Variar
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 px-3 text-xs text-white hover:bg-white/20 hover:text-white rounded-full"
+              onClick={() => handleSave(results[lightboxIdx], lightboxIdx)}
+              disabled={savingIdx === lightboxIdx}
+            >
+              {savingIdx === lightboxIdx ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <BookmarkPlus className="w-3.5 h-3.5 mr-1.5" />
+              )}
+              Salvar
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
