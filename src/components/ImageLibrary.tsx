@@ -96,9 +96,12 @@ export function ImageLibrary() {
 
   useEffect(() => { fetchImages(); }, [fetchImages]);
 
-  // Get all unique tags and stores
-  const allTags = Array.from(new Set(images.flatMap(i => i.tags || [])));
+  // Get all unique tags and stores (exclude internal origin tag)
+  const allTags = Array.from(new Set(images.flatMap(i => i.tags || []))).filter(t => t !== 'image-generator');
   const allStores = Array.from(new Set(images.map(i => i.store_domain).filter(Boolean))) as string[];
+
+  const generatorCount = images.filter(isGenerator).length;
+  const productCount = images.length - generatorCount;
 
   // Filter images
   const filtered = images.filter(img => {
@@ -108,8 +111,12 @@ export function ImageLibrary() {
     const matchTag = !filterTag || img.tags?.includes(filterTag);
     const matchStatus = filterStatus === 'all' || (img.status || 'rascunho') === filterStatus;
     const matchStore = filterStore === 'all' || img.store_domain === filterStore;
-    return matchSearch && matchTag && matchStatus && matchStore;
+    const matchOrigin = filterOrigin === 'all' ||
+      (filterOrigin === 'generator' ? isGenerator(img) : !isGenerator(img));
+    return matchSearch && matchTag && matchStatus && matchStore && matchOrigin;
   });
+
+  const grouped = groupByDate(filtered);
 
   const toggleSelect = (id: string) => {
     setSelected(prev => {
