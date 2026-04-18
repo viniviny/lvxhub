@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -24,6 +24,8 @@ import {
   ChevronDown,
   Check,
   ImagePlus,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -70,7 +72,31 @@ export function ImageGeneratorModule() {
   const [results, setResults] = useState<string[]>([]);
   const [enhancedPrompt, setEnhancedPrompt] = useState<string | null>(null);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const closeLightbox = useCallback(() => setLightboxIdx(null), []);
+  const prevImage = useCallback(() => {
+    setLightboxIdx((i) => (i === null ? null : (i - 1 + results.length) % results.length));
+  }, [results.length]);
+  const nextImage = useCallback(() => {
+    setLightboxIdx((i) => (i === null ? null : (i + 1) % results.length));
+  }, [results.length]);
+
+  useEffect(() => {
+    if (lightboxIdx === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLightbox();
+      else if (e.key === 'ArrowLeft') prevImage();
+      else if (e.key === 'ArrowRight') nextImage();
+    };
+    window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [lightboxIdx, closeLightbox, prevImage, nextImage]);
 
   const currentStyle = STYLES.find((s) => s.id === style)!;
   const currentRatio = RATIOS.find((r) => r.id === aspectRatio)!;
@@ -241,7 +267,14 @@ export function ImageGeneratorModule() {
             <div className={`grid ${gridCols} gap-4`}>
               {results.map((url, idx) => (
                 <div key={idx} className="group relative rounded-lg overflow-hidden border border-border bg-secondary">
-                  <img src={url} alt={`Gerada ${idx + 1}`} className={`w-full ${aspectClass} object-cover`} />
+                  <button
+                    type="button"
+                    onClick={() => setLightboxIdx(idx)}
+                    className="block w-full cursor-zoom-in"
+                    aria-label={`Abrir imagem ${idx + 1} em tela cheia`}
+                  >
+                    <img src={url} alt={`Gerada ${idx + 1}`} className={`w-full ${aspectClass} object-cover`} />
+                  </button>
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3 opacity-0 group-hover:opacity-100 transition flex gap-2">
                     <Button size="sm" variant="secondary" className="flex-1 h-8 text-xs" onClick={() => handleDownload(url, idx)}>
                       <Download className="w-3.5 h-3.5 mr-1" /> Baixar
@@ -451,6 +484,108 @@ export function ImageGeneratorModule() {
           </div>
         </div>
       </div>
+
+      {/* === FULLSCREEN LIGHTBOX === */}
+      {lightboxIdx !== null && results[lightboxIdx] && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-fade-in"
+          onClick={closeLightbox}
+        >
+          {/* Close */}
+          <button
+            type="button"
+            onClick={closeLightbox}
+            className="absolute top-4 right-4 z-10 h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
+            aria-label="Fechar"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* Counter */}
+          <div className="absolute top-4 left-4 z-10 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-medium">
+            {lightboxIdx + 1} / {results.length}
+          </div>
+
+          {/* Prev */}
+          {results.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                prevImage();
+              }}
+              className="absolute left-4 z-10 h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
+              aria-label="Imagem anterior"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+          )}
+
+          {/* Image */}
+          <img
+            src={results[lightboxIdx]}
+            alt={`Imagem ${lightboxIdx + 1}`}
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          {/* Next */}
+          {results.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                nextImage();
+              }}
+              className="absolute right-4 z-10 h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition"
+              aria-label="Próxima imagem"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          )}
+
+          {/* Action bar */}
+          <div
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 bg-white/10 backdrop-blur-md rounded-full p-1.5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 px-3 text-xs text-white hover:bg-white/20 hover:text-white rounded-full"
+              onClick={() => handleDownload(results[lightboxIdx], lightboxIdx)}
+            >
+              <Download className="w-3.5 h-3.5 mr-1.5" /> Baixar
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 px-3 text-xs text-white hover:bg-white/20 hover:text-white rounded-full"
+              onClick={() => {
+                handleVariation(results[lightboxIdx]);
+                closeLightbox();
+              }}
+              disabled={loading}
+            >
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Variar
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 px-3 text-xs text-white hover:bg-white/20 hover:text-white rounded-full"
+              onClick={() => handleSave(results[lightboxIdx], lightboxIdx)}
+              disabled={savingIdx === lightboxIdx}
+            >
+              {savingIdx === lightboxIdx ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <BookmarkPlus className="w-3.5 h-3.5 mr-1.5" />
+              )}
+              Salvar
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
