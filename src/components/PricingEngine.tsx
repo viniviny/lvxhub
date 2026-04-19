@@ -16,6 +16,7 @@ interface PricingEngineProps {
   marginTarget: number;
   shippingCost: number;
   platform: string;
+  onCostChange?: (v: number | null) => void;
   onCurrencyChange: (v: string) => void;
   onCpaChange: (v: number) => void;
   onMarginChange: (v: number) => void;
