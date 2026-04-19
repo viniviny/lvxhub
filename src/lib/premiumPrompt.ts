@@ -162,7 +162,7 @@ const LIGHTING_LIBRARY = [
 ];
 
 export const MODEL_SHOT_NEGATIVE =
-  '--no women, no children, no groups, no visible mannequin, no props, no plants, no busy background, no streetwear, no athletic wear, no sneakers unless product, no text, no logos, no harsh shadows, no overexposed skin, no grain, no blur on product';
+  '--no women, no children, no groups, no visible mannequin, no props, no plants, no busy background, no streetwear, no athletic wear, no sneakers unless product, no text, no logos, no harsh shadows, no overexposed skin, no grain, no blur on product, no cropped head, no cropped feet, no cropped body, no close-up crop, no zoom-in, no partial body, no cut-off garment';
 
 const pickRandom = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
@@ -208,7 +208,22 @@ export function buildModelShotPrompt(opts: ModelShotOptions): { prompt: string; 
     return { prompt, seed };
   }
 
-  const prompt = `A high-end luxury fashion editorial photograph of a ${age} year old male model wearing ${opts.productName}. ${seed.pose}. ${seed.expression}. ${seed.lighting}. The background is a clean ${bg} seamless studio backdrop, completely empty. The product is the hero of the image — every detail of the fabric, stitching, and construction is visible. Shot on medium format camera, 85mm lens, shallow depth of field. Style reference: Ermenegildo Zegna, Brunello Cucinelli, Loro Piana, or Canali seasonal campaign. The image would appear in GQ, Vogue Hommes, or a luxury brand lookbook. Photorealistic, ultra high resolution, commercial quality.
+  const framing = SHOT_FRAMING[seed.shotType];
+
+  const prompt = `A high-end luxury fashion editorial photograph of a ${age} year old male model wearing ${opts.productName}. ${seed.pose}. ${seed.expression}. ${seed.lighting}. The background is a clean ${bg} seamless studio backdrop, completely empty.
+
+━━━ FRAMING (MANDATORY — NO EXCEPTIONS) ━━━
+${framing}
+Full composition showing the complete garment from top to bottom. The model's full body is visible — head to toe — with no cropping of any body part. The model is centered in the frame with equal padding on all sides.
+
+COMPOSITION:
+The model occupies approximately 80% of the vertical frame. There is clearly visible empty space above the head and below the feet. The garment is fully visible with no parts cut off by the frame edges.
+
+CAMERA:
+Camera positioned at full body distance, wide enough to capture the entire model from head to toe in a single frame. Do not zoom in. Do not crop. Portrait orientation 2:3 aspect ratio, optimized for fashion e-commerce product pages.
+
+QUALITY:
+The product is the hero of the image — every detail of the fabric, stitching, and construction is visible. Shot on medium format camera, 85mm lens, shallow depth of field. Style reference: Ermenegildo Zegna, Brunello Cucinelli, Loro Piana, or Canali seasonal campaign. The image would appear in GQ, Vogue Hommes, or a luxury brand lookbook. Photorealistic, ultra high resolution, commercial quality.
 
 NEGATIVE: ${MODEL_SHOT_NEGATIVE}`;
 
