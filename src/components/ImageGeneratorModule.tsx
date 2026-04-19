@@ -111,14 +111,8 @@ export function ImageGeneratorModule() {
     }
   };
 
-  const buildFinalPrompt = (raw: string, opts?: { freshSeed?: boolean }) => {
-    if (modelShot) {
-      const seed = opts?.freshSeed || !modelSeed ? rollModelShotSeed(raw) : modelSeed;
-      const built = buildModelShotPrompt({ productName: raw, backgroundColor: bgColor, seed });
-      setModelSeed(built.seed);
-      return built.prompt;
-    }
-    return enhancePremiumPrompt(raw, { chosenBackground: bgColor || undefined });
+  const buildFinalPrompt = (raw: string) => {
+    return enhancePremiumPrompt(raw);
   };
 
   const handleGenerate = async (opts?: { freshSeed?: boolean }) => {
