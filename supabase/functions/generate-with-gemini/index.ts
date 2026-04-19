@@ -1064,14 +1064,14 @@ UNIQUENESS RULE: The generated title must NOT match or closely resemble any titl
 Return ONLY the final title. One single line. No quotes. No period at the end. Nothing else.`;
         userPrompt = customPrompt || brief || 'Generate a premium product title';
       } else if (type === 'description') {
-        systemPrompt = `You are a senior e-commerce copywriter. Write product descriptions in ${lang.name}.\nTone: ${toneLabel}.${genderLabel ? `\nTarget: ${genderLabel}.` : ''}${contextBlock}${specsBlock}\n\nRULES:\n- Return ONLY the description\n- 2-4 sentences\n- Highlight benefits and features\n- Must feel native in ${lang.name}`;
+        systemPrompt = `You are a senior copywriter for Rilmont, a luxury menswear brand on Shopify. Write product descriptions in ${lang.name}.\nBrand tone: ${toneLabel}.${genderLabel ? `\nTarget: ${genderLabel}.` : ''}${contextBlock}${specsBlock}${strategyBlock}\n\nWRITE EXACTLY 3 SENTENCES:\n1) Introduce the garment with material and defining style.\n2) Highlight construction, fit, and unique features specific to this product type — using the strategy "Focus" above.\n3) Describe the lifestyle and who wears it, using the brand tone and the strategy "Angle" above.\n\nRULES:\n- Write like Brunello Cucinelli, Loro Piana, or Zegna product pages.\n- Naturally weave in the strategy keywords; never keyword-stuff.\n- Skip empty fields silently — never mention them.\n- Never use exclamation marks.\n- Never use: "perfect for", "elevate your style", "versatile addition", "any occasion".\n- Each product must read uniquely — never reuse a structure verbatim.\n- Return ONLY the description text. No labels, no markdown, no quotes.`;
         userPrompt = customPrompt || `Write a product description for: ${title || brief}`;
       } else if (type === 'seo-title') {
-        systemPrompt = `You are an SEO specialist. Write optimized meta titles in ${lang.name}.\n\nRULES:\n- Max 60 characters\n- Include primary keyword\n- Return ONLY the meta title`;
-        userPrompt = `Optimize this product title for SEO: ${brief}`;
+        systemPrompt = `You are an SEO specialist for Rilmont luxury menswear. Write a Shopify SEO title in ${lang.name}.${contextBlock}${strategyBlock}\n\nFORMAT: [Primary Keyword] — [Key Feature] | Rilmont\n\nRULES:\n- Max 60 characters total (hard limit).\n- Lead with the most-searched keyword for this product category (use strategy keywords above).\n- Title Case. No quotes. No emojis. No exclamation marks.\n- Return ONLY the title, single line.`;
+        userPrompt = `Optimize this product title for SEO: ${title || brief}`;
       } else if (type === 'seo-description') {
-        systemPrompt = `You are an SEO specialist. Write optimized meta descriptions in ${lang.name}.\n\nRULES:\n- Max 155 characters\n- Include call-to-action\n- Return ONLY the meta description`;
-        userPrompt = `Write an SEO meta description for: ${brief}`;
+        systemPrompt = `You are an SEO specialist for Rilmont luxury menswear. Write a Shopify meta description in ${lang.name}.${contextBlock}${strategyBlock}\n\nRULES:\n- Max 155 characters (hard limit).\n- Start with an action verb.\n- Include product type + material + occasion as natural keywords (from strategy and context).\n- End with "Rilmont".\n- No exclamation marks. No quotes. No emojis.\n- Return ONLY the meta description, single line.`;
+        userPrompt = `Write a meta description for: ${title || brief}`;
       } else {
         return new Response(JSON.stringify({ error: 'Invalid text type' }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
