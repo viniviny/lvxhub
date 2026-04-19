@@ -1476,6 +1476,7 @@ const Index = () => {
                             marginTarget={form.pricingMargin}
                             shippingCost={form.pricingShipping}
                             platform={form.pricingPlatform}
+                            onCostChange={v => setFormWithSave(prev => ({ ...prev, cost: v }))}
                             onCurrencyChange={v => setFormWithSave(prev => ({ ...prev, pricingCurrency: v }))}
                             onCpaChange={v => setFormWithSave(prev => ({ ...prev, pricingCpa: v }))}
                             onMarginChange={v => setFormWithSave(prev => ({ ...prev, pricingMargin: v }))}
