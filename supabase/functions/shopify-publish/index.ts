@@ -28,7 +28,7 @@ serve(async (req) => {
 
     const body = await req.json();
     const {
-      title, description, price, compareAtPrice, cost, sizes, collection, tags,
+      title, description, price, compareAtPrice, cost, sizes, collection, productType, gender, tags,
       imageBase64, imageName, imageUrl: bodyImageUrl,
       countryCode, countryFlag, countryName, currency: bodyCurrency, currencySymbol,
       localPrice, baseCurrency, language: bodyLanguage, languageLabel, marketName, regionGroup,
