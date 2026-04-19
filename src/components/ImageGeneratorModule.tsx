@@ -139,7 +139,7 @@ export function ImageGeneratorModule() {
       }
       const { data, error } = await supabase.functions.invoke('generate-image-simple', {
         body: {
-          prompt: prompt.trim(),
+          prompt: prompt.trim() + PREMIUM_STYLE_SUFFIX,
           variations,
           aspectRatio,
           imageReference: reference?.base64,
