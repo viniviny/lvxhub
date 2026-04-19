@@ -900,6 +900,12 @@ Generate a realistic, premium editorial photo of the SAME product recolored as s
       const contextBlock = buildContextBlock(productContext);
       const specsBlock = buildSpecsBlock(productSpecs);
 
+      // ─── Universal product-type strategy detection ───
+      // Aplica-se a TODA geração de conteúdo (description, seo-title, seo-description).
+      const detectedTypeRaw = productContext?.product_type || '';
+      const { key: strategyKey, strategy } = detectProductType(detectedTypeRaw, title || brief);
+      const strategyBlock = buildStrategyBlock(strategy, strategyKey);
+
       let systemPrompt = '';
       let userPrompt = '';
 
