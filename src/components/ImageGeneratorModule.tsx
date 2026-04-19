@@ -468,7 +468,7 @@ export function ImageGeneratorModule() {
           <div className="ml-auto flex items-center gap-2">
             <span className="text-[10px] text-muted-foreground">{prompt.length}/2000</span>
             <Button
-              onClick={handleGenerate}
+              onClick={() => handleGenerate()}
               disabled={loading || !prompt.trim()}
               size="sm"
               className="font-display font-semibold h-8"
