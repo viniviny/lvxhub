@@ -468,7 +468,14 @@ export function ImageGeneratorModule() {
           {/* MODEL SHOT TOGGLE */}
           <button
             type="button"
-            onClick={() => setModelShot(v => !v)}
+            onClick={() => setModelShot(v => {
+              const next = !v;
+              // When enabling Model Shot, default to portrait (closest to 2:3) for full-body framing
+              if (next && (aspectRatio === '1:1' || aspectRatio === '16:9')) {
+                setAspectRatio('9:16');
+              }
+              return next;
+            })}
             className={cn(
               'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs font-medium border transition',
               modelShot

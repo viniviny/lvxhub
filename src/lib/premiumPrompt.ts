@@ -118,26 +118,35 @@ export function detectShotType(productName: string): ShotType {
 
 const POSE_LIBRARY: Record<ShotType, string[]> = {
   upper_body: [
-    'standing with arms relaxed at sides, slight weight shift to right leg, looking directly at camera with calm authority',
-    'one hand lightly resting in pocket, other arm relaxed, gaze slightly off camera to the left, contemplative expression',
-    'arms crossed loosely at waist level, direct gaze, confident and composed',
+    'standing tall in full body view, arms relaxed at sides, slight weight shift to right leg, looking directly at camera with calm authority',
+    'standing in full body view, one hand lightly resting in pocket, other arm relaxed, gaze slightly off camera to the left, contemplative expression',
+    'standing in full body view, arms crossed loosely at waist level, direct gaze, confident and composed',
   ],
   lower_body: [
-    'standing straight, one foot slightly forward, hands in pockets, cropped at waist showing full trouser length',
-    'walking stance, mid-stride, natural movement captured, cropped below waist',
+    'standing straight in full body view, one foot slightly forward, hands in pockets, complete trouser length and shoes fully visible',
+    'walking stance in full body view, mid-stride, natural movement captured, full trouser length and footwear visible',
   ],
   full_body: [
-    'standing tall, one hand in pocket, other arm relaxed, weight on left leg, looking directly at camera',
-    'three-quarter turn to the right, looking back at camera over shoulder, relaxed and confident',
-    'walking slowly toward camera, natural stride, looking straight ahead with quiet intensity',
-    'leaning very slightly against an invisible surface, arms relaxed, gaze off to the side',
+    'standing tall in full body view, one hand in pocket, other arm relaxed, weight on left leg, looking directly at camera',
+    'full body three-quarter turn to the right, looking back at camera over shoulder, relaxed and confident',
+    'walking slowly toward camera in full body view, natural stride, looking straight ahead with quiet intensity',
+    'standing in full body view, leaning very slightly against an invisible surface, arms relaxed, gaze off to the side',
   ],
   shoes: [
-    'close-up of shoes on feet, model standing, cropped at ankle level, clean floor, perfect leather or material detail',
+    'full body view of model standing, then framed from ankle to floor showing the complete shoe in perfect leather or material detail',
   ],
   accessory: [
     'ghost product on clean background, no model needed, product centered with soft shadows',
   ],
+};
+
+// Shot framing instructions per product/shot type — enforces full visibility, no cropping.
+const SHOT_FRAMING: Record<ShotType, string> = {
+  upper_body: 'Full body shot, head to toe, model standing, complete garment fully visible from collar to hem.',
+  lower_body: 'Full body shot, head to toe, complete trouser length visible from waist down to the shoes, footwear fully in frame.',
+  full_body: 'Full body shot, head to toe, entire outfit fully visible with no cropping.',
+  shoes: 'Full body shot, head to toe, then a secondary ankle-to-floor close-up — the complete shoe must be fully visible with nothing cropped.',
+  accessory: 'Product-only shot, accessory fully visible and centered, no cropping.',
 };
 
 const EXPRESSION_LIBRARY = [
@@ -153,7 +162,7 @@ const LIGHTING_LIBRARY = [
 ];
 
 export const MODEL_SHOT_NEGATIVE =
-  '--no women, no children, no groups, no visible mannequin, no props, no plants, no busy background, no streetwear, no athletic wear, no sneakers unless product, no text, no logos, no harsh shadows, no overexposed skin, no grain, no blur on product';
+  '--no women, no children, no groups, no visible mannequin, no props, no plants, no busy background, no streetwear, no athletic wear, no sneakers unless product, no text, no logos, no harsh shadows, no overexposed skin, no grain, no blur on product, no cropped head, no cropped feet, no cropped body, no close-up crop, no zoom-in, no partial body, no cut-off garment';
 
 const pickRandom = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
@@ -199,7 +208,22 @@ export function buildModelShotPrompt(opts: ModelShotOptions): { prompt: string; 
     return { prompt, seed };
   }
 
-  const prompt = `A high-end luxury fashion editorial photograph of a ${age} year old male model wearing ${opts.productName}. ${seed.pose}. ${seed.expression}. ${seed.lighting}. The background is a clean ${bg} seamless studio backdrop, completely empty. The product is the hero of the image — every detail of the fabric, stitching, and construction is visible. Shot on medium format camera, 85mm lens, shallow depth of field. Style reference: Ermenegildo Zegna, Brunello Cucinelli, Loro Piana, or Canali seasonal campaign. The image would appear in GQ, Vogue Hommes, or a luxury brand lookbook. Photorealistic, ultra high resolution, commercial quality.
+  const framing = SHOT_FRAMING[seed.shotType];
+
+  const prompt = `A high-end luxury fashion editorial photograph of a ${age} year old male model wearing ${opts.productName}. ${seed.pose}. ${seed.expression}. ${seed.lighting}. The background is a clean ${bg} seamless studio backdrop, completely empty.
+
+━━━ FRAMING (MANDATORY — NO EXCEPTIONS) ━━━
+${framing}
+Full composition showing the complete garment from top to bottom. The model's full body is visible — head to toe — with no cropping of any body part. The model is centered in the frame with equal padding on all sides.
+
+COMPOSITION:
+The model occupies approximately 80% of the vertical frame. There is clearly visible empty space above the head and below the feet. The garment is fully visible with no parts cut off by the frame edges.
+
+CAMERA:
+Camera positioned at full body distance, wide enough to capture the entire model from head to toe in a single frame. Do not zoom in. Do not crop. Portrait orientation 2:3 aspect ratio, optimized for fashion e-commerce product pages.
+
+QUALITY:
+The product is the hero of the image — every detail of the fabric, stitching, and construction is visible. Shot on medium format camera, 85mm lens, shallow depth of field. Style reference: Ermenegildo Zegna, Brunello Cucinelli, Loro Piana, or Canali seasonal campaign. The image would appear in GQ, Vogue Hommes, or a luxury brand lookbook. Photorealistic, ultra high resolution, commercial quality.
 
 NEGATIVE: ${MODEL_SHOT_NEGATIVE}`;
 
