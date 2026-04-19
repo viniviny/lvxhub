@@ -48,6 +48,173 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// ═══════════════════════════════════════════════════════════════════════
+// UNIVERSAL PRODUCT TYPE STRATEGY MAP
+// Aplicado automaticamente a TODO produto adicionado ao Publify.
+// Detecta o tipo a partir do campo productType / título e seleciona
+// a estratégia de tom, foco, keywords e ângulo de descrição.
+// ═══════════════════════════════════════════════════════════════════════
+interface ProductStrategy {
+  tone: string;
+  focus: string;
+  keywords: string[];
+  descriptionAngle: string;
+}
+
+const PRODUCT_STRATEGIES: Record<string, ProductStrategy> = {
+  't-shirt': {
+    tone: 'casual luxury, everyday refinement',
+    focus: 'fabric feel, breathability, versatility, layering',
+    keywords: ['premium cotton', 'everyday elegance', 'soft hand feel', 'versatile layering'],
+    descriptionAngle: 'comfort and craftsmanship for daily wear',
+  },
+  polo: {
+    tone: 'smart casual, refined sportswear heritage',
+    focus: 'collar construction, fabric performance, clean silhouette',
+    keywords: ['piqué texture', 'smart casual', 'clean lines', 'refined polo'],
+    descriptionAngle: 'the intersection of sport and elegance',
+  },
+  knitwear: {
+    tone: 'warmth, artisanal quality, timeless',
+    focus: 'yarn quality, knit construction, layering weight',
+    keywords: ['merino wool', 'fine knit', 'artisan quality', 'seasonal warmth'],
+    descriptionAngle: 'enduring warmth with understated luxury',
+  },
+  shirt: {
+    tone: 'classic, versatile, refined',
+    focus: 'collar style, cuff detail, fabric weight, occasion',
+    keywords: ['woven cotton', 'tailored fit', 'refined shirt', 'versatile dressing'],
+    descriptionAngle: 'precision tailoring for modern men',
+  },
+  blazer: {
+    tone: 'formal, architectural, powerful',
+    focus: 'lapel construction, lining, shoulder structure, silhouette',
+    keywords: ['structured silhouette', 'sartorial excellence', 'refined tailoring', 'impeccable finish'],
+    descriptionAngle: 'commanding presence through precise construction',
+  },
+  suit: {
+    tone: 'ceremonial, authoritative, impeccable',
+    focus: 'canvas construction, fabric weight, drape, lining',
+    keywords: ['full canvas', 'Italian craftsmanship', 'ceremonial elegance', 'tailored authority'],
+    descriptionAngle: 'the pinnacle of menswear craftsmanship',
+  },
+  jacket: {
+    tone: 'functional luxury, modern outerwear',
+    focus: 'outer shell, lining, closures, weather performance',
+    keywords: ['premium outerwear', 'refined protection', 'functional elegance', 'modern jacket'],
+    descriptionAngle: 'refined protection for the modern man',
+  },
+  coat: {
+    tone: 'grand, enveloping, heritage',
+    focus: 'length, weight, collar, seasonal authority',
+    keywords: ['overcoat', 'heritage tailoring', 'seasonal authority', 'refined outerwear'],
+    descriptionAngle: 'the ultimate statement in cold-weather refinement',
+  },
+  pants: {
+    tone: 'relaxed precision, modern tailoring',
+    focus: 'waistband, drape, cut, hem break',
+    keywords: ['clean drape', 'modern cut', 'relaxed elegance', 'refined trousers'],
+    descriptionAngle: 'modern tailoring with effortless movement',
+  },
+  shorts: {
+    tone: 'relaxed luxury, summer refinement',
+    focus: 'inseam length, fabric, waistband, occasion',
+    keywords: ['premium shorts', 'summer elegance', 'refined casual', 'lightweight fabric'],
+    descriptionAngle: 'warm-weather sophistication',
+  },
+  shoes: {
+    tone: 'craftsmanship, heritage, material mastery',
+    focus: 'leather quality, sole construction, finish, lasting',
+    keywords: ['full-grain leather', 'handcrafted', 'refined step', 'lasting quality'],
+    descriptionAngle: 'every step grounded in artisan tradition',
+  },
+  boots: {
+    tone: 'rugged elegance, durability, character',
+    focus: 'shaft height, leather, sole, weather resistance',
+    keywords: ['premium leather boots', 'refined durability', 'artisan boots', 'lasting construction'],
+    descriptionAngle: 'crafted for those who move with purpose',
+  },
+  sneakers: {
+    tone: 'modern luxury, athletic heritage, clean design',
+    focus: 'upper material, sole technology, colorway, clean lines',
+    keywords: ['luxury sneakers', 'premium upper', 'clean silhouette', 'refined sport'],
+    descriptionAngle: 'sport heritage refined for modern luxury',
+  },
+  belt: {
+    tone: 'minimal, precise, functional luxury',
+    focus: 'leather grade, buckle finish, width, stitching',
+    keywords: ['full-grain leather belt', 'refined hardware', 'precise finishing', 'understated luxury'],
+    descriptionAngle: 'the defining detail of a refined wardrobe',
+  },
+  watch: {
+    tone: 'precise, heritage, timeless',
+    focus: 'case material, movement, dial, strap',
+    keywords: ['precision timepiece', 'refined movement', 'heritage watchmaking', 'enduring design'],
+    descriptionAngle: 'time measured with intention',
+  },
+  wallet: {
+    tone: 'minimal, refined, daily luxury',
+    focus: 'leather type, card capacity, stitching, patina potential',
+    keywords: ['slim leather wallet', 'premium grain', 'refined daily carry', 'understated craftsmanship'],
+    descriptionAngle: 'refined simplicity for daily life',
+  },
+  bag: {
+    tone: 'utilitarian luxury, structure, material',
+    focus: 'leather or canvas, hardware, interior organization, handles',
+    keywords: ['premium bag', 'refined carry', 'structured luxury', 'artisan leather'],
+    descriptionAngle: 'form and function in perfect balance',
+  },
+  default: {
+    tone: 'refined, minimal, confident',
+    focus: 'material, construction, occasion, lifestyle',
+    keywords: ['premium quality', 'refined design', 'luxury menswear', 'Rilmont'],
+    descriptionAngle: 'understated luxury for the modern man',
+  },
+};
+
+const TYPE_ALIASES: Record<string, string> = {
+  tee: 't-shirt', tshirt: 't-shirt', 't shirt': 't-shirt', camiseta: 't-shirt', henley: 't-shirt',
+  'polo shirt': 'polo', polos: 'polo',
+  sweater: 'knitwear', cardigan: 'knitwear', crewneck: 'knitwear', knit: 'knitwear',
+  pullover: 'knitwear', rollneck: 'knitwear', sweatshirt: 'knitwear', hoodie: 'knitwear',
+  'dress shirt': 'shirt', overshirt: 'shirt', 'long-sleeve shirt': 'shirt', camisa: 'shirt',
+  'suit jacket': 'blazer', 'sport coat': 'blazer',
+  bomber: 'jacket', 'field jacket': 'jacket', parka: 'jacket', 'coach jacket': 'jacket', jaqueta: 'jacket',
+  overcoat: 'coat', raincoat: 'coat', trench: 'coat', casaco: 'coat',
+  trousers: 'pants', chino: 'pants', chinos: 'pants', jeans: 'pants', joggers: 'pants', 'cargo pants': 'pants', calça: 'pants',
+  'swim shorts': 'shorts', bermuda: 'shorts',
+  loafers: 'shoes', oxfords: 'shoes', derby: 'shoes', sapato: 'shoes',
+  bota: 'boots', botas: 'boots',
+  sneaker: 'sneakers', tênis: 'sneakers', tenis: 'sneakers',
+  cinto: 'belt',
+  relogio: 'watch', relógio: 'watch', timepiece: 'watch',
+  carteira: 'wallet',
+  bolsa: 'bag', backpack: 'bag', mochila: 'bag', tote: 'bag', briefcase: 'bag',
+};
+
+function detectProductType(rawType: string | undefined | null, fallbackTitle?: string): { key: string; strategy: ProductStrategy } {
+  const candidates = [rawType, fallbackTitle].filter(Boolean) as string[];
+  for (const candidate of candidates) {
+    const lower = candidate.toLowerCase().trim();
+    if (PRODUCT_STRATEGIES[lower]) return { key: lower, strategy: PRODUCT_STRATEGIES[lower] };
+    if (TYPE_ALIASES[lower]) {
+      const key = TYPE_ALIASES[lower];
+      return { key, strategy: PRODUCT_STRATEGIES[key] };
+    }
+    for (const key of Object.keys(PRODUCT_STRATEGIES)) {
+      if (key !== 'default' && lower.includes(key)) return { key, strategy: PRODUCT_STRATEGIES[key] };
+    }
+    for (const [alias, key] of Object.entries(TYPE_ALIASES)) {
+      if (lower.includes(alias)) return { key, strategy: PRODUCT_STRATEGIES[key] };
+    }
+  }
+  return { key: 'default', strategy: PRODUCT_STRATEGIES.default };
+}
+
+function buildStrategyBlock(strategy: ProductStrategy, key: string): string {
+  return `\n\nPRODUCT-TYPE STRATEGY (auto-detected: "${key}"):\n- Tone: ${strategy.tone}\n- Focus: ${strategy.focus}\n- Keywords to include naturally (do NOT keyword-stuff): ${strategy.keywords.join(', ')}\n- Angle: ${strategy.descriptionAngle}`;
+}
+
 const GEMINI_TEXT_MODEL = 'gemini-2.5-flash';
 const GEMINI_VALIDATION_MODEL = 'gemini-2.5-flash-lite';
 const GEMINI_IMAGE_MODEL = 'gemini-3.1-flash-image-preview';
