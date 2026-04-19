@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { enhancePremiumPrompt, buildModelShotPrompt, rollModelShotSeed, type ModelShotSeed } from '@/lib/premiumPrompt';
+import { enhancePremiumPrompt } from '@/lib/premiumPrompt';
 
 type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
 
