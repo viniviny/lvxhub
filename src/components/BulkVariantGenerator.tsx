@@ -164,19 +164,8 @@ export function BulkVariantGenerator({
     const total = selectedColors.length * usedRefs.length * variationsPerCombo;
     setProgress({ done: 0, total, current: '' });
 
-    // Premium editorial style — Hermès / Louis Vuitton / Vogue level
-    const PREMIUM_STYLE = `PREMIUM EDITORIAL STYLE (MANDATORY — Hermès / Louis Vuitton / Vogue level):
-- Soft Vogue-style studio lighting: large diffused softbox from above-front, gentle side fill, subtle rim light
-- Sophisticated neutral background: warm beige, light cream, soft ecru or off-white tones (never cold pure white)
-- Refined high-contrast finish: deep but never crushed blacks, luminous highlights, rich editorial color grading
-- Warm, sophisticated palette with subtle amber/cream undertones, gallery-like atmosphere
-- Tack-sharp focus, premium fabric texture clearly visible, 8K hyper-realistic magazine-grade quality
-- Editorial fashion campaign aesthetic — Hermès, Louis Vuitton, Bottega Veneta, Loro Piana catalog feel
-
-LUXURY SHADOW SYSTEM (MANDATORY — two layers):
-1) DIFFUSED BACKGROUND SHADOW: very soft, low-opacity (10–15%) gradient shadow projected slightly behind the product, blends smoothly into the surface
-2) MICRO CONTACT SHADOW: tight, slightly darker (20–30% opacity) micro-shadow directly under the product where it meets the surface — anchors and grounds it
-- Both shadows feathered, gradient, soft — never harsh, sharp or stamped`;
+    // Universal premium prompt enhancement (centralized)
+    const PREMIUM_STYLE = enhancePremiumPrompt('Color variant generation — preserve product silhouette, change only the color while keeping all premium photography standards.');
 
     const userExtra = extraInstruction.trim();
     const finalExtra = userExtra ? `${PREMIUM_STYLE}\n\nADDITIONAL USER INSTRUCTION:\n${userExtra}` : PREMIUM_STYLE;
