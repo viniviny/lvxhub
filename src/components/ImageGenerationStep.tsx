@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { ModelBackgroundPresets, getModelDescriptor, getBackgroundDescriptor, getModelImage, getBackgroundImage, type CustomPreset } from '@/components/ModelBackgroundPresets';
 import { useCustomPresets } from '@/hooks/useCustomPresets';
+import { enhancePremiumPrompt } from '@/lib/premiumPrompt';
 
 export type AspectRatio = '1:1' | '4:5';
 
@@ -106,12 +107,11 @@ async function imageUrlToBase64(url: string): Promise<{ base64: string; mimeType
 
 function buildPremiumPrompt(userPrompt: string, modelDesc: string, bgDesc: string, angle?: string, proportion?: string): string {
   const productDesc = userPrompt.trim() || 'High-end fashion product';
-  const background = bgDesc || 'Clean white studio background';
   const model = modelDesc || 'No model — product only';
   const angleLabel = angle || 'front view';
   const prop = proportion || '1:1';
 
-  return `High-end e-commerce product photography.
+  const base = `High-end e-commerce product photography.
 
 PRODUCT:
 ${productDesc}
@@ -128,44 +128,17 @@ STRICT RULES (MUST FOLLOW)
 ━━━━━━━━━━━━━━━━━━━━━━━
 
 CONFIGURATION (MANDATORY)
-BACKGROUND: ${background}
 ANGLE: ${angleLabel}
 MODEL: ${model}
 PROPORTION: ${prop}
-These must be followed exactly.
+These must be followed exactly.`;
 
-━━━━━━━━━━━━━━━━━━━━━━━
-
-PREMIUM EDITORIAL STYLE (MANDATORY — Hermès / Louis Vuitton / Vogue level)
-- Soft Vogue-style studio lighting: large diffused softbox from above-front, gentle fill from the side, subtle rim light to separate product from background
-- Sophisticated neutral background: warm beige, light cream, soft ecru or off-white tones (never pure cold white unless explicitly requested)
-- Refined high-contrast finish: deep but never crushed blacks, luminous highlights, rich tonal midtones with editorial color grading
-- Warm, sophisticated color palette: subtle amber/cream undertones, gallery-like atmosphere
-- Tack-sharp focus on product, premium fabric texture clearly visible, shallow micro depth of field on background
-- Editorial fashion campaign aesthetic — feels like a Hermès, Louis Vuitton, Bottega Veneta or Loro Piana catalog page
-- 8K hyper-realistic quality, magazine-grade composition
-
-LUXURY SHADOW SYSTEM (MANDATORY — two layers)
-1) DIFFUSED BACKGROUND SHADOW: very soft, low-opacity (10–15%) gradient shadow projected slightly behind the product on the background — suggests a large overhead softbox, blends smoothly into the surface
-2) MICRO CONTACT SHADOW: a tight, slightly darker (20–30% opacity) micro-shadow directly under the product where it meets the surface — anchors and grounds the product with realism
-- Both shadows must have smooth, feathered, gradient edges — never harsh, sharp, hard or stamped
-- Shadows enhance depth and three-dimensionality without distracting from the product
-
-━━━━━━━━━━━━━━━━━━━━━━━
-
-NEGATIVE
-- cropped product
-- cut edges
-- zoomed in
-- wrong background
-- distorted clothing
-- unrealistic proportions
-- messy composition
-
-━━━━━━━━━━━━━━━━━━━━━━━
-
-FINAL
-Generate a clean, centered product image that strictly follows all rules.`;
+  // Apply universal premium enhancement (smart contrast, ghost mannequin,
+  // framing, lighting, shadow, quality suffix, negative prompt)
+  return enhancePremiumPrompt(base, {
+    chosenBackground: bgDesc || undefined,
+    skipGhostMannequin: !!modelDesc, // if a model preset is chosen, mannequin is irrelevant
+  });
 }
 
 export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange, initialPrompt, aliSourceImages }: ImageGenerationStepProps) {

@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { enhancePremiumPrompt } from '@/lib/premiumPrompt';
 
 type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
 
@@ -52,76 +53,9 @@ async function fileToBase64(file: File): Promise<{ base64: string; mimeType: str
   });
 }
 
-// ─── Premium product prompt builder ──────────────────────────────────────
-// Detects product tone from prompt text and picks a contrasting background.
+// Premium prompt enhancement is centralized in src/lib/premiumPrompt.ts
+const buildPremiumProductPrompt = (p: string) => enhancePremiumPrompt(p);
 
-const LIGHT_TONE_KEYWORDS = [
-  'white', 'branco', 'branca', 'ivory', 'marfim', 'cream', 'creme', 'beige', 'bege',
-  'ecru', 'écru', 'off-white', 'sand', 'areia', 'champagne', 'pearl', 'pérola',
-  'light gray', 'cinza claro', 'pale', 'claro', 'clara', 'nude', 'pastel',
-];
-const DARK_TONE_KEYWORDS = [
-  'black', 'preto', 'preta', 'navy', 'marinho', 'dark brown', 'marrom escuro',
-  'chocolate', 'charcoal', 'anthracite', 'antracite', 'grafite', 'midnight',
-  'dark', 'escuro', 'escura', 'forest', 'wine', 'vinho', 'burgundy', 'bordô',
-];
-
-function detectProductTone(prompt: string): 'light' | 'dark' | 'unknown' {
-  const p = prompt.toLowerCase();
-  const hasLight = LIGHT_TONE_KEYWORDS.some(k => p.includes(k));
-  const hasDark = DARK_TONE_KEYWORDS.some(k => p.includes(k));
-  if (hasDark && !hasLight) return 'dark';
-  if (hasLight && !hasDark) return 'light';
-  return 'unknown';
-}
-
-function pickContrastBackground(tone: 'light' | 'dark' | 'unknown'): string {
-  if (tone === 'light') {
-    // light product → darker neutral background
-    return 'sophisticated stone gray background (#D8D4CC), warm oyster (#C8C2B4) or refined anthracite (#353330) — must clearly contrast with the light product';
-  }
-  if (tone === 'dark') {
-    // dark product → light neutral background
-    return 'warm white background (#F7F4EF), soft linen (#EAE5DC) or chalk greige (#E8E2D8) — must clearly contrast with the dark product';
-  }
-  // unknown: default warm neutral
-  return 'sophisticated neutral warm background (soft ecru, light cream or warm beige) chosen to clearly contrast with the product tone';
-}
-
-const NEGATIVE_PROMPT = '--no people, person, model, face, hands, body, harsh shadows, props, objects, plants, decor, busy background, pattern on background, noise, texture on background, mannequin visible';
-
-function buildPremiumProductPrompt(userPrompt: string): string {
-  const trimmed = userPrompt.trim();
-  const tone = detectProductTone(trimmed);
-  const background = pickContrastBackground(tone);
-
-  return `${trimmed}
-
-━━━ PREMIUM PRODUCT PHOTOGRAPHY (MANDATORY) ━━━
-
-PRESENTATION:
-- Garment displayed on an invisible ghost mannequin with structured, well-defined shoulders and a properly fitted silhouette
-- The product occupies 70% of the frame with generous breathing room on all sides
-- Centered, fully visible, never cropped
-
-BACKGROUND (auto-contrast with product):
-- ${background}
-- Clean, seamless, no patterns, no texture, no objects
-
-LIGHTING:
-- Soft studio lighting from upper left, creating subtle volume and natural fabric texture, no harsh shadows
-- Editorial Vogue-style softbox quality, gentle fill on the right, subtle rim light to separate from background
-
-SHADOW:
-- Very subtle drop shadow at the base, almost invisible, just enough to ground the product
-- No background shadow, no harsh or sharp shadow lines
-
-QUALITY:
-- Shot on medium format camera, ultra-sharp detail on fabric and stitching, high-end fashion e-commerce photography quality, Zegna or Canali product page standard
-- 8K hyper-realistic, refined editorial color grading, warm sophisticated tones
-
-NEGATIVE: ${NEGATIVE_PROMPT}`;
-}
 
 
 export function ImageGeneratorModule() {
