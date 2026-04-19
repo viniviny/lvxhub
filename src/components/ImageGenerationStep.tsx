@@ -138,10 +138,16 @@ These must be followed exactly.
 
 STYLE
 - clean background
-- soft shadows
 - realistic lighting
 - premium fashion photography
 - Shopify-ready image
+
+LUXURY SHADOW (MANDATORY)
+- Add a subtle, soft drop shadow directly behind/under the product
+- Shadow must be diffused, low-opacity (around 20-30%), with smooth gradient edges
+- Shadow grounds the product and adds depth, giving an editorial luxury feel
+- Avoid harsh, dark or sharp shadows — keep it elegant and refined
+- Shadow should suggest soft studio lighting from above, like high-end fashion campaigns (Zara, COS, Massimo Dutti)
 
 ━━━━━━━━━━━━━━━━━━━━━━━
 
