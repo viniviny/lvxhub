@@ -99,3 +99,110 @@ ${quality}
 
 NEGATIVE: ${UNIVERSAL_NEGATIVE_PROMPT}`;
 }
+
+// ─── Luxury Fashion Model Shot Engine ──────────────────────────────────────
+// Smart prompt engine that auto-selects pose / expression / lighting based on
+// product type. Used by the "Model Shot" mode in the image generator.
+
+export type ShotType = 'upper_body' | 'lower_body' | 'full_body' | 'shoes' | 'accessory';
+
+export function detectShotType(productName: string): ShotType {
+  const p = productName.toLowerCase();
+  if (/\b(shirt|tee|t-shirt|henley|polo|sweater|knitwear|knit|cardigan|hoodie|camisa|camiseta|moletom|suéter|sueter|tricot)\b/.test(p)) return 'upper_body';
+  if (/\b(pants|trousers|chino|chinos|jeans|shorts|calça|calca|bermuda)\b/.test(p)) return 'lower_body';
+  if (/\b(suit|blazer|jacket|coat|overcoat|trench|parka|terno|paletó|paleto|jaqueta|casaco|sobretudo)\b/.test(p)) return 'full_body';
+  if (/\b(shoes|sneaker|sneakers|boot|boots|loafer|loafers|oxford|oxfords|derby|sandália|sandalia|tênis|tenis|sapato|bota)\b/.test(p)) return 'shoes';
+  if (/\b(belt|watch|wallet|bag|accessory|cinto|relógio|relogio|carteira|bolsa|acessório|acessorio)\b/.test(p)) return 'accessory';
+  return 'full_body';
+}
+
+const POSE_LIBRARY: Record<ShotType, string[]> = {
+  upper_body: [
+    'standing with arms relaxed at sides, slight weight shift to right leg, looking directly at camera with calm authority',
+    'one hand lightly resting in pocket, other arm relaxed, gaze slightly off camera to the left, contemplative expression',
+    'arms crossed loosely at waist level, direct gaze, confident and composed',
+  ],
+  lower_body: [
+    'standing straight, one foot slightly forward, hands in pockets, cropped at waist showing full trouser length',
+    'walking stance, mid-stride, natural movement captured, cropped below waist',
+  ],
+  full_body: [
+    'standing tall, one hand in pocket, other arm relaxed, weight on left leg, looking directly at camera',
+    'three-quarter turn to the right, looking back at camera over shoulder, relaxed and confident',
+    'walking slowly toward camera, natural stride, looking straight ahead with quiet intensity',
+    'leaning very slightly against an invisible surface, arms relaxed, gaze off to the side',
+  ],
+  shoes: [
+    'close-up of shoes on feet, model standing, cropped at ankle level, clean floor, perfect leather or material detail',
+  ],
+  accessory: [
+    'ghost product on clean background, no model needed, product centered with soft shadows',
+  ],
+};
+
+const EXPRESSION_LIBRARY = [
+  'neutral expression, lips slightly closed, eyes calm and direct — quiet luxury',
+  'subtle serious gaze, slight tension in jaw, looking past the camera — editorial confidence',
+  'eyes half-focused into distance, face completely relaxed, effortless presence',
+];
+
+const LIGHTING_LIBRARY = [
+  'soft Rembrandt lighting from upper left, gentle shadow on right cheek, warm and sculptural',
+  'large softbox overhead diffused light, even skin tones, clean and editorial',
+  'split between warm key light from left and soft fill from right, balanced and refined',
+];
+
+export const MODEL_SHOT_NEGATIVE =
+  '--no women, no children, no groups, no visible mannequin, no props, no plants, no busy background, no streetwear, no athletic wear, no sneakers unless product, no text, no logos, no harsh shadows, no overexposed skin, no grain, no blur on product';
+
+const pickRandom = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
+export interface ModelShotSeed {
+  pose: string;
+  expression: string;
+  lighting: string;
+  shotType: ShotType;
+}
+
+export function rollModelShotSeed(productName: string): ModelShotSeed {
+  const shotType = detectShotType(productName);
+  return {
+    shotType,
+    pose: pickRandom(POSE_LIBRARY[shotType]),
+    expression: pickRandom(EXPRESSION_LIBRARY),
+    lighting: pickRandom(LIGHTING_LIBRARY),
+  };
+}
+
+export interface ModelShotOptions {
+  productName: string;
+  backgroundColor?: string; // e.g. "warm cream", "stone gray", "soft ecru"
+  age?: string; // default "28-35"
+  seed?: ModelShotSeed; // pass an existing seed to keep pose stable across renders
+}
+
+/**
+ * Builds the full luxury-fashion model-shot prompt.
+ * Returns both the assembled prompt and the seed used (for "Regenerate Pose").
+ */
+export function buildModelShotPrompt(opts: ModelShotOptions): { prompt: string; seed: ModelShotSeed } {
+  const seed = opts.seed ?? rollModelShotSeed(opts.productName);
+  const age = opts.age ?? '28-35';
+  const bg = opts.backgroundColor?.trim() || 'warm cream';
+
+  // Accessory shot has no model — fall back to the standard premium product prompt
+  if (seed.shotType === 'accessory') {
+    const prompt = enhancePremiumPrompt(opts.productName, {
+      chosenBackground: bg,
+      skipGhostMannequin: true,
+    });
+    return { prompt, seed };
+  }
+
+  const prompt = `A high-end luxury fashion editorial photograph of a ${age} year old male model wearing ${opts.productName}. ${seed.pose}. ${seed.expression}. ${seed.lighting}. The background is a clean ${bg} seamless studio backdrop, completely empty. The product is the hero of the image — every detail of the fabric, stitching, and construction is visible. Shot on medium format camera, 85mm lens, shallow depth of field. Style reference: Ermenegildo Zegna, Brunello Cucinelli, Loro Piana, or Canali seasonal campaign. The image would appear in GQ, Vogue Hommes, or a luxury brand lookbook. Photorealistic, ultra high resolution, commercial quality.
+
+NEGATIVE: ${MODEL_SHOT_NEGATIVE}`;
+
+  return { prompt, seed };
+}
+

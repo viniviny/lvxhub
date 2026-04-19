@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { enhancePremiumPrompt } from '@/lib/premiumPrompt';
+import { enhancePremiumPrompt, buildModelShotPrompt, rollModelShotSeed, type ModelShotSeed } from '@/lib/premiumPrompt';
 
 type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
 
@@ -68,6 +68,10 @@ export function ImageGeneratorModule() {
   const [enhancedPrompt, setEnhancedPrompt] = useState<string | null>(null);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  // Model Shot mode
+  const [modelShot, setModelShot] = useState(false);
+  const [bgColor, setBgColor] = useState('warm cream');
+  const [modelSeed, setModelSeed] = useState<ModelShotSeed | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const closeLightbox = useCallback(() => setLightboxIdx(null), []);
@@ -111,7 +115,17 @@ export function ImageGeneratorModule() {
     }
   };
 
-  const handleGenerate = async () => {
+  const buildFinalPrompt = (raw: string, opts?: { freshSeed?: boolean }) => {
+    if (modelShot) {
+      const seed = opts?.freshSeed || !modelSeed ? rollModelShotSeed(raw) : modelSeed;
+      const built = buildModelShotPrompt({ productName: raw, backgroundColor: bgColor, seed });
+      setModelSeed(built.seed);
+      return built.prompt;
+    }
+    return enhancePremiumPrompt(raw, { chosenBackground: bgColor || undefined });
+  };
+
+  const handleGenerate = async (opts?: { freshSeed?: boolean }) => {
     if (!prompt.trim() || prompt.trim().length < 3) {
       toast.error('Descreva sua imagem (mínimo 3 caracteres)');
       return;
@@ -120,16 +134,16 @@ export function ImageGeneratorModule() {
     setResults([]);
     setEnhancedPrompt(null);
     try {
-      // Ensure session is fresh (auto-refresh expired tokens)
       const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
       if (sessionErr || !sessionData.session) {
         toast.error('Sessão expirada. Faça login novamente.');
         window.location.href = '/login';
         return;
       }
+      const finalPrompt = buildFinalPrompt(prompt.trim(), opts);
       const { data, error } = await supabase.functions.invoke('generate-image-simple', {
         body: {
-          prompt: buildPremiumProductPrompt(prompt.trim()),
+          prompt: finalPrompt,
           variations,
           aspectRatio,
           imageReference: reference?.base64,
@@ -148,6 +162,8 @@ export function ImageGeneratorModule() {
       setLoading(false);
     }
   };
+
+  const handleRegeneratePose = () => handleGenerate({ freshSeed: true });
 
   const handleVariation = async (sourceUrl: string) => {
     if (!prompt.trim()) {
@@ -449,10 +465,74 @@ export function ImageGeneratorModule() {
             </PopoverContent>
           </Popover>
 
+          {/* MODEL SHOT TOGGLE */}
+          <button
+            type="button"
+            onClick={() => setModelShot(v => !v)}
+            className={cn(
+              'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs font-medium border transition',
+              modelShot
+                ? 'border-primary bg-primary/10 text-foreground'
+                : 'border-border bg-background text-foreground hover:bg-secondary'
+            )}
+            title="Ative para gerar foto com modelo masculino editorial"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <span>Modelo {modelShot ? '✓' : ''}</span>
+          </button>
+
+          {/* BACKGROUND COLOR */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs font-medium border border-border bg-background text-foreground hover:bg-secondary transition"
+              >
+                <span className="inline-block w-3 h-3 rounded-sm border border-border" style={{ background: bgColor }} />
+                <span className="text-muted-foreground">Fundo:</span>
+                <span className="max-w-[80px] truncate">{bgColor}</span>
+                <ChevronDown className="w-3 h-3 opacity-60" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-56 p-2 space-y-1">
+              {[
+                'warm cream', 'soft ecru', 'light beige', 'stone gray',
+                'oyster', 'anthracite', 'warm white', 'linen', 'chalk greige',
+              ].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setBgColor(c)}
+                  className={cn(
+                    'w-full text-left px-2.5 py-1.5 rounded-sm text-xs transition flex items-center gap-2',
+                    bgColor === c ? 'bg-accent text-accent-foreground' : 'hover:bg-secondary'
+                  )}
+                >
+                  <Check className={cn('w-3.5 h-3.5 flex-shrink-0', bgColor === c ? 'opacity-100 text-primary' : 'opacity-0')} />
+                  <span>{c}</span>
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+
+          {/* REGENERATE POSE — only in Model Shot mode */}
+          {modelShot && (
+            <button
+              type="button"
+              onClick={handleRegeneratePose}
+              disabled={loading || !prompt.trim()}
+              className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-md text-xs font-medium border border-border bg-background text-foreground hover:bg-secondary transition disabled:opacity-50"
+              title="Sortear nova pose, expressão e iluminação"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-primary" />
+              <span>Regenerar pose</span>
+            </button>
+          )}
+
           <div className="ml-auto flex items-center gap-2">
             <span className="text-[10px] text-muted-foreground">{prompt.length}/2000</span>
             <Button
-              onClick={handleGenerate}
+              onClick={() => handleGenerate()}
               disabled={loading || !prompt.trim()}
               size="sm"
               className="font-display font-semibold h-8"
