@@ -10,6 +10,7 @@ import { Loader2, Upload, Library, Image as ImageIcon, Sparkles, X, Check, Layer
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { enhancePremiumPrompt } from '@/lib/premiumPrompt';
 
 export interface BulkColor {
   id: string;
