@@ -49,6 +49,7 @@ const corsHeaders = {
 };
 
 const GEMINI_TEXT_MODEL = 'gemini-2.5-flash';
+const GEMINI_VALIDATION_MODEL = 'gemini-2.5-flash-lite';
 const GEMINI_IMAGE_MODEL = 'gemini-3.1-flash-image-preview';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
