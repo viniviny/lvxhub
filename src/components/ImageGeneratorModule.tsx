@@ -153,7 +153,7 @@ export function ImageGeneratorModule() {
     }
   };
 
-  const handleRegeneratePose = () => handleGenerate({ freshSeed: true });
+  
 
   const handleVariation = async (sourceUrl: string) => {
     if (!prompt.trim()) {
