@@ -115,7 +115,7 @@ export function ImageGeneratorModule() {
     return enhancePremiumPrompt(raw);
   };
 
-  const handleGenerate = async (opts?: { freshSeed?: boolean }) => {
+  const handleGenerate = async () => {
     if (!prompt.trim() || prompt.trim().length < 3) {
       toast.error('Descreva sua imagem (mínimo 3 caracteres)');
       return;
