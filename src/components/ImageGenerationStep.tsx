@@ -136,18 +136,20 @@ These must be followed exactly.
 
 ━━━━━━━━━━━━━━━━━━━━━━━
 
-STYLE
-- clean background
-- realistic lighting
-- premium fashion photography
-- Shopify-ready image
+PREMIUM EDITORIAL STYLE (MANDATORY — Hermès / Louis Vuitton / Vogue level)
+- Soft Vogue-style studio lighting: large diffused softbox from above-front, gentle fill from the side, subtle rim light to separate product from background
+- Sophisticated neutral background: warm beige, light cream, soft ecru or off-white tones (never pure cold white unless explicitly requested)
+- Refined high-contrast finish: deep but never crushed blacks, luminous highlights, rich tonal midtones with editorial color grading
+- Warm, sophisticated color palette: subtle amber/cream undertones, gallery-like atmosphere
+- Tack-sharp focus on product, premium fabric texture clearly visible, shallow micro depth of field on background
+- Editorial fashion campaign aesthetic — feels like a Hermès, Louis Vuitton, Bottega Veneta or Loro Piana catalog page
+- 8K hyper-realistic quality, magazine-grade composition
 
-LUXURY SHADOW (MANDATORY)
-- Add a subtle, soft drop shadow directly behind/under the product
-- Shadow must be diffused, low-opacity (around 20-30%), with smooth gradient edges
-- Shadow grounds the product and adds depth, giving an editorial luxury feel
-- Avoid harsh, dark or sharp shadows — keep it elegant and refined
-- Shadow should suggest soft studio lighting from above, like high-end fashion campaigns (Zara, COS, Massimo Dutti)
+LUXURY SHADOW SYSTEM (MANDATORY — two layers)
+1) DIFFUSED BACKGROUND SHADOW: very soft, low-opacity (10–15%) gradient shadow projected slightly behind the product on the background — suggests a large overhead softbox, blends smoothly into the surface
+2) MICRO CONTACT SHADOW: a tight, slightly darker (20–30% opacity) micro-shadow directly under the product where it meets the surface — anchors and grounds the product with realism
+- Both shadows must have smooth, feathered, gradient edges — never harsh, sharp, hard or stamped
+- Shadows enhance depth and three-dimensionality without distracting from the product
 
 ━━━━━━━━━━━━━━━━━━━━━━━
 
