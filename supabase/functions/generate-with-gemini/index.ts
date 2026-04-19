@@ -546,36 +546,15 @@ Do NOT substitute, simplify, or deviate. The generated background must be virtua
 - Mix the style cues across the references to create a fresh, premium editorial result.`;
       }
 
-      // Generate with optional validation — only validate when composition is complex (model + bg)
-      const hasModel = presetImages.some(p => p.label === 'MODEL TYPE');
-      const hasBg = presetImages.some(p => p.label === 'BACKGROUND STYLE');
-      const needsValidation = hasModel && hasBg && !!referenceImage; // only the heaviest case
-      const MAX_ATTEMPTS = needsValidation ? 2 : 1;
-      let imageResult: { base64: string; mimeType: string } | null = null;
-
-      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-        const result = await callGeminiImage(GEMINI_API_KEY, fullPrompt, referenceImage, referenceMimeType, presetImages.length > 0 ? presetImages : undefined);
-
-        if (attempt < MAX_ATTEMPTS && needsValidation) {
-          const validation = await validateGeneratedImage(
-            GEMINI_API_KEY, result.base64, result.mimeType,
-            presetImages.length > 0 ? presetImages : undefined,
-            referenceImage, referenceMimeType
-          );
-
-          if (!validation.isValid) {
-            console.log(`Attempt ${attempt}/${MAX_ATTEMPTS} rejected: ${validation.reason || 'mismatch'}. Retrying...`);
-            continue;
-          }
-        }
-
-        imageResult = result;
-        break;
-      }
-
-      if (!imageResult) {
-        throw { status: 500, message: 'No image generated' };
-      }
+      // Single-pass generation. Validation retry was disabled because two
+      // sequential Gemini calls frequently exceeded the 150s edge function limit.
+      const imageResult = await callGeminiImage(
+        GEMINI_API_KEY,
+        fullPrompt,
+        referenceImage,
+        referenceMimeType,
+        presetImages.length > 0 ? presetImages : undefined,
+      );
 
       // Try to upload to Supabase Storage
       const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
