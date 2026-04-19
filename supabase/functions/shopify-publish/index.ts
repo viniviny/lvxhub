@@ -28,7 +28,7 @@ serve(async (req) => {
 
     const body = await req.json();
     const {
-      title, description, price, compareAtPrice, cost, sizes, collection, tags,
+      title, description, price, compareAtPrice, cost, sizes, collection, productType, gender, tags,
       imageBase64, imageName, imageUrl: bodyImageUrl,
       countryCode, countryFlag, countryName, currency: bodyCurrency, currencySymbol,
       localPrice, baseCurrency, language: bodyLanguage, languageLabel, marketName, regionGroup,
@@ -143,13 +143,15 @@ serve(async (req) => {
       } else {
         await checkRes.text(); // consume body
 
+        const combinedTags = [tags || '', gender ? `gender:${gender}` : '', collection ? `collection:${collection}` : '']
+          .filter(Boolean).join(', ');
         const updatePayload: Record<string, unknown> = {
           product: {
             id: shopifyProductId,
             title: title || labels.untitled,
             body_html: cleanDescription || '',
-            product_type: collection || '',
-            tags: tags || '',
+            product_type: productType || collection || '',
+            tags: combinedTags,
             variants: variantsPayload,
             options: [{ name: labels.option, values: optionValues }],
           },
@@ -222,13 +224,15 @@ serve(async (req) => {
       // CREATE new product
       console.log(`[shopify-publish] Creating product with ${productImages.length} images`);
 
+      const combinedTagsCreate = [tags || '', gender ? `gender:${gender}` : '', collection ? `collection:${collection}` : '']
+        .filter(Boolean).join(', ');
       const productPayload: Record<string, unknown> = {
         product: {
           title: title || labels.untitled,
           body_html: cleanDescription || '',
           vendor: 'Publify',
-          product_type: collection || '',
-          tags: tags || '',
+          product_type: productType || collection || '',
+          tags: combinedTagsCreate,
           status: 'draft',
           options: [{ name: labels.option, values: optionValues }],
           variants: variantsPayload,

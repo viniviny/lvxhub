@@ -769,6 +769,8 @@ const Index = () => {
           cost: form.cost,
           sizes: form.sizes,
           collection: form.collection,
+          productType: form.productType,
+          gender: form.gender,
           tags: form.tags,
           imageBase64,
           imageName,
@@ -819,8 +821,40 @@ const Index = () => {
     if (!imageFile || !store.accessToken) return false;
     try {
       const imageBase64 = await fileToBase64(imageFile);
+      const mc = store.marketConfig;
+      const storeLang = mc?.language ? getAILanguageByCode(mc.language) : null;
       const { data, error } = await supabase.functions.invoke('shopify-publish', {
-        body: { title: form.title, description: form.description, price: form.price, sizes: form.sizes, collection: form.collection, imageBase64, imageName: imageFile.name, variants: form.variants, inventoryPolicy: form.inventoryPolicy },
+        body: {
+          title: form.title,
+          description: form.description,
+          price: form.price,
+          compareAtPrice: form.compareAtPrice,
+          cost: form.cost,
+          sizes: form.sizes,
+          collection: form.collection,
+          productType: form.productType,
+          gender: form.gender,
+          tags: form.tags,
+          imageBase64,
+          imageName: imageFile.name,
+          variants: form.variants,
+          inventoryPolicy: form.inventoryPolicy,
+          requiresShipping: form.requiresShipping,
+          weight: form.weight,
+          weightUnit: form.weightUnit,
+          countryOfOrigin: form.countryOfOrigin,
+          selectedChannels: form.selectedChannels,
+          countryCode: mc?.countryCode || null,
+          countryFlag: mc?.countryFlag || null,
+          countryName: mc?.countryName || null,
+          currency: mc?.currency || null,
+          currencySymbol: mc?.currencySymbol || null,
+          localPrice: form.price,
+          baseCurrency: mc?.currency || 'BRL',
+          language: mc?.language || null,
+          languageLabel: storeLang?.label || null,
+          marketName: mc?.marketName || null,
+        },
       });
       if (error || data?.error) return false;
       incrementPublished();
