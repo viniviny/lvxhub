@@ -177,7 +177,7 @@ export function ImageGeneratorModule() {
       const [, mt, b64] = match;
       const { data, error } = await supabase.functions.invoke('generate-image-simple', {
         body: {
-          prompt: prompt.trim() + ' — different angle and composition',
+          prompt: prompt.trim() + ' — different angle and composition' + PREMIUM_STYLE_SUFFIX,
           variations: 1,
           aspectRatio,
           imageReference: b64,
