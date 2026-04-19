@@ -229,7 +229,7 @@ Respond with ONLY valid JSON, no markdown:
   }
 
   try {
-    const url = `${GEMINI_BASE}/${GEMINI_TEXT_MODEL}:generateContent?key=${apiKey}`;
+    const url = `${GEMINI_BASE}/${GEMINI_VALIDATION_MODEL}:generateContent?key=${apiKey}`;
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
