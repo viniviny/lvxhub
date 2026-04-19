@@ -52,6 +52,22 @@ async function fileToBase64(file: File): Promise<{ base64: string; mimeType: str
   });
 }
 
+// Premium editorial style — Hermès / Louis Vuitton / Vogue level
+const PREMIUM_STYLE_SUFFIX = `
+
+PREMIUM EDITORIAL STYLE (MANDATORY — Hermès / Louis Vuitton / Vogue level):
+- Soft Vogue-style studio lighting: large diffused softbox from above-front, gentle side fill, subtle rim light
+- Sophisticated neutral background: warm beige, light cream, soft ecru or off-white tones (never cold pure white)
+- Refined high-contrast finish: deep but never crushed blacks, luminous highlights, rich editorial color grading
+- Warm, sophisticated palette with subtle amber/cream undertones, gallery-like atmosphere
+- Tack-sharp focus, premium texture clearly visible, 8K hyper-realistic magazine-grade quality
+- Editorial campaign aesthetic — Hermès, Louis Vuitton, Bottega Veneta, Loro Piana catalog feel
+
+LUXURY SHADOW SYSTEM (MANDATORY — two layers):
+1) DIFFUSED BACKGROUND SHADOW: very soft, low-opacity (10–15%) gradient shadow projected slightly behind the subject, blends smoothly into the surface
+2) MICRO CONTACT SHADOW: tight, slightly darker (20–30% opacity) micro-shadow directly under the subject where it meets the surface
+- Both shadows feathered, gradient, soft — never harsh, sharp or stamped`;
+
 export function ImageGeneratorModule() {
   const [prompt, setPrompt] = useState('');
   const [variations, setVariations] = useState<1 | 2 | 4>(1);
