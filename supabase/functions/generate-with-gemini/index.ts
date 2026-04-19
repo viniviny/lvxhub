@@ -48,6 +48,173 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// ═══════════════════════════════════════════════════════════════════════
+// UNIVERSAL PRODUCT TYPE STRATEGY MAP
+// Aplicado automaticamente a TODO produto adicionado ao Publify.
+// Detecta o tipo a partir do campo productType / título e seleciona
+// a estratégia de tom, foco, keywords e ângulo de descrição.
+// ═══════════════════════════════════════════════════════════════════════
+interface ProductStrategy {
+  tone: string;
+  focus: string;
+  keywords: string[];
+  descriptionAngle: string;
+}
+
+const PRODUCT_STRATEGIES: Record<string, ProductStrategy> = {
+  't-shirt': {
+    tone: 'casual luxury, everyday refinement',
+    focus: 'fabric feel, breathability, versatility, layering',
+    keywords: ['premium cotton', 'everyday elegance', 'soft hand feel', 'versatile layering'],
+    descriptionAngle: 'comfort and craftsmanship for daily wear',
+  },
+  polo: {
+    tone: 'smart casual, refined sportswear heritage',
+    focus: 'collar construction, fabric performance, clean silhouette',
+    keywords: ['piqué texture', 'smart casual', 'clean lines', 'refined polo'],
+    descriptionAngle: 'the intersection of sport and elegance',
+  },
+  knitwear: {
+    tone: 'warmth, artisanal quality, timeless',
+    focus: 'yarn quality, knit construction, layering weight',
+    keywords: ['merino wool', 'fine knit', 'artisan quality', 'seasonal warmth'],
+    descriptionAngle: 'enduring warmth with understated luxury',
+  },
+  shirt: {
+    tone: 'classic, versatile, refined',
+    focus: 'collar style, cuff detail, fabric weight, occasion',
+    keywords: ['woven cotton', 'tailored fit', 'refined shirt', 'versatile dressing'],
+    descriptionAngle: 'precision tailoring for modern men',
+  },
+  blazer: {
+    tone: 'formal, architectural, powerful',
+    focus: 'lapel construction, lining, shoulder structure, silhouette',
+    keywords: ['structured silhouette', 'sartorial excellence', 'refined tailoring', 'impeccable finish'],
+    descriptionAngle: 'commanding presence through precise construction',
+  },
+  suit: {
+    tone: 'ceremonial, authoritative, impeccable',
+    focus: 'canvas construction, fabric weight, drape, lining',
+    keywords: ['full canvas', 'Italian craftsmanship', 'ceremonial elegance', 'tailored authority'],
+    descriptionAngle: 'the pinnacle of menswear craftsmanship',
+  },
+  jacket: {
+    tone: 'functional luxury, modern outerwear',
+    focus: 'outer shell, lining, closures, weather performance',
+    keywords: ['premium outerwear', 'refined protection', 'functional elegance', 'modern jacket'],
+    descriptionAngle: 'refined protection for the modern man',
+  },
+  coat: {
+    tone: 'grand, enveloping, heritage',
+    focus: 'length, weight, collar, seasonal authority',
+    keywords: ['overcoat', 'heritage tailoring', 'seasonal authority', 'refined outerwear'],
+    descriptionAngle: 'the ultimate statement in cold-weather refinement',
+  },
+  pants: {
+    tone: 'relaxed precision, modern tailoring',
+    focus: 'waistband, drape, cut, hem break',
+    keywords: ['clean drape', 'modern cut', 'relaxed elegance', 'refined trousers'],
+    descriptionAngle: 'modern tailoring with effortless movement',
+  },
+  shorts: {
+    tone: 'relaxed luxury, summer refinement',
+    focus: 'inseam length, fabric, waistband, occasion',
+    keywords: ['premium shorts', 'summer elegance', 'refined casual', 'lightweight fabric'],
+    descriptionAngle: 'warm-weather sophistication',
+  },
+  shoes: {
+    tone: 'craftsmanship, heritage, material mastery',
+    focus: 'leather quality, sole construction, finish, lasting',
+    keywords: ['full-grain leather', 'handcrafted', 'refined step', 'lasting quality'],
+    descriptionAngle: 'every step grounded in artisan tradition',
+  },
+  boots: {
+    tone: 'rugged elegance, durability, character',
+    focus: 'shaft height, leather, sole, weather resistance',
+    keywords: ['premium leather boots', 'refined durability', 'artisan boots', 'lasting construction'],
+    descriptionAngle: 'crafted for those who move with purpose',
+  },
+  sneakers: {
+    tone: 'modern luxury, athletic heritage, clean design',
+    focus: 'upper material, sole technology, colorway, clean lines',
+    keywords: ['luxury sneakers', 'premium upper', 'clean silhouette', 'refined sport'],
+    descriptionAngle: 'sport heritage refined for modern luxury',
+  },
+  belt: {
+    tone: 'minimal, precise, functional luxury',
+    focus: 'leather grade, buckle finish, width, stitching',
+    keywords: ['full-grain leather belt', 'refined hardware', 'precise finishing', 'understated luxury'],
+    descriptionAngle: 'the defining detail of a refined wardrobe',
+  },
+  watch: {
+    tone: 'precise, heritage, timeless',
+    focus: 'case material, movement, dial, strap',
+    keywords: ['precision timepiece', 'refined movement', 'heritage watchmaking', 'enduring design'],
+    descriptionAngle: 'time measured with intention',
+  },
+  wallet: {
+    tone: 'minimal, refined, daily luxury',
+    focus: 'leather type, card capacity, stitching, patina potential',
+    keywords: ['slim leather wallet', 'premium grain', 'refined daily carry', 'understated craftsmanship'],
+    descriptionAngle: 'refined simplicity for daily life',
+  },
+  bag: {
+    tone: 'utilitarian luxury, structure, material',
+    focus: 'leather or canvas, hardware, interior organization, handles',
+    keywords: ['premium bag', 'refined carry', 'structured luxury', 'artisan leather'],
+    descriptionAngle: 'form and function in perfect balance',
+  },
+  default: {
+    tone: 'refined, minimal, confident',
+    focus: 'material, construction, occasion, lifestyle',
+    keywords: ['premium quality', 'refined design', 'luxury menswear', 'Rilmont'],
+    descriptionAngle: 'understated luxury for the modern man',
+  },
+};
+
+const TYPE_ALIASES: Record<string, string> = {
+  tee: 't-shirt', tshirt: 't-shirt', 't shirt': 't-shirt', camiseta: 't-shirt', henley: 't-shirt',
+  'polo shirt': 'polo', polos: 'polo',
+  sweater: 'knitwear', cardigan: 'knitwear', crewneck: 'knitwear', knit: 'knitwear',
+  pullover: 'knitwear', rollneck: 'knitwear', sweatshirt: 'knitwear', hoodie: 'knitwear',
+  'dress shirt': 'shirt', overshirt: 'shirt', 'long-sleeve shirt': 'shirt', camisa: 'shirt',
+  'suit jacket': 'blazer', 'sport coat': 'blazer',
+  bomber: 'jacket', 'field jacket': 'jacket', parka: 'jacket', 'coach jacket': 'jacket', jaqueta: 'jacket',
+  overcoat: 'coat', raincoat: 'coat', trench: 'coat', casaco: 'coat',
+  trousers: 'pants', chino: 'pants', chinos: 'pants', jeans: 'pants', joggers: 'pants', 'cargo pants': 'pants', calça: 'pants',
+  'swim shorts': 'shorts', bermuda: 'shorts',
+  loafers: 'shoes', oxfords: 'shoes', derby: 'shoes', sapato: 'shoes',
+  bota: 'boots', botas: 'boots',
+  sneaker: 'sneakers', tênis: 'sneakers', tenis: 'sneakers',
+  cinto: 'belt',
+  relogio: 'watch', relógio: 'watch', timepiece: 'watch',
+  carteira: 'wallet',
+  bolsa: 'bag', backpack: 'bag', mochila: 'bag', tote: 'bag', briefcase: 'bag',
+};
+
+function detectProductType(rawType: string | undefined | null, fallbackTitle?: string): { key: string; strategy: ProductStrategy } {
+  const candidates = [rawType, fallbackTitle].filter(Boolean) as string[];
+  for (const candidate of candidates) {
+    const lower = candidate.toLowerCase().trim();
+    if (PRODUCT_STRATEGIES[lower]) return { key: lower, strategy: PRODUCT_STRATEGIES[lower] };
+    if (TYPE_ALIASES[lower]) {
+      const key = TYPE_ALIASES[lower];
+      return { key, strategy: PRODUCT_STRATEGIES[key] };
+    }
+    for (const key of Object.keys(PRODUCT_STRATEGIES)) {
+      if (key !== 'default' && lower.includes(key)) return { key, strategy: PRODUCT_STRATEGIES[key] };
+    }
+    for (const [alias, key] of Object.entries(TYPE_ALIASES)) {
+      if (lower.includes(alias)) return { key, strategy: PRODUCT_STRATEGIES[key] };
+    }
+  }
+  return { key: 'default', strategy: PRODUCT_STRATEGIES.default };
+}
+
+function buildStrategyBlock(strategy: ProductStrategy, key: string): string {
+  return `\n\nPRODUCT-TYPE STRATEGY (auto-detected: "${key}"):\n- Tone: ${strategy.tone}\n- Focus: ${strategy.focus}\n- Keywords to include naturally (do NOT keyword-stuff): ${strategy.keywords.join(', ')}\n- Angle: ${strategy.descriptionAngle}`;
+}
+
 const GEMINI_TEXT_MODEL = 'gemini-2.5-flash';
 const GEMINI_VALIDATION_MODEL = 'gemini-2.5-flash-lite';
 const GEMINI_IMAGE_MODEL = 'gemini-3.1-flash-image-preview';
@@ -733,6 +900,12 @@ Generate a realistic, premium editorial photo of the SAME product recolored as s
       const contextBlock = buildContextBlock(productContext);
       const specsBlock = buildSpecsBlock(productSpecs);
 
+      // ─── Universal product-type strategy detection ───
+      // Aplica-se a TODA geração de conteúdo (description, seo-title, seo-description).
+      const detectedTypeRaw = productContext?.product_type || '';
+      const { key: strategyKey, strategy } = detectProductType(detectedTypeRaw, title || brief);
+      const strategyBlock = buildStrategyBlock(strategy, strategyKey);
+
       let systemPrompt = '';
       let userPrompt = '';
 
@@ -891,14 +1064,14 @@ UNIQUENESS RULE: The generated title must NOT match or closely resemble any titl
 Return ONLY the final title. One single line. No quotes. No period at the end. Nothing else.`;
         userPrompt = customPrompt || brief || 'Generate a premium product title';
       } else if (type === 'description') {
-        systemPrompt = `You are a senior e-commerce copywriter. Write product descriptions in ${lang.name}.\nTone: ${toneLabel}.${genderLabel ? `\nTarget: ${genderLabel}.` : ''}${contextBlock}${specsBlock}\n\nRULES:\n- Return ONLY the description\n- 2-4 sentences\n- Highlight benefits and features\n- Must feel native in ${lang.name}`;
+        systemPrompt = `You are a senior copywriter for Rilmont, a luxury menswear brand on Shopify. Write product descriptions in ${lang.name}.\nBrand tone: ${toneLabel}.${genderLabel ? `\nTarget: ${genderLabel}.` : ''}${contextBlock}${specsBlock}${strategyBlock}\n\nWRITE EXACTLY 3 SENTENCES:\n1) Introduce the garment with material and defining style.\n2) Highlight construction, fit, and unique features specific to this product type — using the strategy "Focus" above.\n3) Describe the lifestyle and who wears it, using the brand tone and the strategy "Angle" above.\n\nRULES:\n- Write like Brunello Cucinelli, Loro Piana, or Zegna product pages.\n- Naturally weave in the strategy keywords; never keyword-stuff.\n- Skip empty fields silently — never mention them.\n- Never use exclamation marks.\n- Never use: "perfect for", "elevate your style", "versatile addition", "any occasion".\n- Each product must read uniquely — never reuse a structure verbatim.\n- Return ONLY the description text. No labels, no markdown, no quotes.`;
         userPrompt = customPrompt || `Write a product description for: ${title || brief}`;
       } else if (type === 'seo-title') {
-        systemPrompt = `You are an SEO specialist. Write optimized meta titles in ${lang.name}.\n\nRULES:\n- Max 60 characters\n- Include primary keyword\n- Return ONLY the meta title`;
-        userPrompt = `Optimize this product title for SEO: ${brief}`;
+        systemPrompt = `You are an SEO specialist for Rilmont luxury menswear. Write a Shopify SEO title in ${lang.name}.${contextBlock}${strategyBlock}\n\nFORMAT: [Primary Keyword] — [Key Feature] | Rilmont\n\nRULES:\n- Max 60 characters total (hard limit).\n- Lead with the most-searched keyword for this product category (use strategy keywords above).\n- Title Case. No quotes. No emojis. No exclamation marks.\n- Return ONLY the title, single line.`;
+        userPrompt = `Optimize this product title for SEO: ${title || brief}`;
       } else if (type === 'seo-description') {
-        systemPrompt = `You are an SEO specialist. Write optimized meta descriptions in ${lang.name}.\n\nRULES:\n- Max 155 characters\n- Include call-to-action\n- Return ONLY the meta description`;
-        userPrompt = `Write an SEO meta description for: ${brief}`;
+        systemPrompt = `You are an SEO specialist for Rilmont luxury menswear. Write a Shopify meta description in ${lang.name}.${contextBlock}${strategyBlock}\n\nRULES:\n- Max 155 characters (hard limit).\n- Start with an action verb.\n- Include product type + material + occasion as natural keywords (from strategy and context).\n- End with "Rilmont".\n- No exclamation marks. No quotes. No emojis.\n- Return ONLY the meta description, single line.`;
+        userPrompt = `Write a meta description for: ${title || brief}`;
       } else {
         return new Response(JSON.stringify({ error: 'Invalid text type' }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
