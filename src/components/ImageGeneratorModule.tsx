@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { enhancePremiumPrompt } from '@/lib/premiumPrompt';
+import { enhancePremiumPrompt, buildModelShotPrompt, rollModelShotSeed, type ModelShotSeed } from '@/lib/premiumPrompt';
 
 type AspectRatio = '1:1' | '4:5' | '16:9' | '9:16';
 
@@ -68,6 +68,10 @@ export function ImageGeneratorModule() {
   const [enhancedPrompt, setEnhancedPrompt] = useState<string | null>(null);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  // Model Shot mode
+  const [modelShot, setModelShot] = useState(false);
+  const [bgColor, setBgColor] = useState('warm cream');
+  const [modelSeed, setModelSeed] = useState<ModelShotSeed | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const closeLightbox = useCallback(() => setLightboxIdx(null), []);
@@ -111,7 +115,17 @@ export function ImageGeneratorModule() {
     }
   };
 
-  const handleGenerate = async () => {
+  const buildFinalPrompt = (raw: string, opts?: { freshSeed?: boolean }) => {
+    if (modelShot) {
+      const seed = opts?.freshSeed || !modelSeed ? rollModelShotSeed(raw) : modelSeed;
+      const built = buildModelShotPrompt({ productName: raw, backgroundColor: bgColor, seed });
+      setModelSeed(built.seed);
+      return built.prompt;
+    }
+    return enhancePremiumPrompt(raw, { chosenBackground: bgColor || undefined });
+  };
+
+  const handleGenerate = async (opts?: { freshSeed?: boolean }) => {
     if (!prompt.trim() || prompt.trim().length < 3) {
       toast.error('Descreva sua imagem (mínimo 3 caracteres)');
       return;
@@ -120,16 +134,16 @@ export function ImageGeneratorModule() {
     setResults([]);
     setEnhancedPrompt(null);
     try {
-      // Ensure session is fresh (auto-refresh expired tokens)
       const { data: sessionData, error: sessionErr } = await supabase.auth.getSession();
       if (sessionErr || !sessionData.session) {
         toast.error('Sessão expirada. Faça login novamente.');
         window.location.href = '/login';
         return;
       }
+      const finalPrompt = buildFinalPrompt(prompt.trim(), opts);
       const { data, error } = await supabase.functions.invoke('generate-image-simple', {
         body: {
-          prompt: buildPremiumProductPrompt(prompt.trim()),
+          prompt: finalPrompt,
           variations,
           aspectRatio,
           imageReference: reference?.base64,
@@ -148,6 +162,8 @@ export function ImageGeneratorModule() {
       setLoading(false);
     }
   };
+
+  const handleRegeneratePose = () => handleGenerate({ freshSeed: true });
 
   const handleVariation = async (sourceUrl: string) => {
     if (!prompt.trim()) {
