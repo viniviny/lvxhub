@@ -68,10 +68,6 @@ export function ImageGeneratorModule() {
   const [enhancedPrompt, setEnhancedPrompt] = useState<string | null>(null);
   const [savingIdx, setSavingIdx] = useState<number | null>(null);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
-  // Model Shot mode
-  const [modelShot, setModelShot] = useState(false);
-  const [bgColor, setBgColor] = useState('warm cream');
-  const [modelSeed, setModelSeed] = useState<ModelShotSeed | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const closeLightbox = useCallback(() => setLightboxIdx(null), []);
