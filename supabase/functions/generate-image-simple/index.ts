@@ -135,8 +135,8 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    if (prompt.length > 2000) {
-      return new Response(JSON.stringify({ error: 'Prompt muito longo (máx. 2000)' }), {
+    if (prompt.length > 8000) {
+      return new Response(JSON.stringify({ error: 'Prompt muito longo (máx. 8000)' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

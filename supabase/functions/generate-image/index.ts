@@ -52,9 +52,9 @@ serve(async (req) => {
 
     const { prompt, angle, customAngleText, isCustomPrompt, referenceImage, referenceMimeType, aspectRatio } = await req.json();
 
-    if (!prompt || typeof prompt !== 'string' || prompt.length > 2000) {
+    if (!prompt || typeof prompt !== 'string' || prompt.length > 8000) {
       return new Response(
-        JSON.stringify({ error: 'Prompt inválido (máx. 2000 caracteres).' }),
+        JSON.stringify({ error: 'Prompt inválido (máx. 8000 caracteres).' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
