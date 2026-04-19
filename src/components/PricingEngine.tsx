@@ -49,7 +49,7 @@ function getMarginHealth(percent: number) {
 
 export function PricingEngine({
   cost, currency, cpa, marginTarget, shippingCost, platform,
-  onCurrencyChange, onCpaChange, onMarginChange, onShippingChange, onPlatformChange, onApplyPrice,
+  onCostChange, onCurrencyChange, onCpaChange, onMarginChange, onShippingChange, onPlatformChange, onApplyPrice,
 }: PricingEngineProps) {
   const { rates, loading: ratesLoading, convert } = useExchangeRates('USD');
 
