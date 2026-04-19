@@ -16,6 +16,7 @@ interface PricingEngineProps {
   marginTarget: number;
   shippingCost: number;
   platform: string;
+  onCostChange?: (v: number | null) => void;
   onCurrencyChange: (v: string) => void;
   onCpaChange: (v: number) => void;
   onMarginChange: (v: number) => void;
@@ -48,7 +49,7 @@ function getMarginHealth(percent: number) {
 
 export function PricingEngine({
   cost, currency, cpa, marginTarget, shippingCost, platform,
-  onCurrencyChange, onCpaChange, onMarginChange, onShippingChange, onPlatformChange, onApplyPrice,
+  onCostChange, onCurrencyChange, onCpaChange, onMarginChange, onShippingChange, onPlatformChange, onApplyPrice,
 }: PricingEngineProps) {
   const { rates, loading: ratesLoading, convert } = useExchangeRates('USD');
 
@@ -129,6 +130,29 @@ export function PricingEngine({
         </div>
 
         <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
+              Custo do produto
+              <Tooltip><TooltipTrigger asChild><HelpCircle className="w-3 h-3 text-muted-foreground cursor-help" /></TooltipTrigger>
+                <TooltipContent className="max-w-[200px]"><p className="text-xs">Quanto você paga ao fornecedor por cada unidade do produto.</p></TooltipContent>
+              </Tooltip>
+            </Label>
+            <div className="relative">
+              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">$</span>
+              <Input
+                type="number"
+                min={0}
+                step={0.5}
+                value={cost ?? ''}
+                onChange={e => {
+                  const v = e.target.value;
+                  onCostChange?.(v === '' ? null : Number(v) || 0);
+                }}
+                className="h-8 text-xs bg-secondary border-border pl-6"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
           <div>
             <Label className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
               CPA
