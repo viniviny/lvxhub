@@ -118,26 +118,35 @@ export function detectShotType(productName: string): ShotType {
 
 const POSE_LIBRARY: Record<ShotType, string[]> = {
   upper_body: [
-    'standing with arms relaxed at sides, slight weight shift to right leg, looking directly at camera with calm authority',
-    'one hand lightly resting in pocket, other arm relaxed, gaze slightly off camera to the left, contemplative expression',
-    'arms crossed loosely at waist level, direct gaze, confident and composed',
+    'standing tall in full body view, arms relaxed at sides, slight weight shift to right leg, looking directly at camera with calm authority',
+    'standing in full body view, one hand lightly resting in pocket, other arm relaxed, gaze slightly off camera to the left, contemplative expression',
+    'standing in full body view, arms crossed loosely at waist level, direct gaze, confident and composed',
   ],
   lower_body: [
-    'standing straight, one foot slightly forward, hands in pockets, cropped at waist showing full trouser length',
-    'walking stance, mid-stride, natural movement captured, cropped below waist',
+    'standing straight in full body view, one foot slightly forward, hands in pockets, complete trouser length and shoes fully visible',
+    'walking stance in full body view, mid-stride, natural movement captured, full trouser length and footwear visible',
   ],
   full_body: [
-    'standing tall, one hand in pocket, other arm relaxed, weight on left leg, looking directly at camera',
-    'three-quarter turn to the right, looking back at camera over shoulder, relaxed and confident',
-    'walking slowly toward camera, natural stride, looking straight ahead with quiet intensity',
-    'leaning very slightly against an invisible surface, arms relaxed, gaze off to the side',
+    'standing tall in full body view, one hand in pocket, other arm relaxed, weight on left leg, looking directly at camera',
+    'full body three-quarter turn to the right, looking back at camera over shoulder, relaxed and confident',
+    'walking slowly toward camera in full body view, natural stride, looking straight ahead with quiet intensity',
+    'standing in full body view, leaning very slightly against an invisible surface, arms relaxed, gaze off to the side',
   ],
   shoes: [
-    'close-up of shoes on feet, model standing, cropped at ankle level, clean floor, perfect leather or material detail',
+    'full body view of model standing, then framed from ankle to floor showing the complete shoe in perfect leather or material detail',
   ],
   accessory: [
     'ghost product on clean background, no model needed, product centered with soft shadows',
   ],
+};
+
+// Shot framing instructions per product/shot type — enforces full visibility, no cropping.
+const SHOT_FRAMING: Record<ShotType, string> = {
+  upper_body: 'Full body shot, head to toe, model standing, complete garment fully visible from collar to hem.',
+  lower_body: 'Full body shot, head to toe, complete trouser length visible from waist down to the shoes, footwear fully in frame.',
+  full_body: 'Full body shot, head to toe, entire outfit fully visible with no cropping.',
+  shoes: 'Full body shot, head to toe, then a secondary ankle-to-floor close-up — the complete shoe must be fully visible with nothing cropped.',
+  accessory: 'Product-only shot, accessory fully visible and centered, no cropping.',
 };
 
 const EXPRESSION_LIBRARY = [
