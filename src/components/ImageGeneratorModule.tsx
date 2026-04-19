@@ -130,7 +130,7 @@ export function ImageGeneratorModule() {
         window.location.href = '/login';
         return;
       }
-      const finalPrompt = buildFinalPrompt(prompt.trim(), opts);
+      const finalPrompt = buildFinalPrompt(prompt.trim());
       const { data, error } = await supabase.functions.invoke('generate-image-simple', {
         body: {
           prompt: finalPrompt,
