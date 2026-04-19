@@ -57,19 +57,30 @@ export async function createProjectInBackend(userId: string): Promise<Project> {
 }
 
 export async function saveProjectToBackend(project: Project): Promise<void> {
-  const { error } = await supabase
-    .from('projects')
-    .update({
-      name: project.name,
-      status: project.status,
-      step: project.step,
-      product_data: project.productData as any,
-      ai_data: { ...(project.aiData as any), specs: project.specs } as any,
-      seo_data: project.seoData as any,
-      updated_at: new Date().toISOString(),
-      published_at: project.publishedAt,
-    })
-    .eq('id', project.id);
+  const payload = {
+    name: project.name,
+    status: project.status,
+    step: project.step,
+    product_data: project.productData as any,
+    ai_data: { ...(project.aiData as any), specs: project.specs } as any,
+    seo_data: project.seoData as any,
+    updated_at: new Date().toISOString(),
+    published_at: project.publishedAt,
+  };
+
+  let { error } = await supabase.from('projects').update(payload).eq('id', project.id);
+
+  // JWT expired → try to refresh session and retry once
+  if (error && (error.code === 'PGRST303' || /jwt/i.test(error.message))) {
+    const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError || !refreshed.session) {
+      console.warn('[ProjectService] Session expired, redirecting to login');
+      window.location.href = '/login';
+      return;
+    }
+    const retry = await supabase.from('projects').update(payload).eq('id', project.id);
+    error = retry.error;
+  }
 
   if (error) {
     console.error('[ProjectService] Backend save failed:', error);
