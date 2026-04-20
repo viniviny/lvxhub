@@ -29,7 +29,7 @@ serve(async (req) => {
     const body = await req.json();
     const {
       title, description, price, compareAtPrice, cost, sizes, collection, productType, gender, tags,
-      imageBase64, imageName, imageUrl: bodyImageUrl,
+      imageBase64, imageName, imageUrl: bodyImageUrl, vendor: bodyVendor,
       countryCode, countryFlag, countryName, currency: bodyCurrency, currencySymbol,
       localPrice, baseCurrency, language: bodyLanguage, languageLabel, marketName, regionGroup,
       variants: bodyVariants, inventoryPolicy, requiresShipping, weight, weightUnit, countryOfOrigin,
@@ -42,7 +42,7 @@ serve(async (req) => {
 
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const adminClient = createClient(supabaseUrl, serviceKey);
-    const { data: conn } = await adminClient.from('shopify_connections').select('store_domain, access_token').eq('user_id', userId).eq('is_active', true).maybeSingle();
+    const { data: conn } = await adminClient.from('shopify_connections').select('store_domain, access_token, shop_name').eq('user_id', userId).eq('is_active', true).maybeSingle();
     if (!conn) {
       return new Response(JSON.stringify({ error: 'Nenhuma loja conectada.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
@@ -50,6 +50,8 @@ serve(async (req) => {
     const apiVersion = '2026-01';
     const baseUrl = `https://${conn.store_domain}/admin/api/${apiVersion}`;
     const accessToken = conn.access_token;
+    // Vendor: prefer client-provided value, fall back to the store name (never a hardcoded brand).
+    const vendor = (typeof bodyVendor === 'string' && bodyVendor.trim()) || conn.shop_name || conn.store_domain;
     const steps: string[] = [];
 
     // Language-aware option names
@@ -230,7 +232,7 @@ serve(async (req) => {
         product: {
           title: title || labels.untitled,
           body_html: cleanDescription || '',
-          vendor: 'Publify',
+          vendor,
           product_type: productType || collection || '',
           tags: combinedTagsCreate,
           status: 'draft',

@@ -39,7 +39,7 @@ serve(async (req) => {
 
     const userId = claimsData.claims.sub;
 
-    const { title, description, price, sizes, collection, imageUrl, imageBase64, imageName } = await req.json();
+    const { title, description, price, sizes, collection, imageUrl, imageBase64, imageName, vendor: bodyVendor } = await req.json();
 
     // Input validation
     if (!title || typeof title !== 'string' || title.length > 255) {
@@ -62,7 +62,7 @@ serve(async (req) => {
 
     const { data: conn, error: connError } = await adminClient
       .from('shopify_connections')
-      .select('store_domain, access_token')
+      .select('store_domain, access_token, shop_name')
       .eq('user_id', userId)
       .eq('is_active', true)
       .maybeSingle();
@@ -76,6 +76,9 @@ serve(async (req) => {
 
     // Strip HTML from description
     const cleanDescription = (description || '').replace(/<[^>]*>/g, '');
+
+    // Vendor: prefer client-provided value, fall back to the store name.
+    const vendor = (typeof bodyVendor === 'string' && bodyVendor.trim()) || conn.shop_name || conn.store_domain;
 
     const variants = (sizes && sizes.length > 0 ? sizes : ['Único']).map((size: string) => ({
       option1: size,
@@ -98,7 +101,7 @@ serve(async (req) => {
       product: {
         title,
         body_html: cleanDescription ? `<p>${cleanDescription}</p>` : '',
-        vendor: 'Publify',
+        vendor,
         product_type: collection || '',
         status: 'draft',
         options: [{ name: 'Tamanho', values: sizes && sizes.length > 0 ? sizes : ['Único'] }],
