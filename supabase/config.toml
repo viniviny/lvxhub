@@ -41,3 +41,9 @@ verify_jwt = false
 
 [functions.generate-image-simple]
 verify_jwt = false
+
+[functions.enqueue-generation-job]
+verify_jwt = false
+
+[functions.process-generation-job]
+verify_jwt = false

@@ -77,6 +77,57 @@ export type Database = {
         }
         Relationships: []
       }
+      generation_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          payload: Json
+          progress: number
+          project_id: string | null
+          result: Json | null
+          started_at: string | null
+          status: string
+          total_steps: number
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          payload?: Json
+          progress?: number
+          project_id?: string | null
+          result?: Json | null
+          started_at?: string | null
+          status?: string
+          total_steps?: number
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          payload?: Json
+          progress?: number
+          project_id?: string | null
+          result?: Json | null
+          started_at?: string | null
+          status?: string
+          total_steps?: number
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       image_library: {
         Row: {
           angle: string | null

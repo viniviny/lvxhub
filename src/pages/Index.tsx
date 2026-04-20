@@ -54,6 +54,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { UserMenu } from '@/components/UserMenu';
+import { CommandPalette } from '@/components/CommandPalette';
 import { getAILanguageByCode } from '@/data/languages';
 import {
   Send, Loader2, Upload, CheckCircle2, ExternalLink,
@@ -1073,6 +1074,7 @@ const Index = () => {
       </header>
 
       {/* Dialogs */}
+      <CommandPalette onNavigate={handleViewChange} onNewProduct={handleNewProduct} />
       <SettingsDialog open={showSettings} onOpenChange={setShowSettings} onSaveAndConnect={handleCredentialsSubmit} />
       <OnboardingGuide open={showOnboarding} onOpenChange={setShowOnboarding} onConfigureCredentials={() => { setShowOnboarding(false); setShowConnect(true); }} />
       <ShopifyConnectDialog open={showConnect} onOpenChange={setShowConnect} onConnected={handleStoreConnected} onOpenOnboarding={() => { setShowConnect(false); setShowOnboarding(true); }} />
