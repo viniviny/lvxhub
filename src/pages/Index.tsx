@@ -238,7 +238,9 @@ const Index = () => {
       restoreSpecs(project.specs);
     }
 
-    // Restore images
+    // Restore images — prioriza imagens já salvas no projeto;
+    // se vazio e for import AliExpress, auto-popula a galeria com as fotos do produto
+    // para que possam ser usadas direto na publicação.
     if (project.images && project.images.length > 0) {
       const restored: GeneratedImage[] = project.images.map(img => ({
         id: img.id || crypto.randomUUID(),
@@ -247,12 +249,28 @@ const Index = () => {
         angle: 'frente' as ImageAngle,
       }));
       setGeneratedImages(restored);
-      // Pre-populate savedToProjectRef to prevent re-inserting existing images
       project.images.forEach(img => {
         if (img.url) savedToProjectRef.current.add(img.url);
       });
       const cover = restored.find(i => i.isCover) || restored[0];
       if (cover) setImagePreview(cover.url);
+    } else if (isAliImport) {
+      const aliInsights = project.aiData?.imageInsights as any;
+      const sourceImages: string[] = (aliInsights?.sourceImages || []).filter(Boolean);
+      if (sourceImages.length > 0) {
+        const imported: GeneratedImage[] = sourceImages.map((url, i) => ({
+          id: crypto.randomUUID(),
+          url,
+          isCover: i === 0,
+          angle: 'frente' as ImageAngle,
+        }));
+        setGeneratedImages(imported);
+        setImagePreview(imported[0].url);
+      } else {
+        setGeneratedImages([]);
+        setImagePreview(null);
+      }
+      deletedProjectImageUrlsRef.current = new Set();
     } else {
       setGeneratedImages([]);
       setImagePreview(null);
