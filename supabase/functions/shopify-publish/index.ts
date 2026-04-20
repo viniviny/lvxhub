@@ -6,11 +6,55 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// --- Helpers: timeout + retry on Shopify rate limit (429) ---
+const FUNCTION_TIMEOUT_MS = 140_000;
+
+async function shopifyFetch(
+  url: string,
+  init: RequestInit,
+  opts: { retries?: number; label?: string } = {},
+): Promise<Response> {
+  const retries = opts.retries ?? 3;
+  const label = opts.label ?? url;
+  let lastRes: Response | null = null;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(url, init);
+    if (res.status !== 429) return res;
+    lastRes = res;
+    const retryAfter = Number(res.headers.get('Retry-After') || '2');
+    const waitMs = Math.min(10_000, Math.max(500, retryAfter * 1000)) * (attempt + 1);
+    console.warn(`[shopify-publish] 429 on ${label}, retrying in ${waitMs}ms (attempt ${attempt + 1}/${retries})`);
+    await new Promise((r) => setTimeout(r, waitMs));
+  }
+  return lastRes!;
+}
+
+async function runInBatches<T>(items: T[], batchSize: number, worker: (item: T, idx: number) => Promise<void>) {
+  for (let i = 0; i < items.length; i += batchSize) {
+    const slice = items.slice(i, i + batchSize);
+    await Promise.all(slice.map((it, j) => worker(it, i + j)));
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Hard internal timeout so we always return a clean error before runtime kills us.
+  const timeoutPromise = new Promise<Response>((resolve) => {
+    setTimeout(() => {
+      resolve(new Response(
+        JSON.stringify({ error: 'Tempo limite excedido ao publicar (140s). Tente novamente — algumas operações podem já ter sido aplicadas no Shopify.', step: 'timeout' }),
+        { status: 504, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      ));
+    }, FUNCTION_TIMEOUT_MS);
+  });
+
+  return await Promise.race([handle(req), timeoutPromise]);
+});
+
+async function handle(req: Request): Promise<Response> {
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
@@ -129,9 +173,9 @@ serve(async (req) => {
       console.log(`[shopify-publish] Updating product ${shopifyProductId} with ${productImages.length} images`);
 
       // First check if product still exists
-      const checkRes = await fetch(`${baseUrl}/products/${shopifyProductId}.json`, {
+      const checkRes = await shopifyFetch(`${baseUrl}/products/${shopifyProductId}.json`, {
         headers: { 'X-Shopify-Access-Token': accessToken },
-      });
+      }, { label: 'check product' });
 
       if (checkRes.status === 404) {
         // Product no longer exists — fall back to creating a new one
@@ -159,11 +203,11 @@ serve(async (req) => {
           },
         };
 
-        const updateRes = await fetch(`${baseUrl}/products/${shopifyProductId}.json`, {
+        const updateRes = await shopifyFetch(`${baseUrl}/products/${shopifyProductId}.json`, {
           method: 'PUT',
           headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
           body: JSON.stringify(updatePayload),
-        });
+        }, { label: 'update product' });
 
         if (!updateRes.ok) {
           const errText = await updateRes.text();
@@ -174,43 +218,49 @@ serve(async (req) => {
         const updateData = await updateRes.json();
         product = updateData.product;
 
-      // If new images provided, delete old images first then upload new ones
+      // If new images provided, delete old images first then upload new ones (parallelized)
       if (productImages.length > 0) {
-        // Delete existing images
+        // Delete existing images in parallel
         try {
-          const existingImgsRes = await fetch(`${baseUrl}/products/${shopifyProductId}/images.json`, {
+          const existingImgsRes = await shopifyFetch(`${baseUrl}/products/${shopifyProductId}/images.json`, {
             headers: { 'X-Shopify-Access-Token': accessToken },
-          });
+          }, { label: 'list images' });
           if (existingImgsRes.ok) {
             const existingImgs = await existingImgsRes.json();
-            for (const img of (existingImgs.images || [])) {
-              await fetch(`${baseUrl}/products/${shopifyProductId}/images/${img.id}.json`, {
-                method: 'DELETE',
-                headers: { 'X-Shopify-Access-Token': accessToken },
-              });
-            }
+            const imgs = existingImgs.images || [];
+            await runInBatches(imgs, 4, async (img: any) => {
+              try {
+                await shopifyFetch(`${baseUrl}/products/${shopifyProductId}/images/${img.id}.json`, {
+                  method: 'DELETE',
+                  headers: { 'X-Shopify-Access-Token': accessToken },
+                }, { label: `delete image ${img.id}` });
+              } catch (err) {
+                console.warn(`[shopify-publish] Failed to delete image ${img.id}:`, err);
+              }
+            });
           }
         } catch (err) {
           console.warn('[shopify-publish] Failed to delete old images:', err);
         }
 
-        // Upload new images
-        for (const img of productImages) {
+        // Upload new images in parallel batches
+        await runInBatches(productImages, 4, async (img) => {
           try {
-            await fetch(`${baseUrl}/products/${shopifyProductId}/images.json`, {
+            const r = await shopifyFetch(`${baseUrl}/products/${shopifyProductId}/images.json`, {
               method: 'POST',
               headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
               body: JSON.stringify({ image: { attachment: img.attachment, filename: img.filename, position: img.position } }),
-            });
+            }, { label: `upload image ${img.filename}` });
+            if (!r.ok) console.warn(`[shopify-publish] Image upload non-OK (${r.status}) for ${img.filename}:`, await r.text());
           } catch (err) {
             console.warn('[shopify-publish] Failed to upload image:', err);
           }
-        }
+        });
 
         // Refresh product data to get image URLs
-        const refreshRes = await fetch(`${baseUrl}/products/${shopifyProductId}.json`, {
+        const refreshRes = await shopifyFetch(`${baseUrl}/products/${shopifyProductId}.json`, {
           headers: { 'X-Shopify-Access-Token': accessToken },
-        });
+        }, { label: 'refresh product' });
         if (refreshRes.ok) {
           const refreshData = await refreshRes.json();
           product = refreshData.product;
@@ -242,11 +292,11 @@ serve(async (req) => {
         },
       };
 
-      const createRes = await fetch(`${baseUrl}/products.json`, {
+      const createRes = await shopifyFetch(`${baseUrl}/products.json`, {
         method: 'POST',
         headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
         body: JSON.stringify(productPayload),
-      });
+      }, { label: 'create product' });
 
       if (!createRes.ok) {
         const errText = await createRes.text();
@@ -262,19 +312,18 @@ serve(async (req) => {
 
     const shopifyProductUrl = `https://${conn.store_domain}/admin/products/${product.id}`;
 
-    // --- STEP 2: Upload color variant images and assign to variants ---
+    // --- STEP 2: Upload color variant images and assign to variants (parallel) ---
     if (colorImages && Array.isArray(colorImages) && colorImages.length > 0 && product.variants?.length > 0) {
       steps.push('Enviando imagens das variantes...');
-      for (const ci of colorImages) {
-        if (!ci.imageBase64 || !ci.variantName) continue;
+      const validColorImages = colorImages.filter((ci: any) => ci.imageBase64 && ci.variantName);
+      await runInBatches(validColorImages, 4, async (ci: any) => {
         const matchingVariant = product.variants.find((v: any) => v.option1 === ci.variantName);
         if (!matchingVariant) {
           console.warn(`[shopify-publish] No matching variant for color: ${ci.variantName}`);
-          continue;
+          return;
         }
-
         try {
-          const imgRes = await fetch(`${baseUrl}/products/${product.id}/images.json`, {
+          const imgRes = await shopifyFetch(`${baseUrl}/products/${product.id}/images.json`, {
             method: 'POST',
             headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -284,7 +333,7 @@ serve(async (req) => {
                 variant_ids: [matchingVariant.id],
               },
             }),
-          });
+          }, { label: `variant image ${ci.variantName}` });
           if (!imgRes.ok) {
             const errText = await imgRes.text();
             console.error(`[shopify-publish] Variant image upload failed for ${ci.variantName}:`, errText);
@@ -294,77 +343,79 @@ serve(async (req) => {
         } catch (err) {
           console.error(`[shopify-publish] Variant image error for ${ci.variantName}:`, err);
         }
-      }
+      });
     }
 
     // --- STEP 3: Get locations ---
     steps.push('Buscando localizações...');
     let primaryLocationId: number | null = null;
     try {
-      const locRes = await fetch(`${baseUrl}/locations.json`, {
+      const locRes = await shopifyFetch(`${baseUrl}/locations.json`, {
         headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
-      });
+      }, { label: 'get locations' });
       if (locRes.ok) {
         const locData = await locRes.json();
         if (locData.locations?.length > 0) primaryLocationId = locData.locations[0].id;
       }
-    } catch {}
+    } catch (err) {
+      console.warn('[shopify-publish] Failed to fetch locations:', err);
+    }
 
-    // --- STEP 4: Set inventory levels ---
+    // --- STEP 4: Set inventory levels (parallel) ---
     if (primaryLocationId && product.variants?.length > 0) {
       steps.push('Configurando estoque...');
-      for (let i = 0; i < product.variants.length; i++) {
-        const variant = product.variants[i];
+      await runInBatches(product.variants, 4, async (variant: any, i: number) => {
         const bodyVar = bodyVariants?.[i];
         const stock = bodyVar?.stock ?? 0;
-        if (variant.inventory_item_id) {
-          try {
-            await fetch(`${baseUrl}/inventory_levels/set.json`, {
-              method: 'POST',
-              headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ location_id: primaryLocationId, inventory_item_id: variant.inventory_item_id, available: stock }),
-            });
-          } catch {}
+        if (!variant.inventory_item_id) return;
+        try {
+          const r = await shopifyFetch(`${baseUrl}/inventory_levels/set.json`, {
+            method: 'POST',
+            headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ location_id: primaryLocationId, inventory_item_id: variant.inventory_item_id, available: stock }),
+          }, { label: `inventory variant ${variant.id}` });
+          if (!r.ok) console.warn(`[shopify-publish] Inventory non-OK (${r.status}) for variant ${variant.id}:`, await r.text());
+        } catch (err) {
+          console.warn(`[shopify-publish] Inventory error for variant ${variant.id}:`, err);
         }
-      }
+      });
     }
 
-    // --- STEP 5: Set cost per item ---
+    // --- STEP 5: Set cost per item (parallel) ---
     if (product.variants?.length > 0) {
       steps.push('Definindo custos...');
-      for (let i = 0; i < product.variants.length; i++) {
-        const variant = product.variants[i];
+      await runInBatches(product.variants, 4, async (variant: any, i: number) => {
         const bodyVar = bodyVariants?.[i];
         const itemCost = bodyVar?.cost ?? cost;
-        if (itemCost && itemCost > 0 && variant.inventory_item_id) {
-          try {
-            await fetch(`${baseUrl}/inventory_items/${variant.inventory_item_id}.json`, {
-              method: 'PUT',
-              headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ inventory_item: { cost: itemCost.toString(), country_code_of_origin: countryOfOrigin || null } }),
-            });
-          } catch {}
+        if (!(itemCost && itemCost > 0 && variant.inventory_item_id)) return;
+        try {
+          const r = await shopifyFetch(`${baseUrl}/inventory_items/${variant.inventory_item_id}.json`, {
+            method: 'PUT',
+            headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ inventory_item: { cost: itemCost.toString(), country_code_of_origin: countryOfOrigin || null } }),
+          }, { label: `cost variant ${variant.id}` });
+          if (!r.ok) console.warn(`[shopify-publish] Cost non-OK (${r.status}) for variant ${variant.id}:`, await r.text());
+        } catch (err) {
+          console.warn(`[shopify-publish] Cost error for variant ${variant.id}:`, err);
         }
-      }
+      });
     }
 
-    // --- STEP 6: Add to collections ---
-    if (collection) {
-      steps.push('Adicionando à coleção...');
-    }
-
-    // --- STEP 7: Publish to sales channels ---
+    // --- STEP 6: Publish to sales channels (parallel) ---
     if (selectedChannels?.length > 0) {
       steps.push('Publicando nos canais de venda...');
-      for (const channelId of selectedChannels) {
+      await runInBatches(selectedChannels, 4, async (channelId: string) => {
         try {
-          await fetch(`${baseUrl}/publications/${channelId}/product_listings/${product.id}.json`, {
+          const r = await shopifyFetch(`${baseUrl}/publications/${channelId}/product_listings/${product.id}.json`, {
             method: 'PUT',
             headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
             body: JSON.stringify({ product_listing: { product_id: product.id } }),
-          });
-        } catch {}
-      }
+          }, { label: `publish channel ${channelId}` });
+          if (!r.ok) console.warn(`[shopify-publish] Channel publish non-OK (${r.status}) for ${channelId}:`, await r.text());
+        } catch (err) {
+          console.warn(`[shopify-publish] Channel publish error for ${channelId}:`, err);
+        }
+      });
     }
 
     // --- Persist to published_products ---
@@ -394,12 +445,14 @@ serve(async (req) => {
 
     if (isUpdate && !createdNew) {
       // Update existing record by shopify_product_id
-      await adminClient.from('published_products')
+      const { error: updErr } = await adminClient.from('published_products')
         .update(publishedRecord)
         .eq('shopify_product_id', shopifyProductId)
         .eq('user_id', userId);
+      if (updErr) console.error('[shopify-publish] Failed to update published_products:', updErr);
     } else {
-      await adminClient.from('published_products').insert(publishedRecord);
+      const { error: insErr } = await adminClient.from('published_products').insert(publishedRecord);
+      if (insErr) console.error('[shopify-publish] Failed to insert published_products:', insErr);
     }
 
     return new Response(JSON.stringify({
@@ -415,4 +468,4 @@ serve(async (req) => {
     console.error('[shopify-publish] Unexpected error:', e);
     return new Response(JSON.stringify({ error: 'Erro interno. Tente novamente.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
-});
+}
