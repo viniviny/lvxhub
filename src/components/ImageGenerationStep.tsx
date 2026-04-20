@@ -143,7 +143,7 @@ These must be followed exactly.`;
   });
 }
 
-export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange, initialPrompt, aliSourceImages }: ImageGenerationStepProps) {
+export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange, initialPrompt, aliSourceImages, onAliVariantsSelected }: ImageGenerationStepProps) {
   const navigate = useNavigate();
   const { prompts: allPrompts, recentPrompts: allRecentPrompts, incrementUsage } = useUserPrompts();
   const { logUsage } = useApiUsage();
