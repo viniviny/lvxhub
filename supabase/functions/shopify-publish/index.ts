@@ -445,12 +445,14 @@ async function handle(req: Request): Promise<Response> {
 
     if (isUpdate && !createdNew) {
       // Update existing record by shopify_product_id
-      await adminClient.from('published_products')
+      const { error: updErr } = await adminClient.from('published_products')
         .update(publishedRecord)
         .eq('shopify_product_id', shopifyProductId)
         .eq('user_id', userId);
+      if (updErr) console.error('[shopify-publish] Failed to update published_products:', updErr);
     } else {
-      await adminClient.from('published_products').insert(publishedRecord);
+      const { error: insErr } = await adminClient.from('published_products').insert(publishedRecord);
+      if (insErr) console.error('[shopify-publish] Failed to insert published_products:', insErr);
     }
 
     return new Response(JSON.stringify({
@@ -466,4 +468,4 @@ async function handle(req: Request): Promise<Response> {
     console.error('[shopify-publish] Unexpected error:', e);
     return new Response(JSON.stringify({ error: 'Erro interno. Tente novamente.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
-});
+}
