@@ -37,10 +37,10 @@ export function DashboardSidebar({
               <li key={item.id}>
                 <button
                   onClick={() => onViewChange(item.id)}
-                  className={`w-full flex items-center gap-2.5 px-3 h-[36px] rounded-lg text-[13px] font-medium transition-all duration-150 ${
+                  className={`w-full flex items-center gap-2.5 px-3 h-[36px] rounded-lg text-[13px] font-medium press transition-all duration-200 ease-out-expo ${
                     isActive
                       ? 'nav-active-border bg-secondary text-foreground'
-                      : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                      : 'text-muted-foreground hover:bg-secondary hover:text-foreground hover:translate-x-0.5'
                   }`}
                 >
                   <span className={isActive ? 'text-foreground' : ''}>

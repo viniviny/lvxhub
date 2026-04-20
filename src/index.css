@@ -117,10 +117,57 @@
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11", "kern";
+    letter-spacing: -0.005em;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+    letter-spacing: -0.022em;
+    text-wrap: balance;
+  }
+
+  p, li {
+    text-wrap: pretty;
+  }
+
+  /* Selection */
+  ::selection {
+    background: hsl(var(--primary) / 0.25);
+    color: hsl(var(--foreground));
+  }
+
+  /* Focus ring acessível e bonito */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring) / 0.6);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  /* Scrollbar global suave */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+    scroll-behavior: smooth;
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.4);
+    background-clip: padding-box;
+    border: 2px solid transparent;
   }
 }
 
@@ -169,13 +216,13 @@
   /* Skeleton with shimmer */
   .skeleton-shimmer {
     background: linear-gradient(
-      90deg,
-      hsl(var(--muted)) 0%,
-      hsl(var(--muted) / 0.5) 50%,
-      hsl(var(--muted)) 100%
+      110deg,
+      hsl(var(--muted)) 8%,
+      hsl(var(--muted-foreground) / 0.12) 18%,
+      hsl(var(--muted)) 33%
     );
     background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
+    animation: shimmer 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
   /* Glassmorphism modal */
@@ -197,6 +244,127 @@
   .stagger-3 { animation-delay: 100ms; }
   .stagger-4 { animation-delay: 150ms; }
   .stagger-5 { animation-delay: 200ms; }
+
+  /* ===== Premium UI Utilities (next-gen) ===== */
+
+  /* Frosted glass real, sutil */
+  .frost {
+    background: hsl(var(--background) / 0.7);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border: 1px solid hsl(var(--border) / 0.6);
+  }
+
+  /* Glow ring (foco premium) */
+  .glow-ring {
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.25),
+      0 0 0 6px hsl(var(--primary) / 0.08),
+      0 8px 24px -8px hsl(var(--primary) / 0.25);
+  }
+
+  /* Soft elevation premium */
+  .elev-1 { box-shadow: 0 1px 2px hsl(0 0% 0% / 0.04), 0 2px 6px hsl(0 0% 0% / 0.04); }
+  .elev-2 { box-shadow: 0 4px 12px hsl(0 0% 0% / 0.06), 0 2px 4px hsl(0 0% 0% / 0.04); }
+  .elev-3 { box-shadow: 0 12px 32px hsl(0 0% 0% / 0.10), 0 4px 8px hsl(0 0% 0% / 0.06); }
+
+  /* Press feedback universal */
+  .press {
+    transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .press:active {
+    transform: scale(0.97);
+  }
+
+  /* Lift on hover (cards interativos) */
+  .lift {
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.3s ease;
+  }
+  .lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -8px hsl(0 0% 0% / 0.12);
+  }
+
+  /* Shimmer text gradient (titulos "wow") */
+  .shimmer-text {
+    background: linear-gradient(
+      110deg,
+      hsl(var(--foreground)) 0%,
+      hsl(var(--foreground)) 40%,
+      hsl(var(--primary)) 50%,
+      hsl(var(--foreground)) 60%,
+      hsl(var(--foreground)) 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer-text 3s linear infinite;
+  }
+
+  /* Gradient border premium */
+  .gradient-border {
+    position: relative;
+    background: hsl(var(--card));
+    border-radius: var(--radius);
+  }
+  .gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.5), hsl(var(--border)) 50%, hsl(var(--primary) / 0.3));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Subtle grid background */
+  .grid-bg {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: -1px -1px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+
+  /* Noise overlay (premium texture) */
+  .noise::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.03;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  }
+
+  /* Smooth-blur utility for entering content */
+  .enter-smooth {
+    animation: blur-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  /* Loader dot trio */
+  .loader-dots {
+    display: inline-flex;
+    gap: 4px;
+  }
+  .loader-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: currentColor;
+    animation: breathe 1.2s ease-in-out infinite;
+  }
+  .loader-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .loader-dots span:nth-child(3) { animation-delay: 0.3s; }
 }
 
 /* ===== Pulse Dot (connected indicator) ===== */

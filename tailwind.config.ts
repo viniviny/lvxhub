@@ -96,6 +96,39 @@ export default {
           "0%": { transform: "scale(0.95)", opacity: "0" },
           "100%": { transform: "scale(1)", opacity: "1" },
         },
+        "slide-up": {
+          "0%": { opacity: "0", transform: "translateY(16px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "slide-down": {
+          "0%": { opacity: "0", transform: "translateY(-12px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "blur-in": {
+          "0%": { opacity: "0", filter: "blur(8px)", transform: "translateY(6px)" },
+          "100%": { opacity: "1", filter: "blur(0)", transform: "translateY(0)" },
+        },
+        "breathe": {
+          "0%, 100%": { transform: "scale(1)", opacity: "1" },
+          "50%": { transform: "scale(1.02)", opacity: "0.92" },
+        },
+        "gradient-shift": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
+        "shimmer-text": {
+          "0%": { backgroundPosition: "-200% center" },
+          "100%": { backgroundPosition: "200% center" },
+        },
+        "press": {
+          "0%": { transform: "scale(1)" },
+          "50%": { transform: "scale(0.97)" },
+          "100%": { transform: "scale(1)" },
+        },
+        "spin-slow": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -103,6 +136,19 @@ export default {
         "fade-in": "fade-in 0.3s ease-out forwards",
         "fade-out": "fade-out 0.3s ease-out forwards",
         "scale-in": "scale-in 0.2s ease-out forwards",
+        "slide-up": "slide-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "slide-down": "slide-down 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "blur-in": "blur-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "breathe": "breathe 3s ease-in-out infinite",
+        "gradient-shift": "gradient-shift 6s ease infinite",
+        "shimmer-text": "shimmer-text 2.5s linear infinite",
+        "press": "press 0.18s ease-out",
+        "spin-slow": "spin-slow 8s linear infinite",
+      },
+      transitionTimingFunction: {
+        "out-expo": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "in-out-expo": "cubic-bezier(0.87, 0, 0.13, 1)",
+        "spring": "cubic-bezier(0.34, 1.56, 0.64, 1)",
       },
     },
   },
