@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Package, Store, TrendingUp, Clock, Plus, ClipboardList, Zap, ArrowRight, CheckCircle2, Circle, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SpotlightCard } from '@/components/SpotlightCard';
 
 interface HomeMetrics {
   totalProducts: number;
@@ -107,7 +108,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         {metricCards.map((card) => (
-          <div
+          <SpotlightCard
             key={card.label}
             className={`frost lift noise p-4 flex items-center gap-3 rounded-xl border ${card.border}`}
           >
@@ -122,15 +123,16 @@ export function HomePage({ onNavigate }: HomePageProps) {
               )}
               <p className="text-[11px] text-muted-foreground font-medium leading-tight">{card.label}</p>
             </div>
-          </div>
+          </SpotlightCard>
         ))}
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-        <button
+        <SpotlightCard
+          as="button"
           onClick={() => onNavigate('publish')}
-          className="gradient-border frost lift press noise p-4 flex items-center gap-3 group text-left rounded-xl"
+          className="frost lift press noise p-4 flex items-center gap-3 group text-left rounded-xl border border-border w-full"
         >
           <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/25 transition-colors">
             <Plus className="w-5 h-5 text-primary" />
@@ -140,11 +142,12 @@ export function HomePage({ onNavigate }: HomePageProps) {
             <span className="text-[11px] text-muted-foreground">Criar e publicar um produto</span>
           </div>
           <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-        </button>
+        </SpotlightCard>
 
-        <button
+        <SpotlightCard
+          as="button"
           onClick={() => onNavigate('history')}
-          className="frost lift press noise p-4 flex items-center gap-3 group text-left rounded-xl border border-border"
+          className="frost lift press noise p-4 flex items-center gap-3 group text-left rounded-xl border border-border w-full"
         >
           <div className="w-10 h-10 rounded-xl bg-[hsl(var(--info)/0.1)] flex items-center justify-center flex-shrink-0 group-hover:bg-[hsl(var(--info)/0.2)] transition-colors">
             <ClipboardList className="w-5 h-5 text-[hsl(var(--info))]" />
@@ -154,12 +157,12 @@ export function HomePage({ onNavigate }: HomePageProps) {
             <span className="text-[11px] text-muted-foreground">Produtos publicados e edições</span>
           </div>
           <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-[hsl(var(--info))] transition-colors" />
-        </button>
+        </SpotlightCard>
       </div>
 
       {/* Recent Products */}
       {!loading && metrics.recentProducts.length > 0 && (
-        <div className="frost lift noise p-4 rounded-xl border border-border">
+        <SpotlightCard className="frost lift noise p-4 rounded-xl border border-border">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-display font-semibold text-foreground flex items-center gap-2">
               <Clock className="w-4 h-4 text-muted-foreground" />
@@ -183,7 +186,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
               </div>
             ))}
           </div>
-        </div>
+        </SpotlightCard>
       )}
 
       {/* Onboarding checklist for new users */}
