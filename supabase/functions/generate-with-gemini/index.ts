@@ -716,6 +716,35 @@ BACKGROUND RULES (STRICT — NON-NEGOTIABLE)
 - Do NOT substitute, simplify or deviate. The final background must be virtually identical to the reference.`;
       }
 
+      // ━━━ FINAL ENFORCEMENT BLOCK (always appended last for max weight) ━━━
+      fullPrompt += `
+
+━━━━━━━━━━━━━━━━━━━━━━━
+VARIATION RULES
+- Create a NEW pose (different from any reference)
+- Create a NEW expression
+- Make it look like a real fashion photoshoot, not a static catalog shot
+
+━━━━━━━━━━━━━━━━━━━━━━━
+QUALITY RULES
+- High-end fashion photography
+- Sharp focus on the product
+- Professional lighting and color grading
+- Clean, intentional composition
+
+━━━━━━━━━━━━━━━━━━━━━━━
+FORBIDDEN
+- Do NOT ignore the USER PROMPT
+- Do NOT reuse the original pose or expression from any reference
+- Do NOT change the product (color, shape, design, fabric)
+- Do NOT add watermarks, text overlays or logos that are not part of the product
+
+━━━━━━━━━━━━━━━━━━━━━━━
+FINAL
+Generate the image strictly following ALL rules above. The USER PROMPT and PRODUCT CONSISTENCY are the highest priorities.`;
+
+      console.log('[generate-image] FINAL PROMPT length:', fullPrompt.length);
+
 
       // Build preset reference images array
       const presetImages: { base64: string; mimeType: string; label: string }[] = [];
