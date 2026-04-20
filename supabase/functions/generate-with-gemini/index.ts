@@ -716,6 +716,31 @@ BACKGROUND RULES (STRICT — NON-NEGOTIABLE)
 - Do NOT substitute, simplify or deviate. The final background must be virtually identical to the reference.`;
       }
 
+      // Build preset reference images array
+      const presetImages: { base64: string; mimeType: string; label: string }[] = [];
+      if (modelPresetImage && modelPresetMimeType) {
+        presetImages.push({ base64: modelPresetImage, mimeType: modelPresetMimeType, label: 'MODEL TYPE' });
+      }
+      if (bgPresetImage && bgPresetMimeType) {
+        presetImages.push({ base64: bgPresetImage, mimeType: bgPresetMimeType, label: 'BACKGROUND STYLE' });
+      }
+      // Additional references = inspiration for pose/mood/composition (not the product itself)
+      if (Array.isArray(additionalReferences)) {
+        for (const ref of additionalReferences) {
+          if (ref?.base64 && ref?.mimeType) {
+            presetImages.push({ base64: ref.base64, mimeType: ref.mimeType, label: 'STYLE REFERENCE' });
+          }
+        }
+      }
+      const hasStyleRefs = presetImages.some(p => p.label === 'STYLE REFERENCE');
+      if (hasStyleRefs) {
+        fullPrompt += `\n\nSTYLE REFERENCES (INSPIRATION ONLY):
+- Use the [STYLE REFERENCE] images ONLY as inspiration for pose, framing, lighting, mood and composition.
+- Do NOT copy them literally. Do NOT replace the product with anything from them.
+- The product identity (from [PRODUCT REFERENCE]) MUST remain 100% intact: same shape, color, fabric, design, details.
+- Mix the style cues across the references to create a fresh, premium editorial result.`;
+      }
+
       // ━━━ FINAL ENFORCEMENT BLOCK (always appended last for max weight) ━━━
       fullPrompt += `
 
@@ -744,32 +769,6 @@ FINAL
 Generate the image strictly following ALL rules above. The USER PROMPT and PRODUCT CONSISTENCY are the highest priorities.`;
 
       console.log('[generate-image] FINAL PROMPT length:', fullPrompt.length);
-
-
-      // Build preset reference images array
-      const presetImages: { base64: string; mimeType: string; label: string }[] = [];
-      if (modelPresetImage && modelPresetMimeType) {
-        presetImages.push({ base64: modelPresetImage, mimeType: modelPresetMimeType, label: 'MODEL TYPE' });
-      }
-      if (bgPresetImage && bgPresetMimeType) {
-        presetImages.push({ base64: bgPresetImage, mimeType: bgPresetMimeType, label: 'BACKGROUND STYLE' });
-      }
-      // Additional references = inspiration for pose/mood/composition (not the product itself)
-      if (Array.isArray(additionalReferences)) {
-        for (const ref of additionalReferences) {
-          if (ref?.base64 && ref?.mimeType) {
-            presetImages.push({ base64: ref.base64, mimeType: ref.mimeType, label: 'STYLE REFERENCE' });
-          }
-        }
-      }
-      const hasStyleRefs = presetImages.some(p => p.label === 'STYLE REFERENCE');
-      if (hasStyleRefs) {
-        fullPrompt += `\n\nSTYLE REFERENCES (INSPIRATION ONLY):
-- Use the [STYLE REFERENCE] images ONLY as inspiration for pose, framing, lighting, mood and composition.
-- Do NOT copy them literally. Do NOT replace the product with anything from them.
-- The product identity (from [PRODUCT REFERENCE]) MUST remain 100% intact: same shape, color, fabric, design, details.
-- Mix the style cues across the references to create a fresh, premium editorial result.`;
-      }
 
       // Single-pass generation. Validation retry was disabled because two
       // sequential Gemini calls frequently exceeded the 150s edge function limit.
