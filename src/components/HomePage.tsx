@@ -100,7 +100,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
     <div className="animate-fade-in max-w-4xl mx-auto py-6 px-2">
       {/* Greeting */}
       <div className="mb-6">
-        <h2 className="font-display text-xl font-bold text-foreground">Visão geral</h2>
+        <h2 className="font-display text-xl font-bold text-foreground shimmer-text">Visão geral</h2>
         <p className="text-sm text-muted-foreground mt-0.5">Resumo da sua operação</p>
       </div>
 
@@ -109,7 +109,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
         {metricCards.map((card) => (
           <div
             key={card.label}
-            className={`glass-card p-4 flex items-center gap-3 card-hover border ${card.border}`}
+            className={`frost lift p-4 flex items-center gap-3 rounded-xl border ${card.border}`}
           >
             <div className={`w-10 h-10 rounded-xl ${card.bg} flex items-center justify-center flex-shrink-0`}>
               <card.icon className={`w-5 h-5 ${card.color}`} />
@@ -130,7 +130,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
         <button
           onClick={() => onNavigate('publish')}
-          className="glass-card p-4 flex items-center gap-3 card-hover group text-left"
+          className="gradient-border frost lift press p-4 flex items-center gap-3 group text-left rounded-xl"
         >
           <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/25 transition-colors">
             <Plus className="w-5 h-5 text-primary" />
@@ -144,7 +144,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
         <button
           onClick={() => onNavigate('history')}
-          className="glass-card p-4 flex items-center gap-3 card-hover group text-left"
+          className="frost lift press p-4 flex items-center gap-3 group text-left rounded-xl border border-border"
         >
           <div className="w-10 h-10 rounded-xl bg-[hsl(var(--info)/0.1)] flex items-center justify-center flex-shrink-0 group-hover:bg-[hsl(var(--info)/0.2)] transition-colors">
             <ClipboardList className="w-5 h-5 text-[hsl(var(--info))]" />
@@ -159,7 +159,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
       {/* Recent Products */}
       {!loading && metrics.recentProducts.length > 0 && (
-        <div className="glass-card p-4">
+        <div className="frost lift p-4 rounded-xl border border-border">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-display font-semibold text-foreground flex items-center gap-2">
               <Clock className="w-4 h-4 text-muted-foreground" />
