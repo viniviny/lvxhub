@@ -887,7 +887,6 @@ function ImageGrid({ images, generatingAngles, onImagesChange, onRegenerate, onR
         {images.map((img, i) => {
           const label = ANGLE_OPTIONS.find(a => a.id === img.angle)?.label || img.angle;
           const isRegen = regeneratingIds.has(img.id);
-          const isGen = generatingAngles.has(img.angle);
           return (
             <div key={img.id} className={`group relative rounded-lg overflow-hidden border transition-all cursor-pointer
               ${img.isCover ? 'border-primary/40 ring-1 ring-primary/20' : 'border-border/30 hover:border-border'}
@@ -897,7 +896,7 @@ function ImageGrid({ images, generatingAngles, onImagesChange, onRegenerate, onR
               <img src={img.url} alt={label} className={`w-full h-full object-contain transition-all duration-300 ${img.justCompleted ? 'animate-fade-in' : ''}`} />
 
               {/* Regenerating overlay */}
-              {(isRegen || isGen) && (
+              {isRegen && (
                 <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center z-10">
                   <Loader2 className="w-5 h-5 animate-spin text-white" />
                 </div>
