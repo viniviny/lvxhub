@@ -650,7 +650,25 @@ serve(async (req) => {
         });
       }
 
-      let fullPrompt = prompt;
+      // ━━━ STRICT PRIORITY HEADER (overrides default behavior) ━━━
+      const STRICT_HEADER = `You are generating a product image and MUST strictly follow ALL instructions below.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+PRIORITY RULE (CRITICAL)
+The instructions in this prompt OVERRIDE any default behavior.
+You MUST follow the prompt exactly. The USER PROMPT is the highest-priority creative directive.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+PRODUCT CONSISTENCY (NON-NEGOTIABLE)
+- Keep the product identical to the [PRODUCT REFERENCE] image
+- Do NOT change color, shape, fabric, pattern or design details
+- The product silhouette and identity must remain 100% intact
+
+━━━━━━━━━━━━━━━━━━━━━━━`;
+
+      let fullPrompt = `${STRICT_HEADER}
+
+${prompt}`;
 
       // Add angle instruction
       if (angle && angle !== 'personalizado' && ANGLE_SUFFIXES[angle]) {
@@ -668,6 +686,13 @@ serve(async (req) => {
       if (modelPresetImage) {
         fullPrompt += `
 
+━━━━━━━━━━━━━━━━━━━━━━━
+MODEL RULES (STRICT)
+- Use the [MODEL TYPE] image ONLY as identity reference (face structure, body proportions, ethnicity, age range)
+- DO NOT copy the original pose from the model reference
+- DO NOT copy the original facial expression from the model reference
+- Generate a COMPLETELY NEW pose and a NEW expression for this shot
+
 MODEL INTERACTION & POSE:
 The model must interact with the product naturally. Choose a purposeful pose that highlights the product.
 VARIETY SEED #${Math.floor(Math.random() * 9999)} — pick a DIFFERENT pose each time:
@@ -683,10 +708,14 @@ Expression must match the product mood — relaxed for casual, sharp for formal,
       if (bgPresetImage) {
         fullPrompt += `
 
-BACKGROUND FIDELITY (NON-NEGOTIABLE):
-The background MUST be EXACTLY as shown in the reference image — replicate the setting, colors, textures, lighting, and atmosphere faithfully.
-Do NOT substitute, simplify, or deviate. The generated background must be virtually identical to the reference.`;
+━━━━━━━━━━━━━━━━━━━━━━━
+BACKGROUND RULES (STRICT — NON-NEGOTIABLE)
+- Use ONLY the [BACKGROUND STYLE] image as the background source
+- IGNORE any background present in [PRODUCT REFERENCE] or [STYLE REFERENCE] images
+- The background MUST be EXACTLY as shown in [BACKGROUND STYLE]: replicate setting, colors, textures, lighting and atmosphere faithfully
+- Do NOT substitute, simplify or deviate. The final background must be virtually identical to the reference.`;
       }
+
 
       // Build preset reference images array
       const presetImages: { base64: string; mimeType: string; label: string }[] = [];
