@@ -56,6 +56,7 @@ import { toast } from 'sonner';
 import { UserMenu } from '@/components/UserMenu';
 import { CommandPalette } from '@/components/CommandPalette';
 import { SpotlightHeader } from '@/components/SpotlightHeader';
+import { WizardStepTabs } from '@/components/WizardStepTabs';
 import { getAILanguageByCode } from '@/data/languages';
 import {
   Send, Loader2, Upload, CheckCircle2, ExternalLink,
@@ -1154,35 +1155,12 @@ const Index = () => {
                 </div>
 
                 {/* Step tabs with completion states */}
-                <div className="flex items-center gap-1.5 mb-3">
-                  {[1, 2, 3, 4].map(step => {
-                    const isCompleted = completedSteps.has(step);
-                    const isCurrent = wizardStep === step;
-                    const isFuture = step > wizardStep && !isCompleted;
-
-                    return (
-                      <button
-                        key={step}
-                        onClick={() => goToStep(step)}
-                        disabled={isFuture && !completedSteps.has(step - 1)}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[12px] font-medium transition-all ${
-                          isCurrent
-                            ? 'bg-primary text-primary-foreground'
-                            : isCompleted
-                              ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] border border-[hsl(var(--success)/0.3)]'
-                              : 'bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed'
-                        }`}
-                      >
-                        {isCompleted && !isCurrent ? (
-                          <Check className="w-3 h-3" />
-                        ) : (
-                          <span className="w-3.5 h-3.5 rounded-full border flex items-center justify-center text-[9px]">{step}</span>
-                        )}
-                        {STEP_LABELS[step - 1]}
-                      </button>
-                    );
-                  })}
-                </div>
+                <WizardStepTabs
+                  steps={STEP_LABELS}
+                  current={wizardStep}
+                  completed={completedSteps}
+                  onSelect={goToStep}
+                />
 
                 {/* Step content */}
                 <div className="flex-1">
