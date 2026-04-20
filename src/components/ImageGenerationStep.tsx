@@ -207,6 +207,15 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [selectedBackground, setSelectedBackground] = useState<string | null>(null);
   const { presets: customPresets, addPreset: addCustomPreset, removePreset: removeCustomPreset } = useCustomPresets();
+  // ─── Visual Consistency Session (Phase 1) ───
+  // Locks sessionId + seed + preset signature. Captures the first
+  // generated image as the background master and re-injects it as
+  // an extra reference on subsequent generations so background,
+  // lighting and shadows stay consistent across all variants.
+  const { session: genSession, setBackgroundMaster } = useGenerationSession(
+    selectedModel,
+    selectedBackground,
+  );
   const [hiddenBuiltinIds, setHiddenBuiltinIds] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('hidden-builtin-presets') || '[]'); } catch { return []; }
   });
