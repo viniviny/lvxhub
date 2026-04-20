@@ -173,9 +173,9 @@ async function handle(req: Request): Promise<Response> {
       console.log(`[shopify-publish] Updating product ${shopifyProductId} with ${productImages.length} images`);
 
       // First check if product still exists
-      const checkRes = await fetch(`${baseUrl}/products/${shopifyProductId}.json`, {
+      const checkRes = await shopifyFetch(`${baseUrl}/products/${shopifyProductId}.json`, {
         headers: { 'X-Shopify-Access-Token': accessToken },
-      });
+      }, { label: 'check product' });
 
       if (checkRes.status === 404) {
         // Product no longer exists — fall back to creating a new one
@@ -203,11 +203,11 @@ async function handle(req: Request): Promise<Response> {
           },
         };
 
-        const updateRes = await fetch(`${baseUrl}/products/${shopifyProductId}.json`, {
+        const updateRes = await shopifyFetch(`${baseUrl}/products/${shopifyProductId}.json`, {
           method: 'PUT',
           headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
           body: JSON.stringify(updatePayload),
-        });
+        }, { label: 'update product' });
 
         if (!updateRes.ok) {
           const errText = await updateRes.text();
@@ -218,43 +218,49 @@ async function handle(req: Request): Promise<Response> {
         const updateData = await updateRes.json();
         product = updateData.product;
 
-      // If new images provided, delete old images first then upload new ones
+      // If new images provided, delete old images first then upload new ones (parallelized)
       if (productImages.length > 0) {
-        // Delete existing images
+        // Delete existing images in parallel
         try {
-          const existingImgsRes = await fetch(`${baseUrl}/products/${shopifyProductId}/images.json`, {
+          const existingImgsRes = await shopifyFetch(`${baseUrl}/products/${shopifyProductId}/images.json`, {
             headers: { 'X-Shopify-Access-Token': accessToken },
-          });
+          }, { label: 'list images' });
           if (existingImgsRes.ok) {
             const existingImgs = await existingImgsRes.json();
-            for (const img of (existingImgs.images || [])) {
-              await fetch(`${baseUrl}/products/${shopifyProductId}/images/${img.id}.json`, {
-                method: 'DELETE',
-                headers: { 'X-Shopify-Access-Token': accessToken },
-              });
-            }
+            const imgs = existingImgs.images || [];
+            await runInBatches(imgs, 4, async (img: any) => {
+              try {
+                await shopifyFetch(`${baseUrl}/products/${shopifyProductId}/images/${img.id}.json`, {
+                  method: 'DELETE',
+                  headers: { 'X-Shopify-Access-Token': accessToken },
+                }, { label: `delete image ${img.id}` });
+              } catch (err) {
+                console.warn(`[shopify-publish] Failed to delete image ${img.id}:`, err);
+              }
+            });
           }
         } catch (err) {
           console.warn('[shopify-publish] Failed to delete old images:', err);
         }
 
-        // Upload new images
-        for (const img of productImages) {
+        // Upload new images in parallel batches
+        await runInBatches(productImages, 4, async (img) => {
           try {
-            await fetch(`${baseUrl}/products/${shopifyProductId}/images.json`, {
+            const r = await shopifyFetch(`${baseUrl}/products/${shopifyProductId}/images.json`, {
               method: 'POST',
               headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
               body: JSON.stringify({ image: { attachment: img.attachment, filename: img.filename, position: img.position } }),
-            });
+            }, { label: `upload image ${img.filename}` });
+            if (!r.ok) console.warn(`[shopify-publish] Image upload non-OK (${r.status}) for ${img.filename}:`, await r.text());
           } catch (err) {
             console.warn('[shopify-publish] Failed to upload image:', err);
           }
-        }
+        });
 
         // Refresh product data to get image URLs
-        const refreshRes = await fetch(`${baseUrl}/products/${shopifyProductId}.json`, {
+        const refreshRes = await shopifyFetch(`${baseUrl}/products/${shopifyProductId}.json`, {
           headers: { 'X-Shopify-Access-Token': accessToken },
-        });
+        }, { label: 'refresh product' });
         if (refreshRes.ok) {
           const refreshData = await refreshRes.json();
           product = refreshData.product;
