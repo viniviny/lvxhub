@@ -770,9 +770,23 @@ BACKGROUND RULES (STRICT — NON-NEGOTIABLE)
       if (Array.isArray(additionalReferences)) {
         for (const ref of additionalReferences) {
           if (ref?.base64 && ref?.mimeType) {
-            presetImages.push({ base64: ref.base64, mimeType: ref.mimeType, label: 'STYLE REFERENCE' });
+            // Phase 1: a reference flagged with role='BACKGROUND_MASTER'
+            // is the locked-in master from the first generation of
+            // this session. It must be matched exactly for background,
+            // lighting and shadow — not used as style inspiration.
+            const label = ref.role === 'BACKGROUND_MASTER' ? 'BACKGROUND MASTER' : 'STYLE REFERENCE';
+            presetImages.push({ base64: ref.base64, mimeType: ref.mimeType, label });
           }
         }
+      }
+      const hasMasterRef = presetImages.some(p => p.label === 'BACKGROUND MASTER');
+      if (hasMasterRef) {
+        fullPrompt += `\n\n━━━━━━━━━━━━━━━━━━━━━━━
+BACKGROUND MASTER (HIGHEST CONSISTENCY PRIORITY)
+- The [BACKGROUND MASTER] image is the locked visual anchor for this session.
+- Match its background scene, lighting direction, color temperature and shadow style EXACTLY.
+- Treat it as a hard constraint, not as inspiration. Do NOT reinterpret it.
+- The product itself comes from [PRODUCT REFERENCE] — never copy the product from [BACKGROUND MASTER].`;
       }
       const hasStyleRefs = presetImages.some(p => p.label === 'STYLE REFERENCE');
       if (hasStyleRefs) {
