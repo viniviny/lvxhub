@@ -188,13 +188,13 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
       {/* Onboarding checklist for new users */}
       {!loading && metrics.connectedStores === 0 && metrics.totalProducts === 0 && (
-        <div className="glass-card p-6 max-w-lg mx-auto">
+        <div className="gradient-border frost p-6 max-w-lg mx-auto rounded-xl">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
               <Zap className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-display text-base font-bold text-foreground">Primeiros passos</h3>
+              <h3 className="font-display text-base font-bold text-foreground shimmer-text">Primeiros passos</h3>
               <p className="text-[11px] text-muted-foreground">Complete os passos abaixo para começar</p>
             </div>
           </div>
