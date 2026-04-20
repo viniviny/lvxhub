@@ -393,6 +393,16 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
       .filter((r): r is { mimeType: string; base64: string } => r !== null);
     const primaryRef = parsedRefs[0];
     const additionalRefs = parsedRefs.slice(1);
+    // ─── Background Master injection (Phase 1) ───
+    // Once we have a master from a previous generation in this same
+    // session, attach it as an extra reference so Gemini matches
+    // background, lighting and shadow across all variants.
+    const masterRef = genSession.backgroundMaster
+      ? await imageUrlToBase64(genSession.backgroundMaster)
+      : null;
+    const additionalRefsWithMaster = masterRef
+      ? [...additionalRefs, { ...masterRef, role: 'BACKGROUND_MASTER' as const }]
+      : additionalRefs;
     const promises = angles.map(async (angle) => {
       try {
         const enrichedPrompt = enrichedPromptBase(angle);
@@ -403,10 +413,15 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
             customAngleText: angle === 'personalizado' ? customAngleText : undefined,
             isCustomPrompt,
             referenceImage: primaryRef?.base64, referenceMimeType: primaryRef?.mimeType,
-            additionalReferences: additionalRefs.length > 0 ? additionalRefs : undefined,
+            additionalReferences: additionalRefsWithMaster.length > 0 ? additionalRefsWithMaster : undefined,
             aspectRatio: activeRatio, hasPresets,
             modelPresetImage: modelImageData?.base64, modelPresetMimeType: modelImageData?.mimeType,
             bgPresetImage: bgImageData?.base64, bgPresetMimeType: bgImageData?.mimeType,
+            // Phase 1 — Visual Consistency Session metadata
+            sessionId: genSession.sessionId,
+            generationSeed: genSession.seed,
+            systemRulesVersion: genSession.systemRulesVersion,
+            hasBackgroundMaster: !!masterRef,
           },
         });
         if (error) { toast.error(`Erro ao gerar imagem (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`); return null; }
@@ -415,6 +430,11 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         if (!imageUrl) { toast.error(`Nenhuma imagem retornada (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`); return null; }
         const newImage: GeneratedImage = { id: crypto.randomUUID(), angle, url: imageUrl, isCover: false, justCompleted: true };
         newImages.push(newImage);
+        // First successful generation in this session becomes the
+        // background master automatically (silent — no UI noise).
+        if (!genSession.backgroundMaster && newImages.length === 1) {
+          setBackgroundMaster(imageUrl);
+        }
         logUsage({ service: 'image-generation', action: `Gerar imagem (${angle})`, metadata: { model: 'gemini-2.5-flash-preview-05-20', provider: 'Google Gemini Direct', refsCount: parsedRefs.length } });
         setGeneratedCount(prev => prev + 1);
         setCompletedAngles(prev => new Set(prev).add(angle));
