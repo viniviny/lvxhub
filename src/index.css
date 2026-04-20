@@ -216,13 +216,13 @@
   /* Skeleton with shimmer */
   .skeleton-shimmer {
     background: linear-gradient(
-      90deg,
-      hsl(var(--muted)) 0%,
-      hsl(var(--muted) / 0.5) 50%,
-      hsl(var(--muted)) 100%
+      110deg,
+      hsl(var(--muted)) 8%,
+      hsl(var(--muted-foreground) / 0.12) 18%,
+      hsl(var(--muted)) 33%
     );
     background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
+    animation: shimmer 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
   /* Glassmorphism modal */
