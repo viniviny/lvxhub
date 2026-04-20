@@ -186,7 +186,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
               </div>
             ))}
           </div>
-        </div>
+        </SpotlightCard>
       )}
 
       {/* Onboarding checklist for new users */}
