@@ -1232,8 +1232,13 @@ Return ONLY the final title. One single line. No quotes. No period at the end. N
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    if (status === 504) {
+      return new Response(JSON.stringify({ error: message || 'A geração demorou muito. Reduza referências ou simplifique o prompt e tente novamente.' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    return new Response(JSON.stringify({ error: 'Erro interno ao processar sua solicitação. Tente novamente.' }), {
+    return new Response(JSON.stringify({ error: message || 'Erro interno ao processar sua solicitação. Tente novamente.' }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
