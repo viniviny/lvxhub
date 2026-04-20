@@ -107,25 +107,45 @@ async function imageUrlToBase64(url: string): Promise<{ base64: string; mimeType
   } catch { return null; }
 }
 
-function buildPremiumPrompt(userPrompt: string, modelDesc: string, bgDesc: string, angle?: string, proportion?: string): string {
+function buildPremiumPrompt(
+  userPrompt: string,
+  modelDesc: string,
+  bgDesc: string,
+  angle?: string,
+  proportion?: string,
+  isUserSelectedPrompt?: boolean,
+): string {
   const productDesc = userPrompt.trim() || 'High-end fashion product';
   const model = modelDesc || 'No model — product only';
   const angleLabel = angle || 'front view';
   const prop = proportion || '1:1';
 
+  // When the user picked a saved prompt (or wrote a custom one), give it
+  // top-priority weight. The selected prompt drives style/lifestyle/mood
+  // and MUST be respected, not treated as a simple product description.
+  const userBlock = isUserSelectedPrompt
+    ? `━━━━━━━━━━━━━━━━━━━━━━━
+
+USER SELECTED PROMPT (HIGHEST PRIORITY — MUST FOLLOW STRICTLY)
+${productDesc}
+
+The directives above are mandatory. Apply the requested style, mood,
+lifestyle, framing and creative direction exactly. Do NOT ignore,
+soften or override them.`
+    : `PRODUCT:
+${productDesc}`;
+
   const base = `High-end e-commerce product photography.
 
-PRODUCT:
-${productDesc}
+${userBlock}
 
 ━━━━━━━━━━━━━━━━━━━━━━━
 
-STRICT RULES (MUST FOLLOW)
-- The product must be 100% fully visible
-- No cropping allowed
-- No zoom cutting the product
-- Keep full silhouette inside frame
-- Centered composition with safe margins
+PRODUCT CONSISTENCY RULES (MUST FOLLOW)
+- The product must remain 100% recognizable: same shape, color, fabric, design, details
+- Full product visible inside frame (unless the user prompt explicitly asks for a crop/detail)
+- No accidental cropping that hides key product features
+- Premium, true-to-life rendering
 
 ━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -133,7 +153,12 @@ CONFIGURATION (MANDATORY)
 ANGLE: ${angleLabel}
 MODEL: ${model}
 PROPORTION: ${prop}
-These must be followed exactly.`;
+These must be followed exactly.
+
+PRIORITY ORDER (resolve any conflict in this order):
+1. Product consistency (identity stays intact)
+2. USER SELECTED PROMPT (style, lifestyle, mood, framing)
+3. Configuration (angle, model, proportion)`;
 
   // Apply universal premium enhancement (smart contrast, ghost mannequin,
   // framing, lighting, shadow, quality suffix, negative prompt)
