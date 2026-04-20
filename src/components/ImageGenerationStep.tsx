@@ -288,21 +288,38 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     e.target.value = '';
   };
 
-  const handleAliRefClick = useCallback(async (url: string) => {
+  const loadUrlAsDataUrl = useCallback(async (url: string): Promise<string | null> => {
     try {
-      toast.loading('Carregando referência...', { id: 'ali-ref' });
       const res = await fetch(url);
-      if (!res.ok) throw new Error('Falha ao carregar imagem');
+      if (!res.ok) return null;
       const blob = await res.blob();
-      const reader = new FileReader();
-      reader.onload = () => {
-        addReferenceImage(reader.result as string);
-        toast.success('Referência definida!', { id: 'ali-ref' });
-      };
-      reader.onerror = () => toast.error('Erro ao carregar imagem', { id: 'ali-ref' });
-      reader.readAsDataURL(blob);
-    } catch { toast.error('Não foi possível carregar esta imagem como referência', { id: 'ali-ref' }); }
+      return await new Promise<string | null>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+    } catch { return null; }
   }, []);
+
+  const handleAliRefClick = useCallback(async (url: string) => {
+    toast.loading('Carregando referência...', { id: 'ali-ref' });
+    const dataUrl = await loadUrlAsDataUrl(url);
+    if (!dataUrl) { toast.error('Não foi possível carregar esta imagem como referência', { id: 'ali-ref' }); return; }
+    addReferenceImage(dataUrl);
+    toast.success('Referência definida!', { id: 'ali-ref' });
+  }, [loadUrlAsDataUrl, addReferenceImage]);
+
+  const handleAliBulkAsReferences = useCallback(async (urls: string[]) => {
+    const slots = Math.max(0, 6 - referenceImages.length);
+    if (slots === 0) { toast.error('Limite de 6 referências atingido'); return; }
+    const toLoad = urls.slice(0, slots);
+    const results = await Promise.all(toLoad.map(loadUrlAsDataUrl));
+    const valid = results.filter((d): d is string => !!d);
+    valid.forEach((d) => addReferenceImage(d));
+    if (urls.length > slots) toast.message(`${slots} de ${urls.length} adicionadas (limite 6)`);
+  }, [loadUrlAsDataUrl, addReferenceImage, referenceImages.length]);
+
 
   const generateImages = useCallback(async () => {
     if (selectedAngles.size === 0) return;
