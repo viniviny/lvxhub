@@ -465,12 +465,20 @@
       radial-gradient(ellipse 80% 60% at 50% -10%, hsl(var(--primary) / 0.12), transparent 60%),
       radial-gradient(ellipse 60% 50% at 90% 110%, hsl(var(--primary) / 0.08), transparent 55%),
       radial-gradient(ellipse 50% 40% at 10% 100%, hsl(var(--accent) / 0.06), transparent 60%);
+    animation: mesh-move 24s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
   }
   .dark .hero-radial::before {
     background:
       radial-gradient(ellipse 80% 60% at 50% -10%, hsl(var(--primary) / 0.06), transparent 60%),
       radial-gradient(ellipse 60% 50% at 90% 110%, hsl(var(--primary) / 0.04), transparent 55%),
       radial-gradient(ellipse 50% 40% at 10% 100%, hsl(var(--accent) / 0.04), transparent 60%);
+    animation: mesh-move 24s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  }
+
+  @keyframes mesh-move {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    33%     { transform: translate3d(-2%, 1%, 0) scale(1.04); }
+    66%     { transform: translate3d(2%, -1%, 0) scale(1.02); }
   }
 
   /* Smooth-blur utility for entering content */
