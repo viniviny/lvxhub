@@ -7,19 +7,14 @@ interface PageTransitionProps {
 }
 
 const pageVariants = {
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: 0 },
+  initial: { opacity: 0, y: 12, filter: 'blur(6px)' },
+  animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
+  exit: { opacity: 0, y: -6, filter: 'blur(4px)' },
 };
 
 const pageTransition = {
-  duration: 0.25,
-  ease: 'easeOut' as const,
-};
-
-const exitTransition = {
-  duration: 0.15,
-  ease: 'easeIn',
+  duration: 0.35,
+  ease: [0.22, 1, 0.36, 1] as const,
 };
 
 export function PageTransition({ children, className }: PageTransitionProps) {
