@@ -6,11 +6,55 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+// --- Helpers: timeout + retry on Shopify rate limit (429) ---
+const FUNCTION_TIMEOUT_MS = 140_000;
+
+async function shopifyFetch(
+  url: string,
+  init: RequestInit,
+  opts: { retries?: number; label?: string } = {},
+): Promise<Response> {
+  const retries = opts.retries ?? 3;
+  const label = opts.label ?? url;
+  let lastRes: Response | null = null;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const res = await fetch(url, init);
+    if (res.status !== 429) return res;
+    lastRes = res;
+    const retryAfter = Number(res.headers.get('Retry-After') || '2');
+    const waitMs = Math.min(10_000, Math.max(500, retryAfter * 1000)) * (attempt + 1);
+    console.warn(`[shopify-publish] 429 on ${label}, retrying in ${waitMs}ms (attempt ${attempt + 1}/${retries})`);
+    await new Promise((r) => setTimeout(r, waitMs));
+  }
+  return lastRes!;
+}
+
+async function runInBatches<T>(items: T[], batchSize: number, worker: (item: T, idx: number) => Promise<void>) {
+  for (let i = 0; i < items.length; i += batchSize) {
+    const slice = items.slice(i, i + batchSize);
+    await Promise.all(slice.map((it, j) => worker(it, i + j)));
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Hard internal timeout so we always return a clean error before runtime kills us.
+  const timeoutPromise = new Promise<Response>((resolve) => {
+    setTimeout(() => {
+      resolve(new Response(
+        JSON.stringify({ error: 'Tempo limite excedido ao publicar (140s). Tente novamente — algumas operações podem já ter sido aplicadas no Shopify.', step: 'timeout' }),
+        { status: 504, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      ));
+    }, FUNCTION_TIMEOUT_MS);
+  });
+
+  return await Promise.race([handle(req), timeoutPromise]);
+});
+
+async function handle(req: Request): Promise<Response> {
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
