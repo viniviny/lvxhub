@@ -17,6 +17,7 @@ import {
 import { ModelBackgroundPresets, getModelDescriptor, getBackgroundDescriptor, getModelImage, getBackgroundImage, type CustomPreset } from '@/components/ModelBackgroundPresets';
 import { useCustomPresets } from '@/hooks/useCustomPresets';
 import { enhancePremiumPrompt } from '@/lib/premiumPrompt';
+import { AliExpressGallery } from '@/components/AliExpressGallery';
 
 export type AspectRatio = '1:1' | '4:5';
 
@@ -76,6 +77,7 @@ interface ImageGenerationStepProps {
   onAspectRatioChange?: (ratio: AspectRatio) => void;
   initialPrompt?: string;
   aliSourceImages?: string[];
+  onAliVariantsSelected?: (urls: string[]) => Promise<void> | void;
 }
 
 type PromptMode = 'simple' | 'custom';
