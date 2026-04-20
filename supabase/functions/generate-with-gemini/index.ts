@@ -575,7 +575,9 @@ ${prompt}` });
   // Hard timeout: edge function platform kills the request at 150s.
   // Abort the Gemini call before that so we return a clean error instead of a 504.
   const controller = new AbortController();
-  const timeoutMs = 170_000; // 170s — close to edge runtime cap (180s) but safe
+  // Edge Function tem limite fixo de 150s (IDLE_TIMEOUT). Abortamos em 140s
+  // para devolver erro limpo ao cliente antes do runtime matar a request.
+  const timeoutMs = 140_000;
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   let res: Response;
