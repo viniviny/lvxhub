@@ -650,7 +650,25 @@ serve(async (req) => {
         });
       }
 
-      let fullPrompt = prompt;
+      // ━━━ STRICT PRIORITY HEADER (overrides default behavior) ━━━
+      const STRICT_HEADER = `You are generating a product image and MUST strictly follow ALL instructions below.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+PRIORITY RULE (CRITICAL)
+The instructions in this prompt OVERRIDE any default behavior.
+You MUST follow the prompt exactly. The USER PROMPT is the highest-priority creative directive.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+PRODUCT CONSISTENCY (NON-NEGOTIABLE)
+- Keep the product identical to the [PRODUCT REFERENCE] image
+- Do NOT change color, shape, fabric, pattern or design details
+- The product silhouette and identity must remain 100% intact
+
+━━━━━━━━━━━━━━━━━━━━━━━`;
+
+      let fullPrompt = `${STRICT_HEADER}
+
+${prompt}`;
 
       // Add angle instruction
       if (angle && angle !== 'personalizado' && ANGLE_SUFFIXES[angle]) {
@@ -668,6 +686,13 @@ serve(async (req) => {
       if (modelPresetImage) {
         fullPrompt += `
 
+━━━━━━━━━━━━━━━━━━━━━━━
+MODEL RULES (STRICT)
+- Use the [MODEL TYPE] image ONLY as identity reference (face structure, body proportions, ethnicity, age range)
+- DO NOT copy the original pose from the model reference
+- DO NOT copy the original facial expression from the model reference
+- Generate a COMPLETELY NEW pose and a NEW expression for this shot
+
 MODEL INTERACTION & POSE:
 The model must interact with the product naturally. Choose a purposeful pose that highlights the product.
 VARIETY SEED #${Math.floor(Math.random() * 9999)} — pick a DIFFERENT pose each time:
@@ -683,9 +708,12 @@ Expression must match the product mood — relaxed for casual, sharp for formal,
       if (bgPresetImage) {
         fullPrompt += `
 
-BACKGROUND FIDELITY (NON-NEGOTIABLE):
-The background MUST be EXACTLY as shown in the reference image — replicate the setting, colors, textures, lighting, and atmosphere faithfully.
-Do NOT substitute, simplify, or deviate. The generated background must be virtually identical to the reference.`;
+━━━━━━━━━━━━━━━━━━━━━━━
+BACKGROUND RULES (STRICT — NON-NEGOTIABLE)
+- Use ONLY the [BACKGROUND STYLE] image as the background source
+- IGNORE any background present in [PRODUCT REFERENCE] or [STYLE REFERENCE] images
+- The background MUST be EXACTLY as shown in [BACKGROUND STYLE]: replicate setting, colors, textures, lighting and atmosphere faithfully
+- Do NOT substitute, simplify or deviate. The final background must be virtually identical to the reference.`;
       }
 
       // Build preset reference images array
@@ -712,6 +740,35 @@ Do NOT substitute, simplify, or deviate. The generated background must be virtua
 - The product identity (from [PRODUCT REFERENCE]) MUST remain 100% intact: same shape, color, fabric, design, details.
 - Mix the style cues across the references to create a fresh, premium editorial result.`;
       }
+
+      // ━━━ FINAL ENFORCEMENT BLOCK (always appended last for max weight) ━━━
+      fullPrompt += `
+
+━━━━━━━━━━━━━━━━━━━━━━━
+VARIATION RULES
+- Create a NEW pose (different from any reference)
+- Create a NEW expression
+- Make it look like a real fashion photoshoot, not a static catalog shot
+
+━━━━━━━━━━━━━━━━━━━━━━━
+QUALITY RULES
+- High-end fashion photography
+- Sharp focus on the product
+- Professional lighting and color grading
+- Clean, intentional composition
+
+━━━━━━━━━━━━━━━━━━━━━━━
+FORBIDDEN
+- Do NOT ignore the USER PROMPT
+- Do NOT reuse the original pose or expression from any reference
+- Do NOT change the product (color, shape, design, fabric)
+- Do NOT add watermarks, text overlays or logos that are not part of the product
+
+━━━━━━━━━━━━━━━━━━━━━━━
+FINAL
+Generate the image strictly following ALL rules above. The USER PROMPT and PRODUCT CONSISTENCY are the highest priorities.`;
+
+      console.log('[generate-image] FINAL PROMPT length:', fullPrompt.length);
 
       // Single-pass generation. Validation retry was disabled because two
       // sequential Gemini calls frequently exceeded the 150s edge function limit.
