@@ -35,11 +35,12 @@ export function useProducts() {
     }
   }, []);
 
-  const publishProduct = useCallback(async (formData: ProductFormData, imageUrl: string) => {
+  const publishProduct = useCallback(async (formData: ProductFormData, imageUrl: string, imageBase64?: string, imageName?: string) => {
     setIsPublishing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('publish-product', {
-        body: { ...formData, imageUrl },
+      // Use the unified shopify-publish function (handles base64, variants, channels, inventory, etc.)
+      const { data, error } = await supabase.functions.invoke('shopify-publish', {
+        body: { ...formData, imageUrl, imageBase64, imageName },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);

@@ -872,6 +872,9 @@ const Index = () => {
           language: mc?.language || null,
           languageLabel: storeLang?.label || null,
           marketName: mc?.marketName || null,
+          colorImages: [],
+          additionalImages: [],
+          shopifyProductId: null,
         },
       });
       if (error || data?.error) return false;

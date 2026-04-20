@@ -39,7 +39,7 @@ serve(async (req) => {
 
     const userId = claimsData.claims.sub;
 
-    const { title, description, price, sizes, collection, imageUrl } = await req.json();
+    const { title, description, price, sizes, collection, imageUrl, imageBase64, imageName } = await req.json();
 
     // Input validation
     if (!title || typeof title !== 'string' || title.length > 255) {
@@ -83,6 +83,17 @@ serve(async (req) => {
       inventory_management: 'shopify',
     }));
 
+    // Image handling: prefer base64 (durable upload, AliExpress URLs may expire), fallback to src URL.
+    const productImages: any[] = [];
+    if (imageBase64) {
+      productImages.push({
+        attachment: imageBase64.replace(/^data:image\/[a-z]+;base64,/, ''),
+        filename: imageName || 'product.jpg',
+      });
+    } else if (imageUrl) {
+      productImages.push({ src: imageUrl });
+    }
+
     const productPayload = {
       product: {
         title,
@@ -92,7 +103,7 @@ serve(async (req) => {
         status: 'draft',
         options: [{ name: 'Tamanho', values: sizes && sizes.length > 0 ? sizes : ['Único'] }],
         variants,
-        images: imageUrl ? [{ src: imageUrl }] : [],
+        images: productImages,
       },
     };
 
