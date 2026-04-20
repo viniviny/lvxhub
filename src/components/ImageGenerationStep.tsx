@@ -386,6 +386,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const promises = angles.map(async (angle) => {
       try {
         const enrichedPrompt = enrichedPromptBase(angle);
+        console.log(`FINAL PROMPT [${angle}]:`, enrichedPrompt);
         const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
           body: {
             mode: 'generate-image', prompt: enrichedPrompt, angle,
