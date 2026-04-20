@@ -217,7 +217,9 @@ function buildStrategyBlock(strategy: ProductStrategy, key: string): string {
 
 const GEMINI_TEXT_MODEL = 'gemini-2.5-flash';
 const GEMINI_VALIDATION_MODEL = 'gemini-2.5-flash-lite';
-const GEMINI_IMAGE_MODEL = 'gemini-3.1-flash-image-preview';
+// Nano Banana 1 — gera em 10–30s (vs 60–120s do 3.1-flash-image-preview)
+// que estoura o limite fixo de 150s da Edge Function.
+const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 // ─── Prompt templates ───
