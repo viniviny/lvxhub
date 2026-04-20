@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { ModelBackgroundPresets, getModelDescriptor, getBackgroundDescriptor, getModelImage, getBackgroundImage, type CustomPreset } from '@/components/ModelBackgroundPresets';
 import { useCustomPresets } from '@/hooks/useCustomPresets';
+import { useGenerationSession } from '@/hooks/useGenerationSession';
 import { enhancePremiumPrompt } from '@/lib/premiumPrompt';
 import { AliExpressGallery } from '@/components/AliExpressGallery';
 
