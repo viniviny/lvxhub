@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserPrompts, UserPrompt, UserPromptInsert } from '@/hooks/useUserPrompts';
-import { BookOpen, Plus, Search, Pencil, Trash2, ArrowLeft, SortAsc, Image, Type, FileText, Sparkles, Copy } from 'lucide-react';
+import { BookOpen, Plus, Search, Pencil, Trash2, ArrowLeft, SortAsc, Image, Type, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DashboardSidebar, DashboardView } from '@/components/DashboardSidebar';
 import { useStoreContext } from '@/hooks/useStoreContext';
 import { UserMenu } from '@/components/UserMenu';
-import { PROMPT_TEMPLATES, PromptTemplate } from '@/data/promptTemplates';
 import { toast } from 'sonner';
 
 type SortMode = 'recent' | 'most_used' | 'az';
@@ -29,7 +28,6 @@ export default function PromptsPage() {
   const [sort, setSort] = useState<SortMode>('recent');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
-  const [showTemplates, setShowTemplates] = useState(true);
 
   const handleSidebarNav = (view: DashboardView) => {
     if (view === 'prompts') return;
