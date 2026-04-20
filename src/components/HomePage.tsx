@@ -109,7 +109,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
         {metricCards.map((card) => (
           <div
             key={card.label}
-            className={`frost lift p-4 flex items-center gap-3 rounded-xl border ${card.border}`}
+            className={`frost lift noise p-4 flex items-center gap-3 rounded-xl border ${card.border}`}
           >
             <div className={`w-10 h-10 rounded-xl ${card.bg} flex items-center justify-center flex-shrink-0`}>
               <card.icon className={`w-5 h-5 ${card.color}`} />
@@ -130,7 +130,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
         <button
           onClick={() => onNavigate('publish')}
-          className="gradient-border frost lift press p-4 flex items-center gap-3 group text-left rounded-xl"
+          className="gradient-border frost lift press noise p-4 flex items-center gap-3 group text-left rounded-xl"
         >
           <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/25 transition-colors">
             <Plus className="w-5 h-5 text-primary" />
@@ -144,7 +144,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
         <button
           onClick={() => onNavigate('history')}
-          className="frost lift press p-4 flex items-center gap-3 group text-left rounded-xl border border-border"
+          className="frost lift press noise p-4 flex items-center gap-3 group text-left rounded-xl border border-border"
         >
           <div className="w-10 h-10 rounded-xl bg-[hsl(var(--info)/0.1)] flex items-center justify-center flex-shrink-0 group-hover:bg-[hsl(var(--info)/0.2)] transition-colors">
             <ClipboardList className="w-5 h-5 text-[hsl(var(--info))]" />
@@ -159,7 +159,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
       {/* Recent Products */}
       {!loading && metrics.recentProducts.length > 0 && (
-        <div className="frost lift p-4 rounded-xl border border-border">
+        <div className="frost lift noise p-4 rounded-xl border border-border">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-display font-semibold text-foreground flex items-center gap-2">
               <Clock className="w-4 h-4 text-muted-foreground" />
@@ -188,7 +188,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
 
       {/* Onboarding checklist for new users */}
       {!loading && metrics.connectedStores === 0 && metrics.totalProducts === 0 && (
-        <div className="gradient-border frost p-6 max-w-lg mx-auto rounded-xl">
+        <div className="gradient-border frost noise p-6 max-w-lg mx-auto rounded-xl">
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
               <Zap className="w-5 h-5 text-primary" />

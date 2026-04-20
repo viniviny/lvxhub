@@ -1039,7 +1039,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b border-border bg-background sticky top-0 z-10 h-[52px]">
+      <header className="border-b border-border bg-background grid-bg sticky top-0 z-10 h-[52px]">
         <div className="w-full h-full px-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="font-display text-base font-semibold text-foreground flex items-center gap-1.5">
