@@ -647,15 +647,53 @@ serve(async (req) => {
 
     // ═══ MODE: generate-image ═══
     if (mode === 'generate-image') {
-      const { prompt, angle, customAngleText, isCustomPrompt, referenceImage, referenceMimeType, aspectRatio, hasPresets, modelPresetImage, modelPresetMimeType, bgPresetImage, bgPresetMimeType, additionalReferences } = body;
+      const {
+        prompt, angle, customAngleText, isCustomPrompt,
+        referenceImage, referenceMimeType,
+        aspectRatio, hasPresets,
+        modelPresetImage, modelPresetMimeType,
+        bgPresetImage, bgPresetMimeType,
+        additionalReferences,
+        // ─── Phase 1 — Visual Consistency Session ───
+        sessionId,
+        generationSeed,
+        systemRulesVersion,
+        hasBackgroundMaster,
+      } = body;
       if (!prompt) {
         return new Response(JSON.stringify({ error: 'prompt is required' }), {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      // ━━━ STRICT PRIORITY HEADER (overrides default behavior) ━━━
-      const STRICT_HEADER = `You are generating a product image and MUST strictly follow ALL instructions below.
+      // ━━━ SYSTEM RULES ENVELOPE (Phase 1 — Visual Consistency) ━━━
+      // These rules are NON-NEGOTIABLE and override anything the user
+      // wrote in their prompt. They are injected silently — the user
+      // never sees this block. Hierarchy of authority:
+      //   1. Product identity (PRODUCT REFERENCE image)
+      //   2. SYSTEM RULES (this block)
+      //   3. User prompt (creative direction)
+      //   4. Configuration (angle, model, ratio)
+      const sessionMeta = sessionId
+        ? `\n[SESSION: ${sessionId} · seed ${generationSeed ?? 'n/a'} · rules v${systemRulesVersion ?? '1.0.0'}]`
+        : '';
+      const masterRule = hasBackgroundMaster
+        ? `\n10. A [BACKGROUND MASTER] reference image is provided. Its background, lighting direction, color temperature and shadow style MUST be matched EXACTLY in this output. The product is the only thing that may differ in framing/pose — never the environment.`
+        : '';
+
+      const STRICT_HEADER = `You are generating a product image and MUST strictly follow ALL instructions below.${sessionMeta}
+
+━━━━━━━━━━━━━━━━━━━━━━━
+SYSTEM RULES (NON-NEGOTIABLE — TAKE PRECEDENCE OVER USER PROMPT IN CASE OF CONFLICT)
+1. Background: keep style, color and texture consistent across all generations of this session. Do not invent a new background style.
+2. Lighting: keep direction, intensity and color temperature stable. Default to neutral 5500K daylight unless a preset specifies otherwise.
+3. Shadow: soft contact shadow under the product, ~20-25% opacity, ~40px feather. Consistent across variants.
+4. Camera: straight-on eye level unless the angle field explicitly specifies otherwise.
+5. Composition: product fills ~70% of the frame vertically, centered horizontally.
+6. No filters, no grain, no artistic effects unless explicitly requested by the user prompt.
+7. No text, no logos, no watermarks anywhere in the output.
+8. The product identity from [PRODUCT REFERENCE] (shape, color, fabric, design, details) is sacred — it never changes.
+9. If the user prompt asks for something that conflicts with rules 1-8, obey rules 1-8 and apply only the parts of the user prompt that do not conflict.${masterRule}
 
 ━━━━━━━━━━━━━━━━━━━━━━━
 PRIORITY RULE (CRITICAL)
@@ -732,9 +770,23 @@ BACKGROUND RULES (STRICT — NON-NEGOTIABLE)
       if (Array.isArray(additionalReferences)) {
         for (const ref of additionalReferences) {
           if (ref?.base64 && ref?.mimeType) {
-            presetImages.push({ base64: ref.base64, mimeType: ref.mimeType, label: 'STYLE REFERENCE' });
+            // Phase 1: a reference flagged with role='BACKGROUND_MASTER'
+            // is the locked-in master from the first generation of
+            // this session. It must be matched exactly for background,
+            // lighting and shadow — not used as style inspiration.
+            const label = ref.role === 'BACKGROUND_MASTER' ? 'BACKGROUND MASTER' : 'STYLE REFERENCE';
+            presetImages.push({ base64: ref.base64, mimeType: ref.mimeType, label });
           }
         }
+      }
+      const hasMasterRef = presetImages.some(p => p.label === 'BACKGROUND MASTER');
+      if (hasMasterRef) {
+        fullPrompt += `\n\n━━━━━━━━━━━━━━━━━━━━━━━
+BACKGROUND MASTER (HIGHEST CONSISTENCY PRIORITY)
+- The [BACKGROUND MASTER] image is the locked visual anchor for this session.
+- Match its background scene, lighting direction, color temperature and shadow style EXACTLY.
+- Treat it as a hard constraint, not as inspiration. Do NOT reinterpret it.
+- The product itself comes from [PRODUCT REFERENCE] — never copy the product from [BACKGROUND MASTER].`;
       }
       const hasStyleRefs = presetImages.some(p => p.label === 'STYLE REFERENCE');
       if (hasStyleRefs) {

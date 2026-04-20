@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { ModelBackgroundPresets, getModelDescriptor, getBackgroundDescriptor, getModelImage, getBackgroundImage, type CustomPreset } from '@/components/ModelBackgroundPresets';
 import { useCustomPresets } from '@/hooks/useCustomPresets';
+import { useGenerationSession } from '@/hooks/useGenerationSession';
 import { enhancePremiumPrompt } from '@/lib/premiumPrompt';
 import { AliExpressGallery } from '@/components/AliExpressGallery';
 
@@ -206,6 +207,15 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [selectedBackground, setSelectedBackground] = useState<string | null>(null);
   const { presets: customPresets, addPreset: addCustomPreset, removePreset: removeCustomPreset } = useCustomPresets();
+  // ─── Visual Consistency Session (Phase 1) ───
+  // Locks sessionId + seed + preset signature. Captures the first
+  // generated image as the background master and re-injects it as
+  // an extra reference on subsequent generations so background,
+  // lighting and shadows stay consistent across all variants.
+  const { session: genSession, setBackgroundMaster } = useGenerationSession(
+    selectedModel,
+    selectedBackground,
+  );
   const [hiddenBuiltinIds, setHiddenBuiltinIds] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem('hidden-builtin-presets') || '[]'); } catch { return []; }
   });
@@ -383,6 +393,16 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
       .filter((r): r is { mimeType: string; base64: string } => r !== null);
     const primaryRef = parsedRefs[0];
     const additionalRefs = parsedRefs.slice(1);
+    // ─── Background Master injection (Phase 1) ───
+    // Once we have a master from a previous generation in this same
+    // session, attach it as an extra reference so Gemini matches
+    // background, lighting and shadow across all variants.
+    const masterRef = genSession.backgroundMaster
+      ? await imageUrlToBase64(genSession.backgroundMaster)
+      : null;
+    const additionalRefsWithMaster = masterRef
+      ? [...additionalRefs, { ...masterRef, role: 'BACKGROUND_MASTER' as const }]
+      : additionalRefs;
     const promises = angles.map(async (angle) => {
       try {
         const enrichedPrompt = enrichedPromptBase(angle);
@@ -393,10 +413,15 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
             customAngleText: angle === 'personalizado' ? customAngleText : undefined,
             isCustomPrompt,
             referenceImage: primaryRef?.base64, referenceMimeType: primaryRef?.mimeType,
-            additionalReferences: additionalRefs.length > 0 ? additionalRefs : undefined,
+            additionalReferences: additionalRefsWithMaster.length > 0 ? additionalRefsWithMaster : undefined,
             aspectRatio: activeRatio, hasPresets,
             modelPresetImage: modelImageData?.base64, modelPresetMimeType: modelImageData?.mimeType,
             bgPresetImage: bgImageData?.base64, bgPresetMimeType: bgImageData?.mimeType,
+            // Phase 1 — Visual Consistency Session metadata
+            sessionId: genSession.sessionId,
+            generationSeed: genSession.seed,
+            systemRulesVersion: genSession.systemRulesVersion,
+            hasBackgroundMaster: !!masterRef,
           },
         });
         if (error) { toast.error(`Erro ao gerar imagem (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`); return null; }
@@ -405,6 +430,11 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         if (!imageUrl) { toast.error(`Nenhuma imagem retornada (${ANGLE_OPTIONS.find(a => a.id === angle)?.label})`); return null; }
         const newImage: GeneratedImage = { id: crypto.randomUUID(), angle, url: imageUrl, isCover: false, justCompleted: true };
         newImages.push(newImage);
+        // First successful generation in this session becomes the
+        // background master automatically (silent — no UI noise).
+        if (!genSession.backgroundMaster && newImages.length === 1) {
+          setBackgroundMaster(imageUrl);
+        }
         logUsage({ service: 'image-generation', action: `Gerar imagem (${angle})`, metadata: { model: 'gemini-2.5-flash-preview-05-20', provider: 'Google Gemini Direct', refsCount: parsedRefs.length } });
         setGeneratedCount(prev => prev + 1);
         setCompletedAngles(prev => new Set(prev).add(angle));
@@ -456,16 +486,26 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         .filter((r): r is { mimeType: string; base64: string } => r !== null);
       const primaryRef = parsedRefs[0];
       const additionalRefs = parsedRefs.slice(1);
+      const masterRef = genSession.backgroundMaster
+        ? await imageUrlToBase64(genSession.backgroundMaster)
+        : null;
+      const additionalRefsWithMaster = masterRef
+        ? [...additionalRefs, { ...masterRef, role: 'BACKGROUND_MASTER' as const }]
+        : additionalRefs;
       const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
         body: {
           mode: 'generate-image', prompt: enrichedPrompt, angle: target.angle,
           customAngleText: target.angle === 'personalizado' ? customAngleText : undefined,
           isCustomPrompt: promptMode === 'custom',
           referenceImage: primaryRef?.base64, referenceMimeType: primaryRef?.mimeType,
-          additionalReferences: additionalRefs.length > 0 ? additionalRefs : undefined,
+          additionalReferences: additionalRefsWithMaster.length > 0 ? additionalRefsWithMaster : undefined,
           aspectRatio: activeRatio, hasPresets,
           modelPresetImage: modelImageData?.base64, modelPresetMimeType: modelImageData?.mimeType,
           bgPresetImage: bgImageData?.base64, bgPresetMimeType: bgImageData?.mimeType,
+          sessionId: genSession.sessionId,
+          generationSeed: genSession.seed,
+          systemRulesVersion: genSession.systemRulesVersion,
+          hasBackgroundMaster: !!masterRef,
         },
       });
       if (error || data?.error) { toast.error('Erro ao regenerar imagem'); return; }
