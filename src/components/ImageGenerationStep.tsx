@@ -540,23 +540,14 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           )}
         </div>
 
-        {/* AliExpress references */}
+        {/* AliExpress gallery — full preview, multi-select, reuse as references/variants */}
         {aliSourceImages && aliSourceImages.length > 0 && showAliRef && (
-          <div className="glass-card p-2.5 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.12em]">📦 AliExpress</span>
-              <button onClick={() => setShowAliRef(false)} className="text-muted-foreground hover:text-foreground text-xs leading-none">×</button>
-            </div>
-            <div className="grid grid-cols-3 gap-1">
-              {aliSourceImages.map((url, i) => (
-                <div key={i} onClick={() => handleAliRefClick(url)} title="Clique para usar como referência"
-                  className="relative rounded-md overflow-hidden border border-border/40 cursor-pointer hover:border-primary/50 hover:scale-[1.03] transition-all aspect-square">
-                  <img src={url} alt={`ref-${i}`} className="w-full h-full object-contain bg-black/5" onError={e => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }} />
-                </div>
-              ))}
-            </div>
-            <p className="text-[8px] text-muted-foreground/70 leading-tight">Clique para usar como referência</p>
-          </div>
+          <AliExpressGallery
+            sourceImages={aliSourceImages}
+            onUseAsReferences={handleAliBulkAsReferences}
+            onUseAsVariants={onAliVariantsSelected}
+            onClose={() => setShowAliRef(false)}
+          />
         )}
 
         {/* Upload manual */}
