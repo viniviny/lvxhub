@@ -1037,7 +1037,7 @@ const Index = () => {
   }, [understanding, form.productType, form.gender, generateSpecs, clearSpecs, updateProject]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background hero-radial flex flex-col">
       {/* Header */}
       <header className="border-b border-border bg-background grid-bg sticky top-0 z-10 h-[52px]">
         <div className="w-full h-full px-5 flex items-center justify-between">
