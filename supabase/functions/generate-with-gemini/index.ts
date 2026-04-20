@@ -573,7 +573,7 @@ ${prompt}` });
   // Hard timeout: edge function platform kills the request at 150s.
   // Abort the Gemini call before that so we return a clean error instead of a 504.
   const controller = new AbortController();
-  const timeoutMs = 120_000; // 120s — leaves headroom for upload + response
+  const timeoutMs = 170_000; // 170s — close to edge runtime cap (180s) but safe
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   let res: Response;
@@ -593,7 +593,7 @@ ${prompt}` });
     clearTimeout(timeoutId);
     if (e?.name === 'AbortError') {
       console.error('Gemini image timed out after', timeoutMs, 'ms');
-      throw { status: 504, message: 'A geração demorou muito (>120s). Tente novamente com um prompt mais curto ou menos imagens de referência.' };
+      throw { status: 504, message: 'A geração demorou muito. Reduza o número de imagens de referência ou simplifique o prompt e tente novamente.' };
     }
     throw e;
   }
@@ -1232,8 +1232,13 @@ Return ONLY the final title. One single line. No quotes. No period at the end. N
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    if (status === 504) {
+      return new Response(JSON.stringify({ error: message || 'A geração demorou muito. Reduza referências ou simplifique o prompt e tente novamente.' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    return new Response(JSON.stringify({ error: 'Erro interno ao processar sua solicitação. Tente novamente.' }), {
+    return new Response(JSON.stringify({ error: message || 'Erro interno ao processar sua solicitação. Tente novamente.' }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
