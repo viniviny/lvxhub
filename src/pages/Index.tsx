@@ -1269,6 +1269,16 @@ const Index = () => {
                         }
                         return [];
                       })()}
+                      onAliVariantsSelected={(urls) => {
+                        const newColors: ProductColor[] = urls.map((url, i) => ({
+                          id: crypto.randomUUID(),
+                          name: `Variante ${colors.length + i + 1}`,
+                          hex: '#cccccc',
+                          imageUrl: url,
+                        }));
+                        setColors(prev => [...prev, ...newColors]);
+                        toast.success(`${newColors.length} variante${newColors.length > 1 ? 's' : ''} adicionada${newColors.length > 1 ? 's' : ''}. Edite no Step 3.`);
+                      }}
                     />
                   )}
 
