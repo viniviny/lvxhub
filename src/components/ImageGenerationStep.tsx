@@ -366,7 +366,8 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const bgDesc = getBackgroundDescriptor(selectedBackground, customPresets);
     const hasPresets = !!(modelDesc || bgDesc);
     const angleLabels = angles.map(a => ANGLE_OPTIONS.find(o => o.id === a)?.label || a).join(', ');
-    const enrichedPromptBase = (angle: string) => buildPremiumPrompt(effectivePrompt, modelDesc, bgDesc, ANGLE_OPTIONS.find(o => o.id === angle)?.label || angle, activeRatio);
+    const isUserSelectedPrompt = promptMode === 'custom' || !!activePromptId;
+    const enrichedPromptBase = (angle: string) => buildPremiumPrompt(effectivePrompt, modelDesc, bgDesc, ANGLE_OPTIONS.find(o => o.id === angle)?.label || angle, activeRatio, isUserSelectedPrompt);
     const modelImgUrl = getModelImage(selectedModel, customPresets);
     const bgImgUrl = getBackgroundImage(selectedBackground, customPresets);
     const [modelImageData, bgImageData] = await Promise.all([
