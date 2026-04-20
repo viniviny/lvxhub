@@ -486,16 +486,26 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         .filter((r): r is { mimeType: string; base64: string } => r !== null);
       const primaryRef = parsedRefs[0];
       const additionalRefs = parsedRefs.slice(1);
+      const masterRef = genSession.backgroundMaster
+        ? await imageUrlToBase64(genSession.backgroundMaster)
+        : null;
+      const additionalRefsWithMaster = masterRef
+        ? [...additionalRefs, { ...masterRef, role: 'BACKGROUND_MASTER' as const }]
+        : additionalRefs;
       const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
         body: {
           mode: 'generate-image', prompt: enrichedPrompt, angle: target.angle,
           customAngleText: target.angle === 'personalizado' ? customAngleText : undefined,
           isCustomPrompt: promptMode === 'custom',
           referenceImage: primaryRef?.base64, referenceMimeType: primaryRef?.mimeType,
-          additionalReferences: additionalRefs.length > 0 ? additionalRefs : undefined,
+          additionalReferences: additionalRefsWithMaster.length > 0 ? additionalRefsWithMaster : undefined,
           aspectRatio: activeRatio, hasPresets,
           modelPresetImage: modelImageData?.base64, modelPresetMimeType: modelImageData?.mimeType,
           bgPresetImage: bgImageData?.base64, bgPresetMimeType: bgImageData?.mimeType,
+          sessionId: genSession.sessionId,
+          generationSeed: genSession.seed,
+          systemRulesVersion: genSession.systemRulesVersion,
+          hasBackgroundMaster: !!masterRef,
         },
       });
       if (error || data?.error) { toast.error('Erro ao regenerar imagem'); return; }
