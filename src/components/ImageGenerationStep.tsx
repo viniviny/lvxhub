@@ -17,6 +17,7 @@ import {
 import { ModelBackgroundPresets, getModelDescriptor, getBackgroundDescriptor, getModelImage, getBackgroundImage, type CustomPreset } from '@/components/ModelBackgroundPresets';
 import { useCustomPresets } from '@/hooks/useCustomPresets';
 import { enhancePremiumPrompt } from '@/lib/premiumPrompt';
+import { AliExpressGallery } from '@/components/AliExpressGallery';
 
 export type AspectRatio = '1:1' | '4:5';
 
@@ -76,6 +77,7 @@ interface ImageGenerationStepProps {
   onAspectRatioChange?: (ratio: AspectRatio) => void;
   initialPrompt?: string;
   aliSourceImages?: string[];
+  onAliVariantsSelected?: (urls: string[]) => Promise<void> | void;
 }
 
 type PromptMode = 'simple' | 'custom';
@@ -141,7 +143,7 @@ These must be followed exactly.`;
   });
 }
 
-export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange, initialPrompt, aliSourceImages }: ImageGenerationStepProps) {
+export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, aspectRatio: externalRatio, onAspectRatioChange, initialPrompt, aliSourceImages, onAliVariantsSelected }: ImageGenerationStepProps) {
   const navigate = useNavigate();
   const { prompts: allPrompts, recentPrompts: allRecentPrompts, incrementUsage } = useUserPrompts();
   const { logUsage } = useApiUsage();
@@ -286,21 +288,38 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     e.target.value = '';
   };
 
-  const handleAliRefClick = useCallback(async (url: string) => {
+  const loadUrlAsDataUrl = useCallback(async (url: string): Promise<string | null> => {
     try {
-      toast.loading('Carregando referência...', { id: 'ali-ref' });
       const res = await fetch(url);
-      if (!res.ok) throw new Error('Falha ao carregar imagem');
+      if (!res.ok) return null;
       const blob = await res.blob();
-      const reader = new FileReader();
-      reader.onload = () => {
-        addReferenceImage(reader.result as string);
-        toast.success('Referência definida!', { id: 'ali-ref' });
-      };
-      reader.onerror = () => toast.error('Erro ao carregar imagem', { id: 'ali-ref' });
-      reader.readAsDataURL(blob);
-    } catch { toast.error('Não foi possível carregar esta imagem como referência', { id: 'ali-ref' }); }
+      return await new Promise<string | null>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+    } catch { return null; }
   }, []);
+
+  const handleAliRefClick = useCallback(async (url: string) => {
+    toast.loading('Carregando referência...', { id: 'ali-ref' });
+    const dataUrl = await loadUrlAsDataUrl(url);
+    if (!dataUrl) { toast.error('Não foi possível carregar esta imagem como referência', { id: 'ali-ref' }); return; }
+    addReferenceImage(dataUrl);
+    toast.success('Referência definida!', { id: 'ali-ref' });
+  }, [loadUrlAsDataUrl, addReferenceImage]);
+
+  const handleAliBulkAsReferences = useCallback(async (urls: string[]) => {
+    const slots = Math.max(0, 6 - referenceImages.length);
+    if (slots === 0) { toast.error('Limite de 6 referências atingido'); return; }
+    const toLoad = urls.slice(0, slots);
+    const results = await Promise.all(toLoad.map(loadUrlAsDataUrl));
+    const valid = results.filter((d): d is string => !!d);
+    valid.forEach((d) => addReferenceImage(d));
+    if (urls.length > slots) toast.message(`${slots} de ${urls.length} adicionadas (limite 6)`);
+  }, [loadUrlAsDataUrl, addReferenceImage, referenceImages.length]);
+
 
   const generateImages = useCallback(async () => {
     if (selectedAngles.size === 0) return;
@@ -521,23 +540,14 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
           )}
         </div>
 
-        {/* AliExpress references */}
+        {/* AliExpress gallery — full preview, multi-select, reuse as references/variants */}
         {aliSourceImages && aliSourceImages.length > 0 && showAliRef && (
-          <div className="glass-card p-2.5 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.12em]">📦 AliExpress</span>
-              <button onClick={() => setShowAliRef(false)} className="text-muted-foreground hover:text-foreground text-xs leading-none">×</button>
-            </div>
-            <div className="grid grid-cols-3 gap-1">
-              {aliSourceImages.map((url, i) => (
-                <div key={i} onClick={() => handleAliRefClick(url)} title="Clique para usar como referência"
-                  className="relative rounded-md overflow-hidden border border-border/40 cursor-pointer hover:border-primary/50 hover:scale-[1.03] transition-all aspect-square">
-                  <img src={url} alt={`ref-${i}`} className="w-full h-full object-contain bg-black/5" onError={e => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }} />
-                </div>
-              ))}
-            </div>
-            <p className="text-[8px] text-muted-foreground/70 leading-tight">Clique para usar como referência</p>
-          </div>
+          <AliExpressGallery
+            sourceImages={aliSourceImages}
+            onUseAsReferences={handleAliBulkAsReferences}
+            onUseAsVariants={onAliVariantsSelected}
+            onClose={() => setShowAliRef(false)}
+          />
         )}
 
         {/* Upload manual */}
