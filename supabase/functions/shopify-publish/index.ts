@@ -292,11 +292,11 @@ async function handle(req: Request): Promise<Response> {
         },
       };
 
-      const createRes = await fetch(`${baseUrl}/products.json`, {
+      const createRes = await shopifyFetch(`${baseUrl}/products.json`, {
         method: 'POST',
         headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
         body: JSON.stringify(productPayload),
-      });
+      }, { label: 'create product' });
 
       if (!createRes.ok) {
         const errText = await createRes.text();
@@ -312,19 +312,18 @@ async function handle(req: Request): Promise<Response> {
 
     const shopifyProductUrl = `https://${conn.store_domain}/admin/products/${product.id}`;
 
-    // --- STEP 2: Upload color variant images and assign to variants ---
+    // --- STEP 2: Upload color variant images and assign to variants (parallel) ---
     if (colorImages && Array.isArray(colorImages) && colorImages.length > 0 && product.variants?.length > 0) {
       steps.push('Enviando imagens das variantes...');
-      for (const ci of colorImages) {
-        if (!ci.imageBase64 || !ci.variantName) continue;
+      const validColorImages = colorImages.filter((ci: any) => ci.imageBase64 && ci.variantName);
+      await runInBatches(validColorImages, 4, async (ci: any) => {
         const matchingVariant = product.variants.find((v: any) => v.option1 === ci.variantName);
         if (!matchingVariant) {
           console.warn(`[shopify-publish] No matching variant for color: ${ci.variantName}`);
-          continue;
+          return;
         }
-
         try {
-          const imgRes = await fetch(`${baseUrl}/products/${product.id}/images.json`, {
+          const imgRes = await shopifyFetch(`${baseUrl}/products/${product.id}/images.json`, {
             method: 'POST',
             headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -334,7 +333,7 @@ async function handle(req: Request): Promise<Response> {
                 variant_ids: [matchingVariant.id],
               },
             }),
-          });
+          }, { label: `variant image ${ci.variantName}` });
           if (!imgRes.ok) {
             const errText = await imgRes.text();
             console.error(`[shopify-publish] Variant image upload failed for ${ci.variantName}:`, errText);
@@ -344,77 +343,79 @@ async function handle(req: Request): Promise<Response> {
         } catch (err) {
           console.error(`[shopify-publish] Variant image error for ${ci.variantName}:`, err);
         }
-      }
+      });
     }
 
     // --- STEP 3: Get locations ---
     steps.push('Buscando localizações...');
     let primaryLocationId: number | null = null;
     try {
-      const locRes = await fetch(`${baseUrl}/locations.json`, {
+      const locRes = await shopifyFetch(`${baseUrl}/locations.json`, {
         headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
-      });
+      }, { label: 'get locations' });
       if (locRes.ok) {
         const locData = await locRes.json();
         if (locData.locations?.length > 0) primaryLocationId = locData.locations[0].id;
       }
-    } catch {}
+    } catch (err) {
+      console.warn('[shopify-publish] Failed to fetch locations:', err);
+    }
 
-    // --- STEP 4: Set inventory levels ---
+    // --- STEP 4: Set inventory levels (parallel) ---
     if (primaryLocationId && product.variants?.length > 0) {
       steps.push('Configurando estoque...');
-      for (let i = 0; i < product.variants.length; i++) {
-        const variant = product.variants[i];
+      await runInBatches(product.variants, 4, async (variant: any, i: number) => {
         const bodyVar = bodyVariants?.[i];
         const stock = bodyVar?.stock ?? 0;
-        if (variant.inventory_item_id) {
-          try {
-            await fetch(`${baseUrl}/inventory_levels/set.json`, {
-              method: 'POST',
-              headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ location_id: primaryLocationId, inventory_item_id: variant.inventory_item_id, available: stock }),
-            });
-          } catch {}
+        if (!variant.inventory_item_id) return;
+        try {
+          const r = await shopifyFetch(`${baseUrl}/inventory_levels/set.json`, {
+            method: 'POST',
+            headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ location_id: primaryLocationId, inventory_item_id: variant.inventory_item_id, available: stock }),
+          }, { label: `inventory variant ${variant.id}` });
+          if (!r.ok) console.warn(`[shopify-publish] Inventory non-OK (${r.status}) for variant ${variant.id}:`, await r.text());
+        } catch (err) {
+          console.warn(`[shopify-publish] Inventory error for variant ${variant.id}:`, err);
         }
-      }
+      });
     }
 
-    // --- STEP 5: Set cost per item ---
+    // --- STEP 5: Set cost per item (parallel) ---
     if (product.variants?.length > 0) {
       steps.push('Definindo custos...');
-      for (let i = 0; i < product.variants.length; i++) {
-        const variant = product.variants[i];
+      await runInBatches(product.variants, 4, async (variant: any, i: number) => {
         const bodyVar = bodyVariants?.[i];
         const itemCost = bodyVar?.cost ?? cost;
-        if (itemCost && itemCost > 0 && variant.inventory_item_id) {
-          try {
-            await fetch(`${baseUrl}/inventory_items/${variant.inventory_item_id}.json`, {
-              method: 'PUT',
-              headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ inventory_item: { cost: itemCost.toString(), country_code_of_origin: countryOfOrigin || null } }),
-            });
-          } catch {}
+        if (!(itemCost && itemCost > 0 && variant.inventory_item_id)) return;
+        try {
+          const r = await shopifyFetch(`${baseUrl}/inventory_items/${variant.inventory_item_id}.json`, {
+            method: 'PUT',
+            headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ inventory_item: { cost: itemCost.toString(), country_code_of_origin: countryOfOrigin || null } }),
+          }, { label: `cost variant ${variant.id}` });
+          if (!r.ok) console.warn(`[shopify-publish] Cost non-OK (${r.status}) for variant ${variant.id}:`, await r.text());
+        } catch (err) {
+          console.warn(`[shopify-publish] Cost error for variant ${variant.id}:`, err);
         }
-      }
+      });
     }
 
-    // --- STEP 6: Add to collections ---
-    if (collection) {
-      steps.push('Adicionando à coleção...');
-    }
-
-    // --- STEP 7: Publish to sales channels ---
+    // --- STEP 6: Publish to sales channels (parallel) ---
     if (selectedChannels?.length > 0) {
       steps.push('Publicando nos canais de venda...');
-      for (const channelId of selectedChannels) {
+      await runInBatches(selectedChannels, 4, async (channelId: string) => {
         try {
-          await fetch(`${baseUrl}/publications/${channelId}/product_listings/${product.id}.json`, {
+          const r = await shopifyFetch(`${baseUrl}/publications/${channelId}/product_listings/${product.id}.json`, {
             method: 'PUT',
             headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
             body: JSON.stringify({ product_listing: { product_id: product.id } }),
-          });
-        } catch {}
-      }
+          }, { label: `publish channel ${channelId}` });
+          if (!r.ok) console.warn(`[shopify-publish] Channel publish non-OK (${r.status}) for ${channelId}:`, await r.text());
+        } catch (err) {
+          console.warn(`[shopify-publish] Channel publish error for ${channelId}:`, err);
+        }
+      });
     }
 
     // --- Persist to published_products ---
