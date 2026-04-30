@@ -195,6 +195,101 @@ export function HomePage({ onNavigate }: HomePageProps) {
         </div>
       </section>
 
+      {/* KPIs EXECUTIVOS */}
+      <section className="mb-12 grid grid-cols-2 md:grid-cols-4 gap-3 animate-slide-up">
+        {[
+          { label: 'Produtos publicados', value: metrics.totalProducts,      icon: Package,      tone: 'text-foreground' },
+          { label: 'Lojas conectadas',    value: metrics.connectedStores,    icon: Store,        tone: 'text-foreground' },
+          { label: 'Publicações na semana', value: metrics.weeklyPublications, icon: TrendingUp, tone: 'text-primary' },
+          { label: 'Importados pendentes', value: metrics.importedPending,   icon: Inbox,        tone: 'text-accent' },
+          { label: 'Prontos p/ publicar',  value: metrics.readyToPublish,    icon: Rocket,       tone: 'text-primary' },
+          { label: 'Imagens geradas',      value: metrics.generatedImages,   icon: ImageIcon,    tone: 'text-foreground' },
+          { label: 'Prompts ativos',       value: metrics.totalPrompts,      icon: Wand2,        tone: 'text-foreground' },
+          { label: 'Alertas',              value: (metrics.connectedStores === 0 ? 1 : 0) + (metrics.importedPending > 5 ? 1 : 0), icon: AlertTriangle, tone: 'text-[hsl(var(--warning))]' },
+        ].map((k) => (
+          <div key={k.label} className="rounded-2xl border border-border bg-card p-4 hover:bg-secondary/40 transition-colors">
+            <div className="flex items-center justify-between mb-3">
+              <span className="label-mono">{k.label}</span>
+              <k.icon className={`w-3.5 h-3.5 ${k.tone}`} strokeWidth={2.2} />
+            </div>
+            {loading ? (
+              <div className="h-8 w-12 skeleton-shimmer rounded" />
+            ) : (
+              <span className={`editorial-number text-[32px] ${k.tone}`}>{k.value}</span>
+            )}
+          </div>
+        ))}
+      </section>
+
+      {/* AÇÕES RECOMENDADAS */}
+      {!loading && (() => {
+        const actions = [
+          metrics.connectedStores === 0 && {
+            title: 'Conectar loja Shopify',
+            desc: 'Vincule sua primeira loja para começar a publicar.',
+            icon: Store, view: 'stores', tone: 'primary' as const,
+          },
+          metrics.importedPending > 0 && {
+            title: `Finalizar ${metrics.importedPending} produto${metrics.importedPending > 1 ? 's' : ''} importado${metrics.importedPending > 1 ? 's' : ''}`,
+            desc: 'Gere SEO, imagens e revise antes de publicar.',
+            icon: Sparkles, view: 'imported', tone: 'violet' as const,
+          },
+          metrics.readyToPublish > 0 && {
+            title: `Publicar ${metrics.readyToPublish} produto${metrics.readyToPublish > 1 ? 's' : ''} pronto${metrics.readyToPublish > 1 ? 's' : ''}`,
+            desc: 'Tudo validado — envie direto pra Shopify.',
+            icon: Rocket, view: 'publish', tone: 'primary' as const,
+          },
+          metrics.totalPrompts === 0 && {
+            title: 'Criar seu primeiro prompt',
+            desc: 'Salve templates de naming, SEO e imagens.',
+            icon: BookMarked, view: 'prompts', tone: 'violet' as const,
+          },
+        ].filter(Boolean) as Array<{ title: string; desc: string; icon: LucideIcon; view: string; tone: 'primary' | 'violet' }>;
+
+        if (actions.length === 0) return null;
+        return (
+          <section className="mb-14 animate-slide-up">
+            <div className="flex items-end justify-between mb-5">
+              <div>
+                <span className="label-mono">Ações recomendadas pela IA</span>
+                <h2 className="font-display text-2xl md:text-[28px] font-semibold tracking-tight text-foreground mt-1">
+                  Próximos passos
+                </h2>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {actions.map((a) => {
+                const isPrimary = a.tone === 'primary';
+                return (
+                  <button
+                    key={a.title}
+                    onClick={() => onNavigate(a.view)}
+                    className={`group text-left rounded-2xl border p-5 flex items-center gap-4 transition-all duration-300 ease-out-expo hover:-translate-y-0.5 ${
+                      isPrimary
+                        ? 'border-primary/30 bg-primary/[0.04] hover:bg-primary/[0.08] hover:shadow-[0_0_28px_-6px_hsl(var(--primary)/0.5)]'
+                        : 'border-accent/30 bg-accent/[0.04] hover:bg-accent/[0.08] hover:shadow-[0_0_28px_-6px_hsl(var(--accent)/0.5)]'
+                    }`}
+                  >
+                    <div className={`w-12 h-12 rounded-2xl border flex items-center justify-center flex-shrink-0 ${
+                      isPrimary ? 'bg-primary/10 border-primary/30' : 'bg-accent/10 border-accent/30'
+                    }`}>
+                      <a.icon className={`w-5 h-5 ${isPrimary ? 'text-primary' : 'text-accent'}`} strokeWidth={2} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-display text-[15px] font-semibold text-foreground">{a.title}</h3>
+                      <p className="text-[12.5px] text-muted-foreground mt-0.5">{a.desc}</p>
+                    </div>
+                    <ArrowRight className={`w-4 h-4 flex-shrink-0 transition-all duration-300 ${
+                      isPrimary ? 'text-primary' : 'text-accent'
+                    } group-hover:translate-x-1`} />
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })()}
+
       {/* TOOLS GRID */}
       <section className="mb-14">
         <div className="flex items-end justify-between mb-6">
