@@ -140,6 +140,9 @@ async function handle(req: Request): Promise<Response> {
         steps: [],
       }).select('id').maybeSingle();
       publicationLogId = logRow?.id ?? null;
+      if (publicationLogId) {
+        __logRef = { adminClient, id: publicationLogId, steps: logSteps };
+      }
     } catch (logErr) {
       console.warn('[shopify-publish] Failed to init publication_log:', logErr);
     }
@@ -561,6 +564,15 @@ async function handle(req: Request): Promise<Response> {
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
     console.error('[shopify-publish] Unexpected error:', e);
+    if (__logRef) {
+      try {
+        await __logRef.adminClient.from('publication_logs').update({
+          status: 'failed',
+          steps: __logRef.steps,
+          error_message: (e as Error)?.message?.slice(0, 500) || 'Unexpected error',
+        }).eq('id', __logRef.id);
+      } catch (_) { /* swallow */ }
+    }
     return new Response(JSON.stringify({ error: 'Erro interno. Tente novamente.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 }
