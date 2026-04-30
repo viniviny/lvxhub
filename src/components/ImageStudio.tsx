@@ -39,17 +39,30 @@ const RATIOS: { id: AspectRatio; label: string; icon: any; cls: string }[] = [
 ];
 
 const MODES = [
-  { id: 'product', label: 'Product Photo' },
-  { id: 'model', label: 'Model Shot' },
-  { id: 'detail', label: 'Detail Shot' },
+  { id: 'product', label: 'Foto de Produto' },
+  { id: 'model', label: 'Foto com Modelo' },
+  { id: 'detail', label: 'Detalhe' },
   { id: 'flatlay', label: 'Flat Lay' },
-  { id: 'background_swap', label: 'Background Swap' },
-  { id: 'same_style', label: 'Same Style' },
-  { id: 'new_branch', label: 'New Branch' },
-  { id: 'ads', label: 'Ads Creative' },
+  { id: 'background_swap', label: 'Trocar Fundo' },
+  { id: 'same_style', label: 'Mesmo Estilo' },
+  { id: 'new_branch', label: 'Nova Direção' },
+  { id: 'ads', label: 'Criativo de Anúncio' },
   { id: 'marketplace', label: 'Marketplace' },
   { id: 'banner', label: 'Banner' },
 ];
+
+const ROLE_LABELS_PT: Record<string, string> = {
+  anchor: 'âncora',
+  variation: 'variação',
+  branch: 'ramificação',
+  upscale: 'upscale',
+};
+const roleLabelPt = (r?: string | null) => (r && ROLE_LABELS_PT[r]) || r || '';
+const modeLabelPt = (m?: string | null) => {
+  if (!m) return '';
+  const found = MODES.find((x) => x.id === m);
+  return found ? found.label : m;
+};
 
 type Locks = {
   style: boolean;
@@ -295,9 +308,9 @@ export function ImageStudio() {
       <div className="lg:hidden">
         <Tabs value={mobileTab} onValueChange={(v) => setMobileTab(v as any)}>
           <TabsList className="grid grid-cols-4 w-full">
-            <TabsTrigger value="canvas">Canvas</TabsTrigger>
-            <TabsTrigger value="flow">Flow</TabsTrigger>
-            <TabsTrigger value="controls">Controls</TabsTrigger>
+            <TabsTrigger value="canvas">Tela</TabsTrigger>
+            <TabsTrigger value="flow">Fluxo</TabsTrigger>
+            <TabsTrigger value="controls">Controles</TabsTrigger>
             <TabsTrigger value="approved">Aprovadas</TabsTrigger>
           </TabsList>
           <TabsContent value="canvas" className="h-[calc(100vh-220px)] min-h-[480px]">{CanvasPanel}</TabsContent>
@@ -385,7 +398,7 @@ function EmptyStudio({ onCreate }: { onCreate: () => void }) {
           <Wand2 className="w-7 h-7 text-primary" />
         </div>
         <h2 className="font-display text-2xl font-semibold tracking-tight mb-2">
-          Start a visual workflow
+          Inicie um fluxo visual
         </h2>
         <p className="text-sm text-muted-foreground mb-6">
           Crie um projeto visual independente. Defina uma direção, gere variações infinitas e
@@ -423,7 +436,7 @@ function FlowSidebar(props: {
   return (
     <aside className="h-full rounded-xl border border-border bg-card/40 backdrop-blur-sm flex flex-col overflow-hidden">
       <header className="px-3 py-3 border-b border-border flex items-center justify-between">
-        <span className="label-mono">Flow</span>
+        <span className="label-mono">Fluxo</span>
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={props.onNewProject}>
           <Plus className="w-3.5 h-3.5" />
         </Button>
@@ -505,7 +518,7 @@ function FlowSidebar(props: {
             <FlowImageThumb image={props.anchorImage} active={props.selectedImageId === props.anchorImage.id} onClick={() => props.onSelectImage(props.anchorImage!.id)} />
           ) : (
             <div className="text-[11px] text-muted-foreground px-2 py-3 rounded-lg border border-dashed border-border">
-              Nenhuma âncora. Selecione uma imagem e clique em "Set as Anchor".
+              Nenhuma âncora. Selecione uma imagem e clique em "Definir como Âncora".
             </div>
           )}
         </section>
@@ -617,17 +630,17 @@ function Canvas(props: {
   return (
     <div className="h-full rounded-xl border border-border bg-card/40 backdrop-blur-sm flex flex-col overflow-hidden">
       <header className="px-4 py-3 border-b border-border flex items-center justify-between">
-        <span className="label-mono">Canvas</span>
+        <span className="label-mono">Tela</span>
         {props.image && (
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             <Badge variant="outline" className="h-5 text-[10px] capitalize">
-              {props.image.role}
+              {roleLabelPt(props.image.role)}
             </Badge>
             {props.image.aspect_ratio && (
               <Badge variant="outline" className="h-5 text-[10px]">{props.image.aspect_ratio}</Badge>
             )}
             {props.image.mode && (
-              <Badge variant="outline" className="h-5 text-[10px] capitalize">{props.image.mode}</Badge>
+              <Badge variant="outline" className="h-5 text-[10px] capitalize">{modeLabelPt(props.image.mode)}</Badge>
             )}
           </div>
         )}
@@ -663,7 +676,7 @@ function Canvas(props: {
             <div className="mx-auto w-14 h-14 rounded-2xl bg-secondary border border-border flex items-center justify-center mb-4">
               <ImageIcon className="w-6 h-6 text-muted-foreground" />
             </div>
-            <h3 className="font-display text-lg font-semibold mb-1">Create your first visual direction</h3>
+            <h3 className="font-display text-lg font-semibold mb-1">Crie sua primeira direção visual</h3>
             <p className="text-xs text-muted-foreground mb-5">
               Comece pelo prompt à direita ou carregue uma referência para definir a âncora.
             </p>
@@ -679,7 +692,7 @@ function Canvas(props: {
           <div className="flex items-center gap-2 flex-wrap">
             <Button size="sm" variant={props.isAnchor ? 'default' : 'outline'} onClick={props.onSetAnchor} disabled={props.isAnchor}>
               <Anchor className="w-3.5 h-3.5 mr-1.5" />
-              {props.isAnchor ? 'Âncora' : 'Set as Anchor'}
+              {props.isAnchor ? 'Âncora' : 'Definir como Âncora'}
             </Button>
             <Button
               size="sm"
@@ -690,10 +703,10 @@ function Canvas(props: {
               {props.image.approved ? 'Aprovada' : 'Aprovar'}
             </Button>
             <Button size="sm" variant="outline" onClick={props.onVariation}>
-              <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Variation
+              <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Variação
             </Button>
             <Button size="sm" variant="outline" onClick={props.onBranch}>
-              <GitBranch className="w-3.5 h-3.5 mr-1.5" /> Branch
+              <GitBranch className="w-3.5 h-3.5 mr-1.5" /> Ramificar
             </Button>
             <div className="ml-auto flex items-center gap-1.5">
               <Button size="sm" variant="ghost" onClick={props.onDownload}>
@@ -733,7 +746,7 @@ function ControlsSidebar(props: {
   return (
     <aside className="h-full rounded-xl border border-border bg-card/40 backdrop-blur-sm flex flex-col overflow-hidden">
       <header className="px-3 py-3 border-b border-border flex items-center gap-2">
-        <span className="label-mono">Controls</span>
+        <span className="label-mono">Controles</span>
       </header>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar px-3 py-3 space-y-5">
@@ -784,7 +797,7 @@ function ControlsSidebar(props: {
 
         {/* MODE */}
         <section className="space-y-2">
-          <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Mode</Label>
+          <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Modo</Label>
           <div className="flex flex-wrap gap-1.5">
             {MODES.map((m) => (
               <button
@@ -806,25 +819,25 @@ function ControlsSidebar(props: {
         {/* CONSISTENCY (Visual DNA Locks) */}
         <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Consistency</Label>
-            <span className="text-[9px] text-muted-foreground">Visual DNA</span>
+            <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Consistência</Label>
+            <span className="text-[9px] text-muted-foreground">DNA Visual</span>
           </div>
           <div className="space-y-1.5 rounded-lg border border-border bg-secondary/30 p-2.5">
-            <LockRow icon={<Palette className="w-3 h-3" />} label="Style Lock" enabled={props.locks.style} onChange={(v) => props.setLocks({ ...props.locks, style: v })} />
-            <LockRow icon={<Lock className="w-3 h-3" />} label="Product Lock" enabled={props.locks.product} onChange={(v) => props.setLocks({ ...props.locks, product: v })} />
-            <LockRow icon={<ImageIcon className="w-3 h-3" />} label="Background Lock" enabled={props.locks.background} onChange={(v) => props.setLocks({ ...props.locks, background: v })} />
-            <LockRow icon={<Camera className="w-3 h-3" />} label="Model Lock" enabled={props.locks.model} onChange={(v) => props.setLocks({ ...props.locks, model: v })} />
-            <LockRow icon={<Anchor className="w-3 h-3" />} label="Use Anchor" enabled={props.locks.useAnchor} onChange={(v) => props.setLocks({ ...props.locks, useAnchor: v })} disabled={!props.hasAnchor} hint={!props.hasAnchor ? 'Defina uma âncora' : undefined} />
-            <LockRow icon={<Sparkles className="w-3 h-3" />} label="Seed Family" enabled={props.locks.useSeedFamily} onChange={(v) => props.setLocks({ ...props.locks, useSeedFamily: v })} />
+            <LockRow icon={<Palette className="w-3 h-3" />} label="Travar Estilo" enabled={props.locks.style} onChange={(v) => props.setLocks({ ...props.locks, style: v })} />
+            <LockRow icon={<Lock className="w-3 h-3" />} label="Travar Produto" enabled={props.locks.product} onChange={(v) => props.setLocks({ ...props.locks, product: v })} />
+            <LockRow icon={<ImageIcon className="w-3 h-3" />} label="Travar Fundo" enabled={props.locks.background} onChange={(v) => props.setLocks({ ...props.locks, background: v })} />
+            <LockRow icon={<Camera className="w-3 h-3" />} label="Travar Modelo" enabled={props.locks.model} onChange={(v) => props.setLocks({ ...props.locks, model: v })} />
+            <LockRow icon={<Anchor className="w-3 h-3" />} label="Usar Âncora" enabled={props.locks.useAnchor} onChange={(v) => props.setLocks({ ...props.locks, useAnchor: v })} disabled={!props.hasAnchor} hint={!props.hasAnchor ? 'Defina uma âncora' : undefined} />
+            <LockRow icon={<Sparkles className="w-3 h-3" />} label="Família de Seeds" enabled={props.locks.useSeedFamily} onChange={(v) => props.setLocks({ ...props.locks, useSeedFamily: v })} />
           </div>
         </section>
 
         {/* OUTPUT */}
         <section className="space-y-3">
-          <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Output</Label>
+          <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Saída</Label>
 
           <div>
-            <span className="text-[10px] text-muted-foreground">Aspect ratio</span>
+            <span className="text-[10px] text-muted-foreground">Proporção</span>
             <div className="grid grid-cols-4 gap-1.5 mt-1">
               {RATIOS.map((r) => {
                 const Icon = r.icon;
@@ -847,7 +860,7 @@ function ControlsSidebar(props: {
           </div>
 
           <div>
-            <span className="text-[10px] text-muted-foreground">Quantity</span>
+            <span className="text-[10px] text-muted-foreground">Quantidade</span>
             <div className="grid grid-cols-3 gap-1.5 mt-1">
               {([1, 2, 4] as const).map((n) => (
                 <button
@@ -866,18 +879,18 @@ function ControlsSidebar(props: {
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <span className="text-[10px] text-muted-foreground">Quality</span>
+              <span className="text-[10px] text-muted-foreground">Qualidade</span>
               <Select value={props.quality} onValueChange={props.setQuality}>
                 <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="standard">Standard</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="standard">Padrão</SelectItem>
+                  <SelectItem value="high">Alta</SelectItem>
                   <SelectItem value="ultra">Ultra</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <span className="text-[10px] text-muted-foreground">Format</span>
+              <span className="text-[10px] text-muted-foreground">Formato</span>
               <Select value={props.format} onValueChange={props.setFormat}>
                 <SelectTrigger className="h-8 text-xs mt-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -895,14 +908,14 @@ function ControlsSidebar(props: {
       <div className="border-t border-border p-3 space-y-2 bg-card/60 backdrop-blur-sm">
         <Button className="w-full h-10" onClick={props.onGenerate} disabled={props.generating || props.prompt.trim().length < 3}>
           {props.generating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
-          {props.generating ? 'Gerando...' : 'Generate'}
+          {props.generating ? 'Gerando...' : 'Gerar'}
         </Button>
         <div className="grid grid-cols-2 gap-2">
           <Button variant="outline" size="sm" onClick={props.onVariation} disabled={props.generating || !props.hasImage}>
-            <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Variation
+            <Sparkles className="w-3.5 h-3.5 mr-1.5" /> Variação
           </Button>
           <Button variant="outline" size="sm" onClick={props.onBranch} disabled={props.generating || !props.hasImage}>
-            <GitBranch className="w-3.5 h-3.5 mr-1.5" /> Branch
+            <GitBranch className="w-3.5 h-3.5 mr-1.5" /> Ramificar
           </Button>
         </div>
       </div>
