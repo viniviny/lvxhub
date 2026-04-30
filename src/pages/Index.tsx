@@ -1820,7 +1820,7 @@ const Index = () => {
 
             {/* IMPORT URL VIEW */}
             {currentView === 'import-url' && (
-              <ImportFromURL onImportComplete={() => setCurrentView('imported')} />
+              <ImportFromURL onImportComplete={() => setCurrentView('history')} />
             )}
 
             {/* LIBRARY VIEW */}

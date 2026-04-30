@@ -1,9 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Link2, Search, CheckCircle2, X, RotateCcw } from 'lucide-react';
+import { Loader2, Link2, Search, CheckCircle2, X, RotateCcw, Store } from 'lucide-react';
 
 interface PreviewProduct {
   handle: string;
@@ -19,6 +19,12 @@ interface PreviewProduct {
 
 interface ImportFromURLProps {
   onImportComplete?: () => void;
+}
+
+interface ConnectedStore {
+  id: string;
+  shop_name: string;
+  store_domain: string;
 }
 
 const EXAMPLE_STORES = [
@@ -52,6 +58,21 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
   } | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
+  const [stores, setStores] = useState<ConnectedStore[]>([]);
+  const [targetStoreId, setTargetStoreId] = useState<string>('');
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from('shopify_connections')
+        .select('id, shop_name, store_domain')
+        .eq('is_active', true)
+        .order('created_at', { ascending: true });
+      const list = (data || []) as ConnectedStore[];
+      setStores(list);
+      if (list.length === 1) setTargetStoreId(list[0].id);
+    })();
+  }, []);
 
   const urlType = detectType(url);
 
@@ -115,15 +136,25 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
 
   const handleImport = async () => {
     if (!preview || selected.size === 0) return;
+    if (!targetStoreId) {
+      toast.error('Selecione a loja Shopify de destino antes de importar.');
+      return;
+    }
     const toImport = preview.products.filter(p => selected.has(p.handle));
     setImporting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('import-shopify-products', {
-        body: { products: toImport, origin: preview.origin },
+      const { data, error } = await supabase.functions.invoke('import-shopify-direct', {
+        body: { products: toImport, origin: preview.origin, storeId: targetStoreId },
       });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Erro ao importar');
-      toast.success(`${data.created} produto${data.created !== 1 ? 's' : ''} importado${data.created !== 1 ? 's' : ''} com sucesso`);
+      const store = stores.find(s => s.id === targetStoreId);
+      toast.success(
+        `${data.created} produto${data.created !== 1 ? 's' : ''} publicado${data.created !== 1 ? 's' : ''} em ${store?.store_domain || 'sua loja'}`
+      );
+      if (data.failed > 0) {
+        toast.error(`${data.failed} falharam: ${(data.errors || []).slice(0, 2).join(' | ')}`);
+      }
       onImportComplete?.();
     } catch (err: any) {
       toast.error(err.message || 'Erro ao importar produtos');
@@ -145,11 +176,37 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
         <div className="mb-6">
           <h2 className="font-display text-2xl font-bold text-foreground">Importar via URL</h2>
           <p className="text-muted-foreground text-sm mt-1">
-            Cole a URL de um produto, coleção ou loja Shopify para importar produtos.
+            Cole a URL de um produto, coleção ou loja Shopify. Os produtos vão direto para a sua loja, ativos e visíveis.
           </p>
         </div>
 
         <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+          {/* Seletor de loja destino */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+              <Store className="w-3.5 h-3.5 text-muted-foreground" />
+              Loja de destino
+            </label>
+            {stores.length === 0 ? (
+              <div className="text-xs text-destructive border border-destructive/30 bg-destructive/5 rounded-md px-3 py-2">
+                Nenhuma loja Shopify conectada. Conecte uma loja em "Lojas" antes de importar.
+              </div>
+            ) : (
+              <select
+                value={targetStoreId}
+                onChange={e => setTargetStoreId(e.target.value)}
+                className="w-full h-10 rounded-md border border-input bg-card px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Selecione uma loja...</option>
+                {stores.map(s => (
+                  <option key={s.id} value={s.id}>
+                    {s.shop_name} — {s.store_domain}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Input
@@ -308,13 +365,25 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
         <span className="text-sm text-muted-foreground whitespace-nowrap">
           <span className="font-semibold text-foreground">{selected.size}</span> de {preview.total} selecionados
         </span>
+        {stores.length > 1 && (
+          <select
+            value={targetStoreId}
+            onChange={e => setTargetStoreId(e.target.value)}
+            className="h-8 rounded-md border border-input bg-card px-2 text-xs max-w-[180px]"
+          >
+            <option value="">Loja destino...</option>
+            {stores.map(s => (
+              <option key={s.id} value={s.id}>{s.store_domain}</option>
+            ))}
+          </select>
+        )}
         <Button
           onClick={handleImport}
-          disabled={selected.size === 0 || importing}
+          disabled={selected.size === 0 || importing || !targetStoreId}
           size="sm"
         >
           {importing && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
-          {importing ? `Importando ${selected.size}...` : `Importar ${selected.size} produto${selected.size !== 1 ? 's' : ''}`}
+          {importing ? `Publicando ${selected.size}...` : `Publicar ${selected.size} na Shopify`}
         </Button>
       </div>
     </div>
