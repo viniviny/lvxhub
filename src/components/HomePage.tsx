@@ -5,6 +5,7 @@ import {
   Package, Clock, ArrowRight, CheckCircle2, Zap,
   Download, Sparkles, FileText, Ruler, ImageIcon, UserSquare2,
   Eraser, FileImage, UploadCloud, BookMarked, PlayCircle,
+  type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SpotlightCard } from '@/components/SpotlightCard';
@@ -75,7 +76,7 @@ export function HomePage({ onNavigate }: HomePageProps) {
     id: string;
     title: string;
     desc: string;
-    icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+    icon: LucideIcon;
     badge: 'AI' | 'Novo' | 'Rápido' | 'Shopify' | 'Visual';
     view: string;
     accent?: 'primary' | 'violet' | 'success' | 'warning';
