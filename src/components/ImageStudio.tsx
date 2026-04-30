@@ -39,14 +39,14 @@ const RATIOS: { id: AspectRatio; label: string; icon: any; cls: string }[] = [
 ];
 
 const MODES = [
-  { id: 'product', label: 'Product Photo' },
-  { id: 'model', label: 'Model Shot' },
-  { id: 'detail', label: 'Detail Shot' },
+  { id: 'product', label: 'Foto de Produto' },
+  { id: 'model', label: 'Foto com Modelo' },
+  { id: 'detail', label: 'Detalhe' },
   { id: 'flatlay', label: 'Flat Lay' },
-  { id: 'background_swap', label: 'Background Swap' },
-  { id: 'same_style', label: 'Same Style' },
-  { id: 'new_branch', label: 'New Branch' },
-  { id: 'ads', label: 'Ads Creative' },
+  { id: 'background_swap', label: 'Trocar Fundo' },
+  { id: 'same_style', label: 'Mesmo Estilo' },
+  { id: 'new_branch', label: 'Nova Direção' },
+  { id: 'ads', label: 'Criativo de Anúncio' },
   { id: 'marketplace', label: 'Marketplace' },
   { id: 'banner', label: 'Banner' },
 ];
@@ -295,9 +295,9 @@ export function ImageStudio() {
       <div className="lg:hidden">
         <Tabs value={mobileTab} onValueChange={(v) => setMobileTab(v as any)}>
           <TabsList className="grid grid-cols-4 w-full">
-            <TabsTrigger value="canvas">Canvas</TabsTrigger>
-            <TabsTrigger value="flow">Flow</TabsTrigger>
-            <TabsTrigger value="controls">Controls</TabsTrigger>
+            <TabsTrigger value="canvas">Tela</TabsTrigger>
+            <TabsTrigger value="flow">Fluxo</TabsTrigger>
+            <TabsTrigger value="controls">Controles</TabsTrigger>
             <TabsTrigger value="approved">Aprovadas</TabsTrigger>
           </TabsList>
           <TabsContent value="canvas" className="h-[calc(100vh-220px)] min-h-[480px]">{CanvasPanel}</TabsContent>
