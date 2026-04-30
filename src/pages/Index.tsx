@@ -43,7 +43,7 @@ import { SEOCard } from '@/components/SEOCard';
 import { ColorManager, ProductColor } from '@/components/ColorManager';
 import { AddCustomSize } from '@/components/AddCustomSize';
 import { AIFieldButtons } from '@/components/AIFieldButtons';
-import { AIUnderstandingCard } from '@/components/AIUnderstandingCard';
+import { AIProductUnderstandingPanel } from '@/components/AIProductUnderstandingPanel';
 import { buildProductAIContext } from '@/types/productUnderstanding';
 import { ProductTypeCombobox } from '@/components/ProductTypeCombobox';
 import { UsageDashboard } from '@/components/UsageDashboard';
@@ -1494,8 +1494,16 @@ const Index = () => {
                           </div>
                         </div>
 
-                        {/* AI Understanding summary */}
-                        {!aiDisabled && <AIUnderstandingCard understanding={understanding} gender={form.gender} specs={specs} isGeneratingSpecs={isGeneratingSpecs} onRegenerateSpecs={handleRegenerateSpecs} />}
+                        {/* AI Product Understanding (premium panel) */}
+                        {!aiDisabled && (
+                          <AIProductUnderstandingPanel
+                            understanding={understanding}
+                            gender={form.gender}
+                            specs={specs}
+                            isGeneratingSpecs={isGeneratingSpecs}
+                            onRegenerateSpecs={handleRegenerateSpecs}
+                          />
+                        )}
                       </div>
                     </div>
                   )}
