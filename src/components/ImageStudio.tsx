@@ -612,9 +612,6 @@ function Canvas(props: {
             {props.image.aspect_ratio && (
               <Badge variant="outline" className="h-5 text-[10px]">{props.image.aspect_ratio}</Badge>
             )}
-            {props.image.mode && (
-              <Badge variant="outline" className="h-5 text-[10px] capitalize">{modeLabelPt(props.image.mode)}</Badge>
-            )}
           </div>
         )}
       </header>
@@ -701,21 +698,15 @@ function Canvas(props: {
 // ═══════════════════════════════════════════════════════════════════════
 function ControlsSidebar(props: {
   prompt: string; setPrompt: (v: string) => void;
-  mode: string; setMode: (v: string) => void;
   aspectRatio: AspectRatio; setAspectRatio: (v: AspectRatio) => void;
   quantity: 1 | 2 | 4; setQuantity: (v: 1 | 2 | 4) => void;
   quality: 'standard' | 'high' | 'ultra'; setQuality: (v: any) => void;
   format: 'png' | 'jpg' | 'webp'; setFormat: (v: any) => void;
-  presetId: string; setPresetId: (v: string) => void;
-  presets: any[];
   locks: Locks; setLocks: (v: Locks) => void;
   generating: boolean;
   hasImage: boolean; hasAnchor: boolean;
   onGenerate: () => void; onVariation: () => void; onBranch: () => void;
 }) {
-  const stylePresets = props.presets.filter((p) => p.preset_type === 'style');
-  const packPresets = props.presets.filter((p) => p.preset_type === 'pack');
-
   return (
     <aside className="h-full rounded-xl border border-border bg-card/40 backdrop-blur-sm flex flex-col overflow-hidden">
       <header className="px-3 py-3 border-b border-border flex items-center gap-2">
@@ -736,56 +727,6 @@ function ControlsSidebar(props: {
           />
           <div className="flex items-center justify-between text-[10px] text-muted-foreground">
             <span>{props.prompt.length}/2000</span>
-          </div>
-        </section>
-
-        {/* PRESET */}
-        <section className="space-y-2">
-          <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Preset</Label>
-          <Select value={props.presetId || 'none'} onValueChange={(v) => props.setPresetId(v === 'none' ? '' : v)}>
-            <SelectTrigger className="h-9 text-xs">
-              <SelectValue placeholder="Sem preset" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Sem preset</SelectItem>
-              {stylePresets.length > 0 && (
-                <>
-                  <div className="px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wider">Estilo</div>
-                  {stylePresets.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </>
-              )}
-              {packPresets.length > 0 && (
-                <>
-                  <div className="px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wider">Packs</div>
-                  {packPresets.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </>
-              )}
-            </SelectContent>
-          </Select>
-        </section>
-
-        {/* MODE */}
-        <section className="space-y-2">
-          <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Modo</Label>
-          <div className="flex flex-wrap gap-1.5">
-            {MODES.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => props.setMode(m.id)}
-                className={cn(
-                  'px-2.5 py-1 text-[11px] rounded-full border transition',
-                  props.mode === m.id
-                    ? 'bg-primary/10 border-primary/30 text-foreground'
-                    : 'border-border bg-secondary/40 text-muted-foreground hover:text-foreground hover:border-foreground/30',
-                )}
-              >
-                {m.label}
-              </button>
-            ))}
           </div>
         </section>
 
