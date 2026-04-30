@@ -38,19 +38,6 @@ const RATIOS: { id: AspectRatio; label: string; icon: any; cls: string }[] = [
   { id: '16:9', label: '16:9', icon: Monitor, cls: 'aspect-[16/9]' },
 ];
 
-const MODES = [
-  { id: 'product', label: 'Foto de Produto' },
-  { id: 'model', label: 'Foto com Modelo' },
-  { id: 'detail', label: 'Detalhe' },
-  { id: 'flatlay', label: 'Flat Lay' },
-  { id: 'background_swap', label: 'Trocar Fundo' },
-  { id: 'same_style', label: 'Mesmo Estilo' },
-  { id: 'new_branch', label: 'Nova Direção' },
-  { id: 'ads', label: 'Criativo de Anúncio' },
-  { id: 'marketplace', label: 'Marketplace' },
-  { id: 'banner', label: 'Banner' },
-];
-
 const ROLE_LABELS_PT: Record<string, string> = {
   anchor: 'âncora',
   variation: 'variação',
@@ -58,11 +45,6 @@ const ROLE_LABELS_PT: Record<string, string> = {
   upscale: 'upscale',
 };
 const roleLabelPt = (r?: string | null) => (r && ROLE_LABELS_PT[r]) || r || '';
-const modeLabelPt = (m?: string | null) => {
-  if (!m) return '';
-  const found = MODES.find((x) => x.id === m);
-  return found ? found.label : m;
-};
 
 type Locks = {
   style: boolean;
@@ -85,7 +67,7 @@ const DEFAULT_LOCKS: Locks = {
 export function ImageStudio() {
   const studio = useImageStudio();
   const {
-    loading, projects, sessions, images, presets,
+    loading, projects, sessions, images,
     activeProject, activeSession, activeProjectId, activeSessionId,
     createProject, selectProject, selectSession, deleteProject,
     setAnchor, setApproved, deleteImage, generate, updateSessionDNA,
@@ -93,12 +75,10 @@ export function ImageStudio() {
 
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
-  const [mode, setMode] = useState<string>('product');
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('4:5');
   const [quantity, setQuantity] = useState<1 | 2 | 4>(1);
   const [quality, setQuality] = useState<'standard' | 'high' | 'ultra'>('high');
   const [format, setFormat] = useState<'png' | 'jpg' | 'webp'>('png');
-  const [presetId, setPresetId] = useState<string>('');
   const [locks, setLocks] = useState<Locks>(DEFAULT_LOCKS);
   const [generating, setGenerating] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
@@ -138,11 +118,9 @@ export function ImageStudio() {
     try {
       await generate({
         user_prompt: prompt.trim(),
-        mode,
         role: overrides?.role || (images.length === 0 ? 'anchor' : 'variation'),
         locks,
         output: { quantity, aspect_ratio: aspectRatio, quality, format },
-        preset_id: presetId || undefined,
         parent_image_id: overrides?.parent_image_id,
       });
       toast.success('Imagem gerada');
@@ -250,8 +228,6 @@ export function ImageStudio() {
     <ControlsSidebar
       prompt={prompt}
       setPrompt={setPrompt}
-      mode={mode}
-      setMode={setMode}
       aspectRatio={aspectRatio}
       setAspectRatio={setAspectRatio}
       quantity={quantity}
@@ -260,9 +236,6 @@ export function ImageStudio() {
       setQuality={setQuality}
       format={format}
       setFormat={setFormat}
-      presetId={presetId}
-      setPresetId={setPresetId}
-      presets={presets}
       locks={locks}
       setLocks={setLocks}
       generating={generating}
