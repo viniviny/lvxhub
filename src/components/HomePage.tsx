@@ -374,7 +374,26 @@ export function HomePage({ onNavigate }: HomePageProps) {
       </section>
 
       {/* Recent Products */}
-      {!loading && metrics.recentProducts.length > 0 && (
+      {loading ? (
+        <div className="frost noise p-5 rounded-2xl border border-border">
+          <div className="flex items-center justify-between mb-4">
+            <div className="h-4 w-44 skeleton-shimmer rounded" />
+            <div className="h-6 w-16 skeleton-shimmer rounded" />
+          </div>
+          <div className="space-y-1">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 py-2.5 px-2 border-b border-border/40 last:border-0">
+                <div className="w-9 h-9 rounded-lg skeleton-shimmer flex-shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3 w-2/3 skeleton-shimmer rounded" />
+                  <div className="h-2.5 w-1/3 skeleton-shimmer rounded" />
+                </div>
+                <div className="h-3 w-12 skeleton-shimmer rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : metrics.recentProducts.length > 0 && (
         <SpotlightCard className="frost noise p-5 rounded-2xl border border-border animate-slide-up" >
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-display font-semibold text-foreground flex items-center gap-2">
