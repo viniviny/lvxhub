@@ -1866,8 +1866,8 @@ const Index = () => {
             {/* LIBRARY VIEW */}
             {currentView === 'library' && <ImageLibrary />}
 
-            {/* IMAGE GENERATOR VIEW */}
-            {currentView === 'image-generator' && <ImageGeneratorModule />}
+            {/* IMAGE STUDIO (independent visual creation) */}
+            {currentView === 'image-generator' && <ImageStudio />}
 
             {/* STORES VIEW */}
             {currentView === 'stores' && (
