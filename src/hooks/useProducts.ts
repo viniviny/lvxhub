@@ -38,7 +38,10 @@ export function useProducts() {
   const publishProduct = useCallback(async (formData: ProductFormData, imageUrl: string, imageBase64?: string, imageName?: string) => {
     setIsPublishing(true);
     try {
-      // Use the unified shopify-publish function (handles base64, variants, channels, inventory, etc.)
+      // Use the unified shopify-publish function (handles base64, variants, channels, inventory, etc.).
+      // NOTE: legacy caller — does not send connection_id. The edge function will only resolve
+      // automatically when the user has exactly one active Shopify connection. For multi-store
+      // flows use Index.tsx's publish handlers which pass connection_id explicitly.
       const { data, error } = await supabase.functions.invoke('shopify-publish', {
         body: { ...formData, imageUrl, imageBase64, imageName },
       });
