@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.process-generation-job]
 verify_jwt = false
+
+[functions.studio-generate]
+verify_jwt = false

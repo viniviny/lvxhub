@@ -25,7 +25,7 @@ const navGroups: NavGroup[] = [
   {
     label: 'AI Studio',
     items: [
-      { id: 'image-generator', label: 'Gerador de Imagem', icon: <Wand2 className="w-4 h-4" /> },
+      { id: 'image-generator', label: 'Image Studio', icon: <Wand2 className="w-4 h-4" /> },
       { id: 'library',         label: 'Biblioteca',        icon: <ImageIcon className="w-4 h-4" /> },
       { id: 'prompts',         label: 'Prompts',           icon: <BookOpen className="w-4 h-4" /> },
     ],
