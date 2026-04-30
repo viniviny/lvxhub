@@ -51,8 +51,8 @@ export function AIProductUnderstandingPanel({
   const material    = understanding.manualMaterial || specs?.material || ins.materialLook || null;
   const audience    = gender ? cap(gender) : null;
   const useCase     = understanding.useCase || specs?.use_case || null;
-  const collection  = specs?.collection_suggestion || null;
-  const tags        = specs?.suggested_tags || [];
+  const collection  = null as string | null; // not provided by current specs schema
+  const tags        = specs?.additional_features || [];
 
   // Confidence: count of resolved fields out of 8 main slots.
   const slots = [productType, style, color, fit, material, audience, useCase, collection];
