@@ -133,6 +133,10 @@ export function GlobalPublishFlow({
     }
   };
 
+  const completedCount = progress.filter(p => p.status === 'done' || p.status === 'error').length;
+  const totalCount = progress.length;
+  const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg">
@@ -236,21 +240,64 @@ export function GlobalPublishFlow({
         {/* Phase: progress */}
         {phase === 'progress' && (
           <div className="space-y-4 py-2">
+            {/* Overall progress */}
+            <div className="rounded-xl border border-border bg-secondary/30 p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-foreground">
+                  {isPublishing ? 'Publicando…' : 'Publicação concluída'}
+                </span>
+                <span className="editorial-number text-base text-foreground tabular-nums">
+                  {completedCount}<span className="text-muted-foreground/60">/{totalCount}</span>
+                </span>
+              </div>
+              <div className="relative h-1.5 rounded-full bg-card overflow-hidden">
+                <div
+                  className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${progressPct}%` }}
+                />
+                {isPublishing && (
+                  <div
+                    className="absolute inset-y-0 w-1/4 bg-gradient-to-r from-transparent via-primary-foreground/30 to-transparent"
+                    style={{ animation: 'shimmer 1.6s ease-in-out infinite', left: `${Math.max(0, progressPct - 10)}%` }}
+                  />
+                )}
+              </div>
+            </div>
+
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
               {progress.map(p => {
                 const store = stores.find(s => s.id === p.storeId);
                 if (!store) return null;
+                const isActive = p.status === 'translating' || p.status === 'publishing';
                 return (
-                  <div key={p.storeId} className="flex items-center gap-3 p-2.5 rounded-lg bg-secondary/40 border border-border">
+                  <div
+                    key={p.storeId}
+                    className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all duration-300 ${
+                      isActive
+                        ? 'border-primary/40 bg-primary/5 shadow-[0_0_0_1px_hsl(var(--primary)/0.1)]'
+                        : p.status === 'done'
+                        ? 'border-[hsl(var(--success)/0.25)] bg-[hsl(var(--success)/0.04)]'
+                        : p.status === 'error'
+                        ? 'border-destructive/30 bg-destructive/5'
+                        : 'border-border bg-secondary/40'
+                    }`}
+                  >
                     <StatusIcon status={p.status} />
                     <span className="text-lg">{store.marketConfig?.countryFlag || '🏪'}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">
                         {store.marketConfig?.marketName || store.domain}
                       </p>
-                      <p className={`text-xs ${p.status === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>
-                        {p.message}
-                      </p>
+                      {isActive ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="h-1.5 w-24 skeleton-shimmer rounded-full" />
+                          <span className="text-[10px] text-muted-foreground">{p.message}</span>
+                        </div>
+                      ) : (
+                        <p className={`text-xs ${p.status === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                          {p.message}
+                        </p>
+                      )}
                     </div>
                   </div>
                 );
