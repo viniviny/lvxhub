@@ -430,12 +430,17 @@ async function handle(req: Request): Promise<Response> {
       if (locRes.ok) {
         const locData = await locRes.json();
         if (locData.locations?.length > 0) primaryLocationId = locData.locations[0].id;
+        pushLog('get_locations', 'ok', `count=${locData.locations?.length || 0}`);
+      } else {
+        pushLog('get_locations', 'warn', `status=${locRes.status}`);
       }
     } catch (err) {
       console.warn('[shopify-publish] Failed to fetch locations:', err);
+      pushLog('get_locations', 'warn', String(err).slice(0, 200));
     }
 
     // --- STEP 4: Set inventory levels (parallel) ---
+    let inventoryWarn = false;
     if (primaryLocationId && product.variants?.length > 0) {
       steps.push('Configurando estoque...');
       await runInBatches(product.variants, 4, async (variant: any, i: number) => {
@@ -448,14 +453,17 @@ async function handle(req: Request): Promise<Response> {
             headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
             body: JSON.stringify({ location_id: primaryLocationId, inventory_item_id: variant.inventory_item_id, available: stock }),
           }, { label: `inventory variant ${variant.id}` });
-          if (!r.ok) console.warn(`[shopify-publish] Inventory non-OK (${r.status}) for variant ${variant.id}:`, await r.text());
+          if (!r.ok) { inventoryWarn = true; console.warn(`[shopify-publish] Inventory non-OK (${r.status}) for variant ${variant.id}:`, await r.text()); }
         } catch (err) {
+          inventoryWarn = true;
           console.warn(`[shopify-publish] Inventory error for variant ${variant.id}:`, err);
         }
       });
+      pushLog('set_inventory', inventoryWarn ? 'warn' : 'ok');
     }
 
     // --- STEP 5: Set cost per item (parallel) ---
+    let costWarn = false;
     if (product.variants?.length > 0) {
       steps.push('Definindo custos...');
       await runInBatches(product.variants, 4, async (variant: any, i: number) => {
@@ -468,14 +476,17 @@ async function handle(req: Request): Promise<Response> {
             headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
             body: JSON.stringify({ inventory_item: { cost: itemCost.toString(), country_code_of_origin: countryOfOrigin || null } }),
           }, { label: `cost variant ${variant.id}` });
-          if (!r.ok) console.warn(`[shopify-publish] Cost non-OK (${r.status}) for variant ${variant.id}:`, await r.text());
+          if (!r.ok) { costWarn = true; console.warn(`[shopify-publish] Cost non-OK (${r.status}) for variant ${variant.id}:`, await r.text()); }
         } catch (err) {
+          costWarn = true;
           console.warn(`[shopify-publish] Cost error for variant ${variant.id}:`, err);
         }
       });
+      pushLog('set_cost', costWarn ? 'warn' : 'ok');
     }
 
     // --- STEP 6: Publish to sales channels (parallel) ---
+    let channelsWarn = false;
     if (selectedChannels?.length > 0) {
       steps.push('Publicando nos canais de venda...');
       await runInBatches(selectedChannels, 4, async (channelId: string) => {
@@ -485,11 +496,13 @@ async function handle(req: Request): Promise<Response> {
             headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
             body: JSON.stringify({ product_listing: { product_id: product.id } }),
           }, { label: `publish channel ${channelId}` });
-          if (!r.ok) console.warn(`[shopify-publish] Channel publish non-OK (${r.status}) for ${channelId}:`, await r.text());
+          if (!r.ok) { channelsWarn = true; console.warn(`[shopify-publish] Channel publish non-OK (${r.status}) for ${channelId}:`, await r.text()); }
         } catch (err) {
+          channelsWarn = true;
           console.warn(`[shopify-publish] Channel publish error for ${channelId}:`, err);
         }
       });
+      pushLog('publish_channels', channelsWarn ? 'warn' : 'ok');
     }
 
     // --- Persist to published_products ---
