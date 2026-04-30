@@ -51,6 +51,19 @@ const MODES = [
   { id: 'banner', label: 'Banner' },
 ];
 
+const ROLE_LABELS_PT: Record<string, string> = {
+  anchor: 'âncora',
+  variation: 'variação',
+  branch: 'ramificação',
+  upscale: 'upscale',
+};
+const roleLabelPt = (r?: string | null) => (r && ROLE_LABELS_PT[r]) || r || '';
+const modeLabelPt = (m?: string | null) => {
+  if (!m) return '';
+  const found = MODES.find((x) => x.id === m);
+  return found ? found.label : m;
+};
+
 type Locks = {
   style: boolean;
   product: boolean;
