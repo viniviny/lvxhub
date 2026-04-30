@@ -542,6 +542,10 @@ async function handle(req: Request): Promise<Response> {
       if (insErr) console.error('[shopify-publish] Failed to insert published_products:', insErr);
     }
 
+    // Finalize publication log: partial_success if any non-critical step warned, success otherwise.
+    const hadWarning = logSteps.some((l) => l.status === 'warn');
+    await finalizeLog(hadWarning ? 'partial_success' : 'success', undefined, product.id.toString());
+
     return new Response(JSON.stringify({
       productId: product.id.toString(),
       title: product.title,
