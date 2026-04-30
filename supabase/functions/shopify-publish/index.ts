@@ -55,6 +55,8 @@ serve(async (req) => {
 });
 
 async function handle(req: Request): Promise<Response> {
+  // Refs hoisted so the outer catch can finalize the publication log if it was already created.
+  let __logRef: { adminClient: any; id: string; steps: any[] } | null = null;
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
