@@ -1602,7 +1602,7 @@ const Index = () => {
                             form={form}
                             hasImage={!!imageFile || generatedImages.some(i => i.url)}
                             imageCount={(imageFile ? 1 : 0) + generatedImages.filter(i => i.url).length}
-                            storeConnected={!!store?.accessToken}
+                            storeConnected={hasConnectedStore}
                           />
                         </div>
 
