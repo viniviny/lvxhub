@@ -1,8 +1,7 @@
 /**
  * useImageStudio — data layer for the independent Image Studio.
- * Wraps Supabase access to visual_projects, image_sessions,
- * studio_images and studio_presets. No coupling with products,
- * Shopify, drafts or stores.
+ * Wraps Supabase access to visual_projects, image_sessions and
+ * studio_images. No coupling with products, Shopify, drafts or stores.
  */
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,20 +46,10 @@ export type ImageSession = {
   updated_at: string;
 };
 
-export type StudioPreset = {
-  id: string;
-  name: string;
-  description: string | null;
-  preset_type: string;
-  config: any;
-  is_system: boolean;
-};
-
 export function useImageStudio() {
   const [projects, setProjects] = useState<VisualProject[]>([]);
   const [sessions, setSessions] = useState<ImageSession[]>([]);
   const [images, setImages] = useState<StudioImage[]>([]);
-  const [presets, setPresets] = useState<StudioPreset[]>([]);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -94,20 +83,11 @@ export function useImageStudio() {
     return data || [];
   }, []);
 
-  const reloadPresets = useCallback(async () => {
-    const { data } = await (supabase as any)
-      .from('studio_presets')
-      .select('*')
-      .order('is_system', { ascending: false });
-    setPresets(data || []);
-  }, []);
-
   // initial bootstrap
   useEffect(() => {
     (async () => {
       setLoading(true);
       try {
-        await reloadPresets();
         const list = await reloadProjects();
         if (list.length > 0) {
           setActiveProjectId(list[0].id);
@@ -121,7 +101,7 @@ export function useImageStudio() {
         setLoading(false);
       }
     })();
-  }, [reloadPresets, reloadProjects, reloadSessions, reloadImages]);
+  }, [reloadProjects, reloadSessions, reloadImages]);
 
   const createProject = useCallback(
     async (name: string, description?: string) => {
@@ -260,11 +240,9 @@ export function useImageStudio() {
   const generate = useCallback(
     async (payload: {
       user_prompt: string;
-      mode?: string;
       role?: string;
       locks?: any;
       output?: any;
-      preset_id?: string;
       parent_image_id?: string;
       branch_id?: string;
     }) => {
@@ -291,7 +269,6 @@ export function useImageStudio() {
     projects,
     sessions,
     images,
-    presets,
     activeProjectId,
     activeSessionId,
     activeProject: projects.find((p) => p.id === activeProjectId) || null,

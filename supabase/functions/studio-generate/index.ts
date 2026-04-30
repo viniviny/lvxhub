@@ -5,8 +5,8 @@
  * Independent generation endpoint for the Image Studio.
  *
  * No dependency on products, drafts, Shopify, stores or markets.
- * Reads/writes ONLY: visual_projects, image_sessions, studio_images,
- * studio_presets and storage bucket `studio-images`.
+ * Reads/writes ONLY: visual_projects, image_sessions, studio_images
+ * and storage bucket `studio-images`.
  *
  * Body:
  *   {
@@ -15,11 +15,9 @@
  *     parent_image_id?: uuid,
  *     branch_id?: uuid,
  *     user_prompt: string,
- *     mode?: string,                 // product, model, detail, lifestyle, etc
  *     role?: string,                 // anchor | variation | branch | ...
  *     locks?: { style, product, background, model, useAnchor, useSeedFamily },
  *     output?: { quantity, aspect_ratio, quality, format },
- *     preset_id?: uuid,
  *     anchor_image_url?: string,     // optional override
  *   }
  * ═══════════════════════════════════════════════════════════════════════
@@ -46,50 +44,28 @@ const RATIO_INSTRUCTIONS: Record<AspectRatio, string> = {
 
 function buildStudioPrompt(input: {
   userPrompt: string;
-  mode?: string;
   role?: string;
   locks?: any;
   visualDNA?: any;
-  preset?: any;
   aspectRatio: AspectRatio;
   hasAnchor: boolean;
   seed?: string;
 }): { final: string; negative: string } {
   const blocks: string[] = [];
   const dna = input.visualDNA || {};
-  const cfg = input.preset?.config || {};
 
   // Base prompt
   blocks.push(`PRIMARY DIRECTION: ${input.userPrompt.trim()}`);
 
   // Style direction
-  const style = cfg.style_direction || dna.style_direction;
+  const style = dna.style_direction;
   if (style) blocks.push(`STYLE DIRECTION: ${style}.`);
 
   // Camera / lighting / background / palette
-  if (cfg.camera_style || dna.camera_style)
-    blocks.push(`CAMERA: ${cfg.camera_style || dna.camera_style}.`);
-  if (cfg.lighting_style || dna.lighting_style)
-    blocks.push(`LIGHTING: ${cfg.lighting_style || dna.lighting_style}.`);
-  if (cfg.background_style || dna.background_style)
-    blocks.push(`BACKGROUND: ${cfg.background_style || dna.background_style}.`);
-  if (cfg.color_palette || dna.color_palette)
-    blocks.push(`COLOR PALETTE: ${cfg.color_palette || dna.color_palette}.`);
-
-  // Mode hints
-  const modeMap: Record<string, string> = {
-    product: 'Pure product shot, no model, isolated cleanly.',
-    model: 'Model wearing the product, natural posture, full or three-quarter view.',
-    detail: 'Macro detail shot — fabric, texture, seams, finishing.',
-    flatlay: 'Flat lay top-down composition, evenly lit.',
-    background_swap: 'Replace only the background, keep product untouched.',
-    same_style: 'Generate same direction with subtle composition variation.',
-    new_branch: 'Explore a new visual direction while keeping product identity.',
-    ads: 'Marketing creative, eye-catching, headline-ready negative space.',
-    marketplace: 'Marketplace cover, clean, optimized for thumbnail readability.',
-    banner: 'Wide banner composition with breathing room for typography.',
-  };
-  if (input.mode && modeMap[input.mode]) blocks.push(`MODE: ${modeMap[input.mode]}`);
+  if (dna.camera_style) blocks.push(`CAMERA: ${dna.camera_style}.`);
+  if (dna.lighting_style) blocks.push(`LIGHTING: ${dna.lighting_style}.`);
+  if (dna.background_style) blocks.push(`BACKGROUND: ${dna.background_style}.`);
+  if (dna.color_palette) blocks.push(`COLOR PALETTE: ${dna.color_palette}.`);
 
   // Locks
   const L = input.locks || {};
@@ -125,7 +101,6 @@ function buildStudioPrompt(input: {
   );
 
   const negative =
-    cfg.negative_prompt ||
     dna.negative_prompt ||
     'oversaturated, plastic, cheap, low quality, watermark, text, logo, frame, border, distorted anatomy, extra limbs';
   blocks.push(`NEGATIVE: avoid — ${negative}.`);
@@ -261,11 +236,9 @@ serve(async (req) => {
       parent_image_id,
       branch_id,
       user_prompt,
-      mode,
       role = 'variation',
       locks = {},
       output = {},
-      preset_id,
       anchor_image_url,
     } = body || {};
 
@@ -300,16 +273,6 @@ serve(async (req) => {
       });
     }
 
-    let preset: any = null;
-    if (preset_id) {
-      const { data } = await admin
-        .from('studio_presets')
-        .select('*')
-        .eq('id', preset_id)
-        .maybeSingle();
-      preset = data;
-    }
-
     // Resolve anchor reference
     let anchorUrl: string | null = anchor_image_url || null;
     if (!anchorUrl && session.anchor_image_id) {
@@ -339,11 +302,9 @@ serve(async (req) => {
 
     const built = buildStudioPrompt({
       userPrompt: String(user_prompt),
-      mode,
       role,
       locks,
       visualDNA: session.visual_dna || {},
-      preset,
       aspectRatio,
       hasAnchor: refs.length > 0,
       seed: session.seed_base || undefined,
@@ -381,7 +342,7 @@ serve(async (req) => {
         prompt: String(user_prompt).slice(0, 4000),
         final_prompt: built.final.slice(0, 8000),
         negative_prompt: built.negative.slice(0, 2000),
-        mode: mode || null,
+        mode: null,
         role,
         status: 'generated',
         aspect_ratio: aspectRatio,
@@ -389,7 +350,7 @@ serve(async (req) => {
         provider: 'gemini',
         model: GEMINI_IMAGE_MODEL,
         seed: session.seed_base || null,
-        metadata: { quality: output.quality || 'standard', preset_id: preset_id || null },
+        metadata: { quality: output.quality || 'standard' },
       };
       const { data: row, error: insErr } = await admin
         .from('studio_images')

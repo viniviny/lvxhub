@@ -38,19 +38,6 @@ const RATIOS: { id: AspectRatio; label: string; icon: any; cls: string }[] = [
   { id: '16:9', label: '16:9', icon: Monitor, cls: 'aspect-[16/9]' },
 ];
 
-const MODES = [
-  { id: 'product', label: 'Foto de Produto' },
-  { id: 'model', label: 'Foto com Modelo' },
-  { id: 'detail', label: 'Detalhe' },
-  { id: 'flatlay', label: 'Flat Lay' },
-  { id: 'background_swap', label: 'Trocar Fundo' },
-  { id: 'same_style', label: 'Mesmo Estilo' },
-  { id: 'new_branch', label: 'Nova Direção' },
-  { id: 'ads', label: 'Criativo de Anúncio' },
-  { id: 'marketplace', label: 'Marketplace' },
-  { id: 'banner', label: 'Banner' },
-];
-
 const ROLE_LABELS_PT: Record<string, string> = {
   anchor: 'âncora',
   variation: 'variação',
@@ -58,11 +45,6 @@ const ROLE_LABELS_PT: Record<string, string> = {
   upscale: 'upscale',
 };
 const roleLabelPt = (r?: string | null) => (r && ROLE_LABELS_PT[r]) || r || '';
-const modeLabelPt = (m?: string | null) => {
-  if (!m) return '';
-  const found = MODES.find((x) => x.id === m);
-  return found ? found.label : m;
-};
 
 type Locks = {
   style: boolean;
@@ -85,7 +67,7 @@ const DEFAULT_LOCKS: Locks = {
 export function ImageStudio() {
   const studio = useImageStudio();
   const {
-    loading, projects, sessions, images, presets,
+    loading, projects, sessions, images,
     activeProject, activeSession, activeProjectId, activeSessionId,
     createProject, selectProject, selectSession, deleteProject,
     setAnchor, setApproved, deleteImage, generate, updateSessionDNA,
@@ -93,12 +75,10 @@ export function ImageStudio() {
 
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [prompt, setPrompt] = useState('');
-  const [mode, setMode] = useState<string>('product');
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('4:5');
   const [quantity, setQuantity] = useState<1 | 2 | 4>(1);
   const [quality, setQuality] = useState<'standard' | 'high' | 'ultra'>('high');
   const [format, setFormat] = useState<'png' | 'jpg' | 'webp'>('png');
-  const [presetId, setPresetId] = useState<string>('');
   const [locks, setLocks] = useState<Locks>(DEFAULT_LOCKS);
   const [generating, setGenerating] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
@@ -138,11 +118,9 @@ export function ImageStudio() {
     try {
       await generate({
         user_prompt: prompt.trim(),
-        mode,
         role: overrides?.role || (images.length === 0 ? 'anchor' : 'variation'),
         locks,
         output: { quantity, aspect_ratio: aspectRatio, quality, format },
-        preset_id: presetId || undefined,
         parent_image_id: overrides?.parent_image_id,
       });
       toast.success('Imagem gerada');
@@ -250,8 +228,6 @@ export function ImageStudio() {
     <ControlsSidebar
       prompt={prompt}
       setPrompt={setPrompt}
-      mode={mode}
-      setMode={setMode}
       aspectRatio={aspectRatio}
       setAspectRatio={setAspectRatio}
       quantity={quantity}
@@ -260,9 +236,6 @@ export function ImageStudio() {
       setQuality={setQuality}
       format={format}
       setFormat={setFormat}
-      presetId={presetId}
-      setPresetId={setPresetId}
-      presets={presets}
       locks={locks}
       setLocks={setLocks}
       generating={generating}
@@ -639,9 +612,6 @@ function Canvas(props: {
             {props.image.aspect_ratio && (
               <Badge variant="outline" className="h-5 text-[10px]">{props.image.aspect_ratio}</Badge>
             )}
-            {props.image.mode && (
-              <Badge variant="outline" className="h-5 text-[10px] capitalize">{modeLabelPt(props.image.mode)}</Badge>
-            )}
           </div>
         )}
       </header>
@@ -728,21 +698,15 @@ function Canvas(props: {
 // ═══════════════════════════════════════════════════════════════════════
 function ControlsSidebar(props: {
   prompt: string; setPrompt: (v: string) => void;
-  mode: string; setMode: (v: string) => void;
   aspectRatio: AspectRatio; setAspectRatio: (v: AspectRatio) => void;
   quantity: 1 | 2 | 4; setQuantity: (v: 1 | 2 | 4) => void;
   quality: 'standard' | 'high' | 'ultra'; setQuality: (v: any) => void;
   format: 'png' | 'jpg' | 'webp'; setFormat: (v: any) => void;
-  presetId: string; setPresetId: (v: string) => void;
-  presets: any[];
   locks: Locks; setLocks: (v: Locks) => void;
   generating: boolean;
   hasImage: boolean; hasAnchor: boolean;
   onGenerate: () => void; onVariation: () => void; onBranch: () => void;
 }) {
-  const stylePresets = props.presets.filter((p) => p.preset_type === 'style');
-  const packPresets = props.presets.filter((p) => p.preset_type === 'pack');
-
   return (
     <aside className="h-full rounded-xl border border-border bg-card/40 backdrop-blur-sm flex flex-col overflow-hidden">
       <header className="px-3 py-3 border-b border-border flex items-center gap-2">
@@ -763,56 +727,6 @@ function ControlsSidebar(props: {
           />
           <div className="flex items-center justify-between text-[10px] text-muted-foreground">
             <span>{props.prompt.length}/2000</span>
-          </div>
-        </section>
-
-        {/* PRESET */}
-        <section className="space-y-2">
-          <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Preset</Label>
-          <Select value={props.presetId || 'none'} onValueChange={(v) => props.setPresetId(v === 'none' ? '' : v)}>
-            <SelectTrigger className="h-9 text-xs">
-              <SelectValue placeholder="Sem preset" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Sem preset</SelectItem>
-              {stylePresets.length > 0 && (
-                <>
-                  <div className="px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wider">Estilo</div>
-                  {stylePresets.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </>
-              )}
-              {packPresets.length > 0 && (
-                <>
-                  <div className="px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wider">Packs</div>
-                  {packPresets.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
-                </>
-              )}
-            </SelectContent>
-          </Select>
-        </section>
-
-        {/* MODE */}
-        <section className="space-y-2">
-          <Label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Modo</Label>
-          <div className="flex flex-wrap gap-1.5">
-            {MODES.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => props.setMode(m.id)}
-                className={cn(
-                  'px-2.5 py-1 text-[11px] rounded-full border transition',
-                  props.mode === m.id
-                    ? 'bg-primary/10 border-primary/30 text-foreground'
-                    : 'border-border bg-secondary/40 text-muted-foreground hover:text-foreground hover:border-foreground/30',
-                )}
-              >
-                {m.label}
-              </button>
-            ))}
           </div>
         </section>
 
