@@ -248,9 +248,12 @@ async function handle(req: Request): Promise<Response> {
         console.warn(`[shopify-publish] Product ${shopifyProductId} not found, creating new product instead`);
         await checkRes.text(); // consume body
         createdNew = true;
+        pushLog('check_product', 'warn', 'product_not_found_fallback_create');
       } else if (!checkRes.ok) {
         const errText = await checkRes.text();
         console.error('[shopify-publish] Check product error:', errText);
+        pushLog('check_product', 'error', errText.slice(0, 500));
+        await finalizeLog('failed', `check_product: ${errText.slice(0, 200)}`);
         return new Response(JSON.stringify({ error: 'Erro ao verificar produto no Shopify.', step: 'check_product', details: errText }), { status: checkRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       } else {
         await checkRes.text(); // consume body
@@ -278,6 +281,8 @@ async function handle(req: Request): Promise<Response> {
         if (!updateRes.ok) {
           const errText = await updateRes.text();
           console.error('[shopify-publish] Update product error:', errText);
+          pushLog('update_product', 'error', errText.slice(0, 500));
+          await finalizeLog('failed', `update_product: ${errText.slice(0, 200)}`);
           return new Response(JSON.stringify({ error: 'Erro ao atualizar produto no Shopify.', step: 'update_product', details: errText }), { status: updateRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
 
