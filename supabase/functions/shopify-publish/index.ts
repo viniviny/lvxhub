@@ -78,6 +78,7 @@ async function handle(req: Request): Promise<Response> {
       localPrice, baseCurrency, language: bodyLanguage, languageLabel, marketName, regionGroup,
       variants: bodyVariants, inventoryPolicy, requiresShipping, weight, weightUnit, countryOfOrigin,
       selectedChannels, colorImages, additionalImages, shopifyProductId,
+      connection_id: bodyConnectionId, draft_id: bodyDraftId,
     } = body;
 
     if (!title || typeof title !== 'string' || title.length > 255) {
@@ -86,10 +87,75 @@ async function handle(req: Request): Promise<Response> {
 
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const adminClient = createClient(supabaseUrl, serviceKey);
-    const { data: conn } = await adminClient.from('shopify_connections').select('store_domain, access_token, shop_name').eq('user_id', userId).eq('is_active', true).maybeSingle();
-    if (!conn) {
-      return new Response(JSON.stringify({ error: 'Nenhuma loja conectada.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+    // ---- Resolve connection EXPLICITLY by id (multi-store safe) ----
+    // Prefer body.connection_id. Fallback: only if user has exactly one active connection
+    // (legacy clients that haven't been updated yet).
+    let conn: { id: string; store_domain: string; access_token: string; shop_name: string | null; is_active: boolean } | null = null;
+    if (bodyConnectionId && typeof bodyConnectionId === 'string') {
+      const { data } = await adminClient
+        .from('shopify_connections')
+        .select('id, store_domain, access_token, shop_name, is_active')
+        .eq('id', bodyConnectionId)
+        .eq('user_id', userId)
+        .maybeSingle();
+      conn = data;
+      if (!conn) {
+        return new Response(JSON.stringify({ error: 'Conexão Shopify não encontrada ou não pertence ao usuário.', step: 'validate_connection' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      if (!conn.is_active) {
+        return new Response(JSON.stringify({ error: 'Esta loja Shopify está desativada. Reconecte para publicar.', step: 'validate_connection', reconnect: true }), { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    } else {
+      // Legacy fallback: only resolve automatically if user has exactly ONE active store.
+      const { data: activeConns } = await adminClient
+        .from('shopify_connections')
+        .select('id, store_domain, access_token, shop_name, is_active')
+        .eq('user_id', userId)
+        .eq('is_active', true);
+      if (!activeConns || activeConns.length === 0) {
+        return new Response(JSON.stringify({ error: 'Nenhuma loja Shopify conectada.', step: 'validate_connection' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      if (activeConns.length > 1) {
+        return new Response(JSON.stringify({ error: 'Múltiplas lojas conectadas. Selecione qual loja usar (connection_id obrigatório).', step: 'validate_connection' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      conn = activeConns[0];
     }
+
+    // ---- Init publication log (best-effort, non-blocking) ----
+    const logSteps: Array<{ step: string; status: 'ok' | 'warn' | 'error'; message?: string; at: string }> = [];
+    const pushLog = (step: string, status: 'ok' | 'warn' | 'error', message?: string) =>
+      logSteps.push({ step, status, message, at: new Date().toISOString() });
+
+    let publicationLogId: string | null = null;
+    try {
+      const { data: logRow } = await adminClient.from('publication_logs').insert({
+        user_id: userId,
+        connection_id: conn.id,
+        draft_id: (typeof bodyDraftId === 'string' && bodyDraftId) ? bodyDraftId : null,
+        shopify_product_id: shopifyProductId ? String(shopifyProductId) : null,
+        status: 'started',
+        steps: [],
+      }).select('id').maybeSingle();
+      publicationLogId = logRow?.id ?? null;
+    } catch (logErr) {
+      console.warn('[shopify-publish] Failed to init publication_log:', logErr);
+    }
+    pushLog('validate_connection', 'ok', conn.store_domain);
+
+    const finalizeLog = async (status: 'success' | 'partial_success' | 'failed', errorMessage?: string, finalShopifyId?: string) => {
+      if (!publicationLogId) return;
+      try {
+        await adminClient.from('publication_logs').update({
+          status,
+          steps: logSteps,
+          error_message: errorMessage ?? null,
+          shopify_product_id: finalShopifyId ?? (shopifyProductId ? String(shopifyProductId) : null),
+        }).eq('id', publicationLogId);
+      } catch (e) {
+        console.warn('[shopify-publish] Failed to finalize publication_log:', e);
+      }
+    };
 
     const apiVersion = '2026-01';
     const baseUrl = `https://${conn.store_domain}/admin/api/${apiVersion}`;
