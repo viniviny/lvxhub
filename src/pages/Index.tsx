@@ -1598,7 +1598,12 @@ const Index = () => {
                       {/* LEFT — Checklist + Publish */}
                       <div className="space-y-3">
                         <div className="glass-card p-4">
-                          <ReviewChecklist form={form} hasImage={!!imageFile || generatedImages.some(i => i.url)} />
+                          <ReviewChecklist
+                            form={form}
+                            hasImage={!!imageFile || generatedImages.some(i => i.url)}
+                            imageCount={(imageFile ? 1 : 0) + generatedImages.filter(i => i.url).length}
+                            storeConnected={!!store?.accessToken}
+                          />
                         </div>
 
                         {/* Publicação accordion */}
