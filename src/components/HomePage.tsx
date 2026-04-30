@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { Package, Store, TrendingUp, Clock, Plus, ClipboardList, Zap, ArrowRight, CheckCircle2 } from 'lucide-react';
+import {
+  Package, Clock, ArrowRight, CheckCircle2, Zap,
+  Download, Sparkles, FileText, Ruler, ImageIcon, UserSquare2,
+  Eraser, FileImage, UploadCloud, BookMarked, PlayCircle,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SpotlightCard } from '@/components/SpotlightCard';
-import { useCountUp } from '@/hooks/useCountUp';
 
 interface RecentProduct {
   title: string;
@@ -23,11 +26,6 @@ interface HomeMetrics {
 
 interface HomePageProps {
   onNavigate: (view: string) => void;
-}
-
-function MetricNumber({ value, delay }: { value: number; delay: number }) {
-  const animated = useCountUp(value, 1200, delay);
-  return <span className="editorial-number text-[42px] md:text-[48px] text-foreground">{animated}</span>;
 }
 
 export function HomePage({ onNavigate }: HomePageProps) {
@@ -73,34 +71,52 @@ export function HomePage({ onNavigate }: HomePageProps) {
     fetchMetrics();
   }, [user]);
 
-  const metricCards = [
-    {
-      label: 'Produtos publicados',
-      value: metrics.totalProducts,
-      icon: Package,
-      iconBg: 'bg-gradient-to-br from-primary/30 to-primary/10',
-      iconColor: 'text-primary',
-      glow: 'glow-shadow-primary',
-      border: 'border-primary/20',
-    },
-    {
-      label: 'Lojas conectadas',
-      value: metrics.connectedStores,
-      icon: Store,
-      iconBg: 'bg-gradient-to-br from-[hsl(var(--success)/0.3)] to-[hsl(var(--success)/0.08)]',
-      iconColor: 'text-[hsl(var(--success))]',
-      glow: 'glow-shadow-success',
-      border: 'border-[hsl(var(--success)/0.2)]',
-    },
-    {
-      label: 'Esta semana',
-      value: metrics.weeklyPublications,
-      icon: TrendingUp,
-      iconBg: 'bg-gradient-to-br from-[hsl(var(--info)/0.3)] to-[hsl(var(--info)/0.08)]',
-      iconColor: 'text-[hsl(var(--info))]',
-      glow: 'glow-shadow-info',
-      border: 'border-[hsl(var(--info)/0.2)]',
-    },
+  type Tool = {
+    id: string;
+    title: string;
+    desc: string;
+    icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+    badge: 'AI' | 'Novo' | 'Rápido' | 'Shopify' | 'Visual';
+    view: string;
+    accent?: 'primary' | 'violet' | 'success' | 'warning';
+  };
+
+  const tools: Tool[] = [
+    { id: 'import',      title: 'Importar Produto',     desc: 'Importe via link de fornecedor ou rascunhos Shopify.',                  icon: Download,     badge: 'Rápido',  view: 'import-url',       accent: 'primary' },
+    { id: 'naming',      title: 'Naming Premium',       desc: 'Gere nomes elegantes baseados em tipo, material e estilo.',             icon: Sparkles,     badge: 'AI',      view: 'publish',          accent: 'violet'  },
+    { id: 'seo',         title: 'Descrição SEO',        desc: 'Descrições premium com estrutura SEO e tom de marca.',                  icon: FileText,     badge: 'AI',      view: 'publish',          accent: 'violet'  },
+    { id: 'specs',       title: 'Especificações',       desc: 'Materiais, tamanhos, fit, cuidados e dados do fornecedor.',             icon: Ruler,        badge: 'AI',      view: 'publish',          accent: 'primary' },
+    { id: 'image',       title: 'Image Studio',         desc: 'Imagens premium com fundo limpo e formatos para ecommerce.',            icon: ImageIcon,    badge: 'Visual',  view: 'image-generator',  accent: 'primary' },
+    { id: 'model',       title: 'Model Photoshoot',     desc: 'Coloque produtos em modelos realistas preservando detalhes.',           icon: UserSquare2,  badge: 'Novo',    view: 'image-generator',  accent: 'violet'  },
+    { id: 'bg',          title: 'Background Cleaner',   desc: 'Remova ou substitua fundos por cenas premium de ecommerce.',            icon: Eraser,       badge: 'Visual',  view: 'image-generator',  accent: 'primary' },
+    { id: 'webp',        title: 'WebP Optimizer',       desc: 'Converta e comprima imagens para um Shopify mais rápido.',              icon: FileImage,    badge: 'Rápido',  view: 'publish',          accent: 'success' },
+    { id: 'publisher',   title: 'Shopify Publisher',    desc: 'Revise, otimize e publique direto na sua loja Shopify.',                icon: UploadCloud,  badge: 'Shopify', view: 'publish',          accent: 'primary' },
+    { id: 'prompts',     title: 'Prompt Library',       desc: 'Salve e reutilize prompts de títulos, descrições e imagens.',           icon: BookMarked,   badge: 'AI',      view: 'prompts',          accent: 'violet'  },
+  ];
+
+  const accentMap = {
+    primary: { ring: 'ring-primary/30', glow: 'group-hover:shadow-[0_0_28px_-6px_hsl(var(--primary)/0.55)]', icon: 'text-primary',                   bg: 'bg-primary/10 border-primary/20' },
+    violet:  { ring: 'ring-accent/30',  glow: 'group-hover:shadow-[0_0_28px_-6px_hsl(var(--accent)/0.55)]',  icon: 'text-accent',                    bg: 'bg-accent/10 border-accent/20' },
+    success: { ring: 'ring-[hsl(var(--success)/0.3)]', glow: 'group-hover:shadow-[0_0_28px_-6px_hsl(var(--success)/0.5)]', icon: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success)/0.1)] border-[hsl(var(--success)/0.2)]' },
+    warning: { ring: 'ring-[hsl(var(--warning)/0.3)]', glow: 'group-hover:shadow-[0_0_28px_-6px_hsl(var(--warning)/0.5)]', icon: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning)/0.1)] border-[hsl(var(--warning)/0.2)]' },
+  } as const;
+
+  const badgeStyle = (b: Tool['badge']) => {
+    switch (b) {
+      case 'AI':      return 'bg-accent/15 text-accent border-accent/25';
+      case 'Novo':    return 'bg-primary/15 text-primary border-primary/25';
+      case 'Rápido':  return 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.25)]';
+      case 'Shopify': return 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.25)]';
+      case 'Visual':  return 'bg-accent/15 text-accent border-accent/25';
+    }
+  };
+
+  const workflow = [
+    { label: 'Importar', desc: 'Link ou Shopify',  icon: Download },
+    { label: 'Enriquecer', desc: 'Naming + SEO',   icon: Sparkles },
+    { label: 'Gerar',      desc: 'Imagens premium', icon: ImageIcon },
+    { label: 'Otimizar',   desc: 'WebP + SEO',     icon: FileImage },
+    { label: 'Publicar',   desc: 'Shopify ready',  icon: UploadCloud },
   ];
 
   const formatRelativeDate = (dateStr: string) => {
@@ -116,69 +132,137 @@ export function HomePage({ onNavigate }: HomePageProps) {
   const isNew = (dateStr: string) => Date.now() - new Date(dateStr).getTime() < 60 * 60 * 1000;
 
   return (
-    <div className="max-w-5xl mx-auto py-8 px-4">
-      {/* Greeting */}
-      <div className="mb-8 animate-slide-up" style={{ animationDelay: '0ms' }}>
-        <h2 className="font-display text-3xl md:text-4xl font-semibold text-foreground tracking-tight">Visão geral</h2>
-        <p className="text-sm text-muted-foreground mt-1.5">Resumo da sua operação</p>
-      </div>
+    <div className="max-w-7xl mx-auto py-10 px-4 md:px-8">
+      {/* HERO */}
+      <section className="relative overflow-hidden rounded-[28px] border border-border bg-gradient-to-b from-secondary/40 to-card p-8 md:p-14 mb-12 animate-slide-up">
+        <div
+          className="absolute inset-0 -z-10 opacity-60"
+          style={{
+            background:
+              'radial-gradient(60% 50% at 80% 0%, hsl(var(--primary)/0.18), transparent 60%), radial-gradient(40% 40% at 10% 100%, hsl(var(--accent)/0.18), transparent 60%)',
+          }}
+        />
+        <div className="grid-bg absolute inset-0 -z-10 opacity-30" />
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        {metricCards.map((card, i) => (
-          <SpotlightCard
-            key={card.label}
-            className={`frost lift noise p-5 rounded-2xl border ${card.border} ${card.glow} animate-slide-up transition-shadow duration-300`}
+        <span className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] font-semibold text-primary border border-primary/30 bg-primary/10 rounded-full px-3 py-1.5 mb-6">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary pulse-dot" />
+          Publify · AI Operating System
+        </span>
+
+        <h1 className="font-display text-[40px] sm:text-[56px] md:text-[72px] leading-[1.02] font-semibold tracking-tight text-foreground max-w-3xl">
+          One product in.<br />
+          <span className="text-primary">Shopify listing</span> out.
+        </h1>
+
+        <p className="mt-5 text-base md:text-lg text-muted-foreground max-w-2xl leading-relaxed">
+          Transforme produtos brutos de fornecedores em listagens premium prontas para Shopify — com naming, descrições, visuais, otimização e publicação por IA.
+        </p>
+
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <Button
+            size="lg"
+            onClick={() => onNavigate('publish')}
+            className="h-12 px-6 rounded-full font-semibold text-primary-foreground bg-primary hover:bg-primary/90 shadow-[0_0_30px_-6px_hsl(var(--primary)/0.7)] hover:shadow-[0_0_42px_-4px_hsl(var(--primary)/0.85)] transition-all"
           >
-            <div style={{ animationDelay: `${100 + i * 80}ms` }} className="flex items-start justify-between mb-4">
-              <div className={`w-11 h-11 rounded-xl ${card.iconBg} flex items-center justify-center shadow-sm`}>
-                <card.icon className={`w-5 h-5 ${card.iconColor}`} strokeWidth={2.2} />
+            Start Publishing
+            <ArrowRight className="w-4 h-4 ml-1" />
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={() => {
+              document.getElementById('workflow')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="h-12 px-6 rounded-full border-border bg-secondary/40 hover:bg-secondary text-foreground"
+          >
+            <PlayCircle className="w-4 h-4 mr-1.5" />
+            View Workflow
+          </Button>
+        </div>
+      </section>
+
+      {/* TOOLS GRID */}
+      <section className="mb-14">
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <span className="label-mono">AI Toolkit</span>
+            <h2 className="font-display text-2xl md:text-[32px] font-semibold tracking-tight text-foreground mt-1">
+              What do you want to create today?
+            </h2>
+          </div>
+          <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => onNavigate('publish')}>
+            Ver tudo <ArrowRight className="w-3.5 h-3.5 ml-1" />
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {tools.map((t, i) => {
+            const a = accentMap[t.accent || 'primary'];
+            return (
+              <SpotlightCard
+                key={t.id}
+                as="button"
+                onClick={() => onNavigate(t.view)}
+                className={`group relative text-left rounded-[22px] border border-border bg-card hover:bg-secondary/60 p-5 flex flex-col h-full transition-all duration-300 ease-out-expo hover:-translate-y-0.5 ${a.glow} animate-slide-up`}
+              >
+                <div className="flex items-start justify-between mb-5">
+                  <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center ${a.bg}`}>
+                    <t.icon className={`w-5 h-5 ${a.icon}`} strokeWidth={2} />
+                  </div>
+                  <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full border ${badgeStyle(t.badge)}`}>
+                    {t.badge}
+                  </span>
+                </div>
+
+                <h3 className="font-display text-[17px] font-semibold text-foreground tracking-tight mb-1.5">
+                  {t.title}
+                </h3>
+                <p className="text-[13px] text-muted-foreground leading-relaxed flex-1">
+                  {t.desc}
+                </p>
+
+                <div className="mt-5 pt-4 border-t border-border/60 flex items-center justify-between">
+                  <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Abrir</span>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />
+                </div>
+              </SpotlightCard>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* WORKFLOW */}
+      <section id="workflow" className="mb-14">
+        <div className="mb-6">
+          <span className="label-mono">Pipeline</span>
+          <h2 className="font-display text-2xl md:text-[32px] font-semibold tracking-tight text-foreground mt-1">
+            Build once. Publish faster.
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1.5">
+            Um workflow de IA repetível para cada produto que você publica.
+          </p>
+        </div>
+
+        <div className="rounded-[22px] border border-border bg-card p-5 md:p-8">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 md:gap-2 items-stretch">
+            {workflow.map((s, i) => (
+              <div key={s.label} className="flex items-center">
+                <div className="flex-1 rounded-2xl border border-border bg-secondary/40 hover:bg-secondary transition-colors p-4 text-center min-h-[120px] flex flex-col items-center justify-center gap-2">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <s.icon className="w-4 h-4 text-primary" strokeWidth={2.2} />
+                  </div>
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Etapa {i + 1}</span>
+                  <span className="text-sm font-semibold text-foreground">{s.label}</span>
+                  <span className="text-[11px] text-muted-foreground">{s.desc}</span>
+                </div>
+                {i < workflow.length - 1 && (
+                  <ArrowRight className="hidden sm:block w-4 h-4 text-muted-foreground/60 mx-1 flex-shrink-0" />
+                )}
               </div>
-            </div>
-            <div className="space-y-1">
-              {loading ? (
-                <div className="h-12 w-16 skeleton-shimmer rounded" />
-              ) : (
-                <MetricNumber value={card.value} delay={150 + i * 120} />
-              )}
-              <p className="label-mono">{card.label}</p>
-            </div>
-          </SpotlightCard>
-        ))}
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-        <SpotlightCard
-          as="button"
-          onClick={() => onNavigate('publish')}
-          className="frost lift press noise p-5 flex items-center gap-4 group text-left rounded-2xl border border-border w-full animate-slide-up glow-shadow-primary transition-shadow duration-300"
-        >
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-300 ease-out-expo">
-            <Plus className="w-5 h-5 text-primary" strokeWidth={2.2} />
+            ))}
           </div>
-          <div className="flex-1 min-w-0">
-            <span className="text-[15px] font-semibold text-foreground block">Novo Produto</span>
-            <span className="text-xs text-muted-foreground">Criar e publicar um produto</span>
-          </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300 ease-out-expo" />
-        </SpotlightCard>
-
-        <SpotlightCard
-          as="button"
-          onClick={() => onNavigate('history')}
-          className="frost lift press noise p-5 flex items-center gap-4 group text-left rounded-2xl border border-border w-full animate-slide-up glow-shadow-info transition-shadow duration-300"
-        >
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[hsl(var(--info)/0.3)] to-[hsl(var(--info)/0.08)] flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-300 ease-out-expo">
-            <ClipboardList className="w-5 h-5 text-[hsl(var(--info))]" strokeWidth={2.2} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <span className="text-[15px] font-semibold text-foreground block">Ver Histórico</span>
-            <span className="text-xs text-muted-foreground">Produtos publicados e edições</span>
-          </div>
-          <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-[hsl(var(--info))] group-hover:translate-x-1 transition-all duration-300 ease-out-expo" />
-        </SpotlightCard>
-      </div>
+        </div>
+      </section>
 
       {/* Recent Products */}
       {!loading && metrics.recentProducts.length > 0 && (
