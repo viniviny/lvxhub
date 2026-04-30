@@ -15,7 +15,7 @@ import { useProductUnderstanding } from '@/hooks/useProductUnderstanding';
 import { useProductSpecs } from '@/hooks/useProductSpecs';
 import { ProductHistory } from '@/components/ProductHistory';
 import { ImageLibrary } from '@/components/ImageLibrary';
-import { ImageGeneratorModule } from '@/components/ImageGeneratorModule';
+import { ImageStudio } from '@/components/ImageStudio';
 import { StoreSelector } from '@/components/StoreSelector';
 import { useStoreContext } from '@/hooks/useStoreContext';
 import type { MarketConfig, ShopifyStore } from '@/hooks/useStoreManager';
@@ -1866,8 +1866,8 @@ const Index = () => {
             {/* LIBRARY VIEW */}
             {currentView === 'library' && <ImageLibrary />}
 
-            {/* IMAGE GENERATOR VIEW */}
-            {currentView === 'image-generator' && <ImageGeneratorModule />}
+            {/* IMAGE STUDIO (independent visual creation) */}
+            {currentView === 'image-generator' && <ImageStudio />}
 
             {/* STORES VIEW */}
             {currentView === 'stores' && (

@@ -1,14 +1,12 @@
-# Memory: index.md
-Updated: now
-
 # Project Memory
 
 ## Core
-UI language is Portuguese (Brazil). White premium theme (light default), dark mode available.
+UI language is Portuguese (Brazil). Support Light/Dark mode, default is 'Oceano Profundo'.
 Registration disabled, use only email/password (no social login).
 Shopify publish updates: use `PUT` with `shopify_product_id`, fallback to `POST` on 404.
 Gemini API: Base64 'inlineData' must be processed in 8KB chunks to prevent max call stack size.
 Data sync: prioritize backend images on reconciliation. Ignore Postgres 23505 (unique constraint violation).
+Image Studio is INDEPENDENT — never link it to drafts, products, Shopify, stores, markets or publish.
 
 ## Memories
 - [AI Field Controls](mem://features/ai-field-controls) — Step 2 Title/Desc AI generation and SEO metadata context
@@ -29,4 +27,4 @@ Data sync: prioritize backend images on reconciliation. Ignore Postgres 23505 (u
 - [Generation Presets](mem://features/image-generation-presets) — Step 1 visual presets, custom_presets with RLS, hidden in localStorage
 - [Premium Standards](mem://ai/image-generation-premium-standards) — Zara/COS style, 8K editorial, mandatory angle/proportion, no stiff poses
 - [Selective Regen](mem://features/image-selective-regeneration) — Per-angle regen in Step 1, uses lastUsedPromptRef if desc empty
-- [White Theme](mem://design/white-premium-theme) — Neutral monochrome palette, no blue accent, Shopify/Stripe aesthetic
+- [Image Studio](mem://features/image-studio) — Standalone visual creation: visual_projects/image_sessions/studio_images/studio_presets, studio-generate edge fn, 3-col layout, NO links to products/Shopify/drafts
