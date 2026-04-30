@@ -22,6 +22,7 @@ export type StudioImage = {
   role: string;
   status: string;
   aspect_ratio: string | null;
+  format: string | null;
   approved: boolean;
   metadata: any;
   created_at: string;
