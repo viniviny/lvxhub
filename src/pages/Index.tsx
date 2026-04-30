@@ -865,8 +865,17 @@ const Index = () => {
       const imageBase64 = await fileToBase64(imageFile);
       const mc = store.marketConfig;
       const storeLang = mc?.language ? getAILanguageByCode(mc.language) : null;
+      // Resolve Supabase connection_id for this specific store domain
+      const { data: connRow } = await supabase
+        .from('shopify_connections')
+        .select('id')
+        .eq('store_domain', store.domain)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (!connRow?.id) return false;
       const { data, error } = await supabase.functions.invoke('shopify-publish', {
         body: {
+          connection_id: connRow.id,
           title: form.title,
           description: form.description,
           price: form.price,
