@@ -5,6 +5,7 @@ import {
   Package, Clock, ArrowRight, CheckCircle2, Zap,
   Download, Sparkles, FileText, Ruler, ImageIcon, UserSquare2,
   Eraser, FileImage, UploadCloud, BookMarked, PlayCircle,
+  Store, TrendingUp, AlertTriangle, Inbox, Rocket, Wand2,
   type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,9 @@ interface HomeMetrics {
   connectedStores: number;
   weeklyPublications: number;
   totalPrompts: number;
+  importedPending: number;
+  readyToPublish: number;
+  generatedImages: number;
   recentProducts: RecentProduct[];
 }
 
@@ -36,6 +40,9 @@ export function HomePage({ onNavigate }: HomePageProps) {
     connectedStores: 0,
     weeklyPublications: 0,
     totalPrompts: 0,
+    importedPending: 0,
+    readyToPublish: 0,
+    generatedImages: 0,
     recentProducts: [],
   });
   const [loading, setLoading] = useState(true);
@@ -48,12 +55,15 @@ export function HomePage({ onNavigate }: HomePageProps) {
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-        const [productsRes, storesRes, weeklyRes, recentRes, promptsRes] = await Promise.all([
+        const [productsRes, storesRes, weeklyRes, recentRes, promptsRes, importedRes, readyRes, imagesRes] = await Promise.all([
           supabase.from('published_products').select('id', { count: 'exact', head: true }),
           supabase.from('shopify_connections').select('id', { count: 'exact', head: true }).eq('is_active', true),
           supabase.from('published_products').select('id', { count: 'exact', head: true }).gte('created_at', oneWeekAgo.toISOString()),
           supabase.from('published_products').select('title, store_domain, created_at, image_url').order('created_at', { ascending: false }).limit(5),
           supabase.from('user_prompts').select('id', { count: 'exact', head: true }),
+          supabase.from('projects').select('id', { count: 'exact', head: true }).eq('status', 'draft'),
+          supabase.from('projects').select('id', { count: 'exact', head: true }).in('status', ['ready', 'review']),
+          supabase.from('image_library').select('id', { count: 'exact', head: true }),
         ]);
 
         setMetrics({
@@ -61,6 +71,9 @@ export function HomePage({ onNavigate }: HomePageProps) {
           connectedStores: storesRes.count || 0,
           weeklyPublications: weeklyRes.count || 0,
           totalPrompts: promptsRes.count || 0,
+          importedPending: importedRes.count || 0,
+          readyToPublish: readyRes.count || 0,
+          generatedImages: imagesRes.count || 0,
           recentProducts: (recentRes.data as RecentProduct[]) || [],
         });
       } catch (err) {
