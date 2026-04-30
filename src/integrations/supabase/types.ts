@@ -242,6 +242,63 @@ export type Database = {
         }
         Relationships: []
       }
+      image_sessions: {
+        Row: {
+          anchor_image_id: string | null
+          created_at: string
+          id: string
+          name: string
+          project_id: string
+          seed_base: string | null
+          seed_family: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          visual_dna: Json
+        }
+        Insert: {
+          anchor_image_id?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          project_id: string
+          seed_base?: string | null
+          seed_family?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          visual_dna?: Json
+        }
+        Update: {
+          anchor_image_id?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          project_id?: string
+          seed_base?: string | null
+          seed_family?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          visual_dna?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_sessions_anchor_fk"
+            columns: ["anchor_image_id"]
+            isOneToOne: false
+            referencedRelation: "studio_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_sessions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "visual_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_drafts: {
         Row: {
           collection: string | null
@@ -624,6 +681,148 @@ export type Database = {
         }
         Relationships: []
       }
+      studio_images: {
+        Row: {
+          approved: boolean
+          aspect_ratio: string | null
+          branch_id: string | null
+          created_at: string
+          final_prompt: string | null
+          format: string | null
+          height: number | null
+          id: string
+          image_url: string | null
+          metadata: Json
+          mode: string | null
+          model: string | null
+          negative_prompt: string | null
+          parent_image_id: string | null
+          project_id: string
+          prompt: string | null
+          provider: string | null
+          role: string
+          seed: string | null
+          session_id: string
+          status: string
+          storage_path: string | null
+          updated_at: string
+          user_id: string
+          width: number | null
+        }
+        Insert: {
+          approved?: boolean
+          aspect_ratio?: string | null
+          branch_id?: string | null
+          created_at?: string
+          final_prompt?: string | null
+          format?: string | null
+          height?: number | null
+          id?: string
+          image_url?: string | null
+          metadata?: Json
+          mode?: string | null
+          model?: string | null
+          negative_prompt?: string | null
+          parent_image_id?: string | null
+          project_id: string
+          prompt?: string | null
+          provider?: string | null
+          role?: string
+          seed?: string | null
+          session_id: string
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+          user_id: string
+          width?: number | null
+        }
+        Update: {
+          approved?: boolean
+          aspect_ratio?: string | null
+          branch_id?: string | null
+          created_at?: string
+          final_prompt?: string | null
+          format?: string | null
+          height?: number | null
+          id?: string
+          image_url?: string | null
+          metadata?: Json
+          mode?: string | null
+          model?: string | null
+          negative_prompt?: string | null
+          parent_image_id?: string | null
+          project_id?: string
+          prompt?: string | null
+          provider?: string | null
+          role?: string
+          seed?: string | null
+          session_id?: string
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+          user_id?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_images_parent_image_id_fkey"
+            columns: ["parent_image_id"]
+            isOneToOne: false
+            referencedRelation: "studio_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_images_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "visual_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_images_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "image_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      studio_presets: {
+        Row: {
+          config: Json
+          created_at: string
+          description: string | null
+          id: string
+          is_system: boolean
+          name: string
+          preset_type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          name: string
+          preset_type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          name?: string
+          preset_type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_prompts: {
         Row: {
           category: string | null
@@ -683,6 +882,36 @@ export type Database = {
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      visual_projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
