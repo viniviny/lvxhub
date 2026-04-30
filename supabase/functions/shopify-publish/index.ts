@@ -372,12 +372,15 @@ async function handle(req: Request): Promise<Response> {
       if (!createRes.ok) {
         const errText = await createRes.text();
         console.error('[shopify-publish] Create product error:', errText);
+        pushLog('create_product', 'error', errText.slice(0, 500));
+        await finalizeLog('failed', `create_product: ${errText.slice(0, 200)}`);
         return new Response(JSON.stringify({ error: 'Erro ao criar produto no Shopify.', step: 'create_product', details: errText }), { status: createRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       const productData = await createRes.json();
       product = productData.product;
       steps.push(`Produto criado com ${product.images?.length || 0} imagens!`);
+      pushLog('create_product', 'ok', `images=${product.images?.length || 0}`);
       console.log(`[shopify-publish] Product created: ${product.id}, images: ${product.images?.length || 0}`);
     }
 
@@ -534,6 +537,8 @@ async function handle(req: Request): Promise<Response> {
       steps,
       imageUrl: product.images?.[0]?.src || bodyImageUrl || null,
       totalImages: product.images?.length || 0,
+      publicationLogId,
+      connectionId: conn.id,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
     console.error('[shopify-publish] Unexpected error:', e);
