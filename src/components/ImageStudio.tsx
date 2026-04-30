@@ -621,13 +621,13 @@ function Canvas(props: {
         {props.image && (
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
             <Badge variant="outline" className="h-5 text-[10px] capitalize">
-              {props.image.role}
+              {roleLabelPt(props.image.role)}
             </Badge>
             {props.image.aspect_ratio && (
               <Badge variant="outline" className="h-5 text-[10px]">{props.image.aspect_ratio}</Badge>
             )}
             {props.image.mode && (
-              <Badge variant="outline" className="h-5 text-[10px] capitalize">{props.image.mode}</Badge>
+              <Badge variant="outline" className="h-5 text-[10px] capitalize">{modeLabelPt(props.image.mode)}</Badge>
             )}
           </div>
         )}
