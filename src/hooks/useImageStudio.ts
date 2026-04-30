@@ -1,8 +1,7 @@
 /**
  * useImageStudio — data layer for the independent Image Studio.
- * Wraps Supabase access to visual_projects, image_sessions,
- * studio_images and studio_presets. No coupling with products,
- * Shopify, drafts or stores.
+ * Wraps Supabase access to visual_projects, image_sessions and
+ * studio_images. No coupling with products, Shopify, drafts or stores.
  */
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
