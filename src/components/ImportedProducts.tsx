@@ -39,7 +39,10 @@ export function ImportedProducts({ onOpen }: ImportedProductsProps) {
       if (error) throw error;
 
       const imported = (data || [])
-        .filter((row: any) => row.ai_data?.imageInsights?.importedFrom === 'aliexpress')
+        .filter((row: any) => {
+          const from = row.ai_data?.imageInsights?.importedFrom;
+          return from === 'aliexpress' || from === 'shopify';
+        })
         .map((row: any) => ({
           id: row.id,
           name: row.name,

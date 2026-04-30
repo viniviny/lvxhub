@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import { logger } from '@/lib/logger';
 import { useNavigate } from 'react-router-dom';
 import { ImageGenerationStep, GeneratedImage, ImageAngle } from '@/components/ImageGenerationStep';
 import { useProject } from '@/hooks/useProject';
@@ -7,6 +8,7 @@ import { useDraftSave } from '@/hooks/useDraftSave';
 import { DraftResumeDialog } from '@/components/DraftResumeDialog';
 import { AliExpressImportToast } from '@/components/AliExpressImportToast';
 import { ImportedProducts } from '@/components/ImportedProducts';
+import { ImportFromURL } from '@/components/ImportFromURL';
 import { DraftSavedIndicator } from '@/components/DraftSavedIndicator';
 import { ProductFormData, ProductSize, ProductGender, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
 import { useProductUnderstanding } from '@/hooks/useProductUnderstanding';
@@ -495,12 +497,12 @@ const Index = () => {
           (payload) => {
             const row = payload.new as any;
             const insights = row?.ai_data?.imageInsights;
-            if (insights?.importedFrom !== 'aliexpress') return;
+            if (insights?.importedFrom !== 'aliexpress' && insights?.importedFrom !== 'shopify') return;
             const sourceImages: string[] = insights?.sourceImages || [];
             setAliImport({
               open: true,
               projectId: row.id,
-              title: row.name || 'Produto AliExpress',
+              title: row.name || (insights?.importedFrom === 'shopify' ? 'Produto Shopify' : 'Produto AliExpress'),
               price: row?.product_data?.cost || 0,
               imageUrl: sourceImages[0] || '',
               imageCount: sourceImages.length,
@@ -726,7 +728,7 @@ const Index = () => {
           if (b64.includes(',')) b64 = b64.split(',')[1];
           additionalImages.push({ imageBase64: b64, imageName: `product-${img.angle || 'image'}-${Date.now()}.png` });
         } catch (err) {
-          console.warn(`[Publish] Failed to fetch generated image:`, err);
+          logger.warn('[Publish] Failed to fetch generated image', { error: err });
         }
         processedCount++;
         setImageUploadProgress({ current: processedCount, total: totalToProcess });
@@ -743,11 +745,11 @@ const Index = () => {
           if (result.converted) {
             imageBase64 = result.base64;
             imageName = result.fileName;
-            console.log(`[ImageOptimization] Converted to WebP: ${result.originalSize}→${result.optimizedSize} bytes`);
+            logger.debug('[ImageOptimization] Converted to WebP', { originalSize: result.originalSize, optimizedSize: result.optimizedSize });
           }
         } catch (err) {
           // Safe fallback: continue with original image
-          console.warn('[ImageOptimization] Optimization failed, using original:', err);
+          logger.warn('[ImageOptimization] Optimization failed, using original', { error: err });
         }
       }
 
@@ -773,7 +775,7 @@ const Index = () => {
             if (b64.includes(',')) b64 = b64.split(',')[1];
             colorImages.push({ variantName: color.name, imageBase64: b64, imageName: `variant-${color.name}-${Date.now()}.png` });
           } catch (err) {
-            console.warn(`[Publish] Failed to fetch color image for ${color.name}:`, err);
+            logger.warn(`[Publish] Failed to fetch color image for ${color.name}`, { error: err });
           }
           processedCount++;
           setImageUploadProgress({ current: processedCount, total: totalToProcess });
@@ -832,7 +834,7 @@ const Index = () => {
       // Mark project as published
       publishProject();
     } catch (err: any) {
-      console.error('Publish error:', err);
+      logger.error('Publish error', err);
       toast.error(err.message || 'Erro ao publicar produto.');
     } finally {
       setIsPublishing(false);
@@ -1250,11 +1252,11 @@ const Index = () => {
                             fetch(cover.url).then(r => r.blob()).then(blob => {
                               const file = new File([blob], 'product-image.png', { type: 'image/png' });
                               setImageFile(file);
-                            }).catch(e => console.error('Fetch cover error:', e));
+                            }).catch(e => logger.error('Fetch cover error', e));
                           }
                         }
                         } catch (err) {
-                          console.error('onImagesChange crashed:', err);
+                          logger.error('onImagesChange crashed', err);
                         }
                       }}
                       onNext={() => { markStepComplete(1); setWizardStep(2); updateStep(2); }}
@@ -1815,6 +1817,11 @@ const Index = () => {
 
             {/* IMPORTED VIEW */}
             {currentView === 'imported' && <ImportedProducts onOpen={handleOpenImported} />}
+
+            {/* IMPORT URL VIEW */}
+            {currentView === 'import-url' && (
+              <ImportFromURL onImportComplete={() => setCurrentView('imported')} />
+            )}
 
             {/* LIBRARY VIEW */}
             {currentView === 'library' && <ImageLibrary />}
