@@ -128,6 +128,66 @@ export type Database = {
         }
         Relationships: []
       }
+      generation_sessions: {
+        Row: {
+          background_master_url: string | null
+          connection_id: string | null
+          created_at: string
+          draft_id: string | null
+          id: string
+          preset_signature: string | null
+          seed: number | null
+          selected_background: string | null
+          selected_model: string | null
+          system_rules_version: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          background_master_url?: string | null
+          connection_id?: string | null
+          created_at?: string
+          draft_id?: string | null
+          id?: string
+          preset_signature?: string | null
+          seed?: number | null
+          selected_background?: string | null
+          selected_model?: string | null
+          system_rules_version?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          background_master_url?: string | null
+          connection_id?: string | null
+          created_at?: string
+          draft_id?: string | null
+          id?: string
+          preset_signature?: string | null
+          seed?: number | null
+          selected_background?: string | null
+          selected_model?: string | null
+          system_rules_version?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generation_sessions_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "shopify_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generation_sessions_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "product_drafts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       image_library: {
         Row: {
           angle: string | null
@@ -181,6 +241,77 @@ export type Database = {
           width?: number | null
         }
         Relationships: []
+      }
+      product_drafts: {
+        Row: {
+          collection: string | null
+          connection_id: string
+          created_at: string
+          description: string | null
+          gender: string | null
+          id: string
+          image_prompt: string | null
+          market_id: string | null
+          media: Json
+          pricing: Json
+          product_type: string | null
+          shopify_product_id: string | null
+          status: string
+          tags: string[]
+          title: string
+          updated_at: string
+          user_id: string
+          variants: Json
+        }
+        Insert: {
+          collection?: string | null
+          connection_id: string
+          created_at?: string
+          description?: string | null
+          gender?: string | null
+          id?: string
+          image_prompt?: string | null
+          market_id?: string | null
+          media?: Json
+          pricing?: Json
+          product_type?: string | null
+          shopify_product_id?: string | null
+          status?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          user_id: string
+          variants?: Json
+        }
+        Update: {
+          collection?: string | null
+          connection_id?: string
+          created_at?: string
+          description?: string | null
+          gender?: string | null
+          id?: string
+          image_prompt?: string | null
+          market_id?: string | null
+          media?: Json
+          pricing?: Json
+          product_type?: string | null
+          shopify_product_id?: string | null
+          status?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          user_id?: string
+          variants?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_drafts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "shopify_connections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -291,6 +422,57 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      publication_logs: {
+        Row: {
+          connection_id: string | null
+          created_at: string
+          draft_id: string | null
+          error_message: string | null
+          id: string
+          shopify_product_id: string | null
+          status: string
+          steps: Json
+          user_id: string
+        }
+        Insert: {
+          connection_id?: string | null
+          created_at?: string
+          draft_id?: string | null
+          error_message?: string | null
+          id?: string
+          shopify_product_id?: string | null
+          status?: string
+          steps?: Json
+          user_id: string
+        }
+        Update: {
+          connection_id?: string | null
+          created_at?: string
+          draft_id?: string | null
+          error_message?: string | null
+          id?: string
+          shopify_product_id?: string | null
+          status?: string
+          steps?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publication_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "shopify_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publication_logs_draft_id_fkey"
+            columns: ["draft_id"]
+            isOneToOne: false
+            referencedRelation: "product_drafts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       published_products: {
         Row: {

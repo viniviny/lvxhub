@@ -55,6 +55,8 @@ serve(async (req) => {
 });
 
 async function handle(req: Request): Promise<Response> {
+  // Refs hoisted so the outer catch can finalize the publication log if it was already created.
+  let __logRef: { adminClient: any; id: string; steps: any[] } | null = null;
   try {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
@@ -78,6 +80,7 @@ async function handle(req: Request): Promise<Response> {
       localPrice, baseCurrency, language: bodyLanguage, languageLabel, marketName, regionGroup,
       variants: bodyVariants, inventoryPolicy, requiresShipping, weight, weightUnit, countryOfOrigin,
       selectedChannels, colorImages, additionalImages, shopifyProductId,
+      connection_id: bodyConnectionId, draft_id: bodyDraftId,
     } = body;
 
     if (!title || typeof title !== 'string' || title.length > 255) {
@@ -86,10 +89,78 @@ async function handle(req: Request): Promise<Response> {
 
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const adminClient = createClient(supabaseUrl, serviceKey);
-    const { data: conn } = await adminClient.from('shopify_connections').select('store_domain, access_token, shop_name').eq('user_id', userId).eq('is_active', true).maybeSingle();
-    if (!conn) {
-      return new Response(JSON.stringify({ error: 'Nenhuma loja conectada.' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+    // ---- Resolve connection EXPLICITLY by id (multi-store safe) ----
+    // Prefer body.connection_id. Fallback: only if user has exactly one active connection
+    // (legacy clients that haven't been updated yet).
+    let conn: { id: string; store_domain: string; access_token: string; shop_name: string | null; is_active: boolean } | null = null;
+    if (bodyConnectionId && typeof bodyConnectionId === 'string') {
+      const { data } = await adminClient
+        .from('shopify_connections')
+        .select('id, store_domain, access_token, shop_name, is_active')
+        .eq('id', bodyConnectionId)
+        .eq('user_id', userId)
+        .maybeSingle();
+      conn = data;
+      if (!conn) {
+        return new Response(JSON.stringify({ error: 'Conexão Shopify não encontrada ou não pertence ao usuário.', step: 'validate_connection' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      if (!conn.is_active) {
+        return new Response(JSON.stringify({ error: 'Esta loja Shopify está desativada. Reconecte para publicar.', step: 'validate_connection', reconnect: true }), { status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    } else {
+      // Legacy fallback: only resolve automatically if user has exactly ONE active store.
+      const { data: activeConns } = await adminClient
+        .from('shopify_connections')
+        .select('id, store_domain, access_token, shop_name, is_active')
+        .eq('user_id', userId)
+        .eq('is_active', true);
+      if (!activeConns || activeConns.length === 0) {
+        return new Response(JSON.stringify({ error: 'Nenhuma loja Shopify conectada.', step: 'validate_connection' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      if (activeConns.length > 1) {
+        return new Response(JSON.stringify({ error: 'Múltiplas lojas conectadas. Selecione qual loja usar (connection_id obrigatório).', step: 'validate_connection' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      conn = activeConns[0];
     }
+
+    // ---- Init publication log (best-effort, non-blocking) ----
+    const logSteps: Array<{ step: string; status: 'ok' | 'warn' | 'error'; message?: string; at: string }> = [];
+    const pushLog = (step: string, status: 'ok' | 'warn' | 'error', message?: string) =>
+      logSteps.push({ step, status, message, at: new Date().toISOString() });
+
+    let publicationLogId: string | null = null;
+    try {
+      const { data: logRow } = await adminClient.from('publication_logs').insert({
+        user_id: userId,
+        connection_id: conn.id,
+        draft_id: (typeof bodyDraftId === 'string' && bodyDraftId) ? bodyDraftId : null,
+        shopify_product_id: shopifyProductId ? String(shopifyProductId) : null,
+        status: 'started',
+        steps: [],
+      }).select('id').maybeSingle();
+      publicationLogId = logRow?.id ?? null;
+      if (publicationLogId) {
+        __logRef = { adminClient, id: publicationLogId, steps: logSteps };
+      }
+    } catch (logErr) {
+      console.warn('[shopify-publish] Failed to init publication_log:', logErr);
+    }
+    pushLog('validate_connection', 'ok', conn.store_domain);
+
+    const finalizeLog = async (status: 'success' | 'partial_success' | 'failed', errorMessage?: string, finalShopifyId?: string) => {
+      if (!publicationLogId) return;
+      try {
+        await adminClient.from('publication_logs').update({
+          status,
+          steps: logSteps,
+          error_message: errorMessage ?? null,
+          shopify_product_id: finalShopifyId ?? (shopifyProductId ? String(shopifyProductId) : null),
+        }).eq('id', publicationLogId);
+      } catch (e) {
+        console.warn('[shopify-publish] Failed to finalize publication_log:', e);
+      }
+    };
 
     const apiVersion = '2026-01';
     const baseUrl = `https://${conn.store_domain}/admin/api/${apiVersion}`;
@@ -182,9 +253,12 @@ async function handle(req: Request): Promise<Response> {
         console.warn(`[shopify-publish] Product ${shopifyProductId} not found, creating new product instead`);
         await checkRes.text(); // consume body
         createdNew = true;
+        pushLog('check_product', 'warn', 'product_not_found_fallback_create');
       } else if (!checkRes.ok) {
         const errText = await checkRes.text();
         console.error('[shopify-publish] Check product error:', errText);
+        pushLog('check_product', 'error', errText.slice(0, 500));
+        await finalizeLog('failed', `check_product: ${errText.slice(0, 200)}`);
         return new Response(JSON.stringify({ error: 'Erro ao verificar produto no Shopify.', step: 'check_product', details: errText }), { status: checkRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       } else {
         await checkRes.text(); // consume body
@@ -212,6 +286,8 @@ async function handle(req: Request): Promise<Response> {
         if (!updateRes.ok) {
           const errText = await updateRes.text();
           console.error('[shopify-publish] Update product error:', errText);
+          pushLog('update_product', 'error', errText.slice(0, 500));
+          await finalizeLog('failed', `update_product: ${errText.slice(0, 200)}`);
           return new Response(JSON.stringify({ error: 'Erro ao atualizar produto no Shopify.', step: 'update_product', details: errText }), { status: updateRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
 
@@ -301,12 +377,15 @@ async function handle(req: Request): Promise<Response> {
       if (!createRes.ok) {
         const errText = await createRes.text();
         console.error('[shopify-publish] Create product error:', errText);
+        pushLog('create_product', 'error', errText.slice(0, 500));
+        await finalizeLog('failed', `create_product: ${errText.slice(0, 200)}`);
         return new Response(JSON.stringify({ error: 'Erro ao criar produto no Shopify.', step: 'create_product', details: errText }), { status: createRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
       const productData = await createRes.json();
       product = productData.product;
       steps.push(`Produto criado com ${product.images?.length || 0} imagens!`);
+      pushLog('create_product', 'ok', `images=${product.images?.length || 0}`);
       console.log(`[shopify-publish] Product created: ${product.id}, images: ${product.images?.length || 0}`);
     }
 
@@ -356,12 +435,17 @@ async function handle(req: Request): Promise<Response> {
       if (locRes.ok) {
         const locData = await locRes.json();
         if (locData.locations?.length > 0) primaryLocationId = locData.locations[0].id;
+        pushLog('get_locations', 'ok', `count=${locData.locations?.length || 0}`);
+      } else {
+        pushLog('get_locations', 'warn', `status=${locRes.status}`);
       }
     } catch (err) {
       console.warn('[shopify-publish] Failed to fetch locations:', err);
+      pushLog('get_locations', 'warn', String(err).slice(0, 200));
     }
 
     // --- STEP 4: Set inventory levels (parallel) ---
+    let inventoryWarn = false;
     if (primaryLocationId && product.variants?.length > 0) {
       steps.push('Configurando estoque...');
       await runInBatches(product.variants, 4, async (variant: any, i: number) => {
@@ -374,14 +458,17 @@ async function handle(req: Request): Promise<Response> {
             headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
             body: JSON.stringify({ location_id: primaryLocationId, inventory_item_id: variant.inventory_item_id, available: stock }),
           }, { label: `inventory variant ${variant.id}` });
-          if (!r.ok) console.warn(`[shopify-publish] Inventory non-OK (${r.status}) for variant ${variant.id}:`, await r.text());
+          if (!r.ok) { inventoryWarn = true; console.warn(`[shopify-publish] Inventory non-OK (${r.status}) for variant ${variant.id}:`, await r.text()); }
         } catch (err) {
+          inventoryWarn = true;
           console.warn(`[shopify-publish] Inventory error for variant ${variant.id}:`, err);
         }
       });
+      pushLog('set_inventory', inventoryWarn ? 'warn' : 'ok');
     }
 
     // --- STEP 5: Set cost per item (parallel) ---
+    let costWarn = false;
     if (product.variants?.length > 0) {
       steps.push('Definindo custos...');
       await runInBatches(product.variants, 4, async (variant: any, i: number) => {
@@ -394,14 +481,17 @@ async function handle(req: Request): Promise<Response> {
             headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
             body: JSON.stringify({ inventory_item: { cost: itemCost.toString(), country_code_of_origin: countryOfOrigin || null } }),
           }, { label: `cost variant ${variant.id}` });
-          if (!r.ok) console.warn(`[shopify-publish] Cost non-OK (${r.status}) for variant ${variant.id}:`, await r.text());
+          if (!r.ok) { costWarn = true; console.warn(`[shopify-publish] Cost non-OK (${r.status}) for variant ${variant.id}:`, await r.text()); }
         } catch (err) {
+          costWarn = true;
           console.warn(`[shopify-publish] Cost error for variant ${variant.id}:`, err);
         }
       });
+      pushLog('set_cost', costWarn ? 'warn' : 'ok');
     }
 
     // --- STEP 6: Publish to sales channels (parallel) ---
+    let channelsWarn = false;
     if (selectedChannels?.length > 0) {
       steps.push('Publicando nos canais de venda...');
       await runInBatches(selectedChannels, 4, async (channelId: string) => {
@@ -411,11 +501,13 @@ async function handle(req: Request): Promise<Response> {
             headers: { 'X-Shopify-Access-Token': accessToken, 'Content-Type': 'application/json' },
             body: JSON.stringify({ product_listing: { product_id: product.id } }),
           }, { label: `publish channel ${channelId}` });
-          if (!r.ok) console.warn(`[shopify-publish] Channel publish non-OK (${r.status}) for ${channelId}:`, await r.text());
+          if (!r.ok) { channelsWarn = true; console.warn(`[shopify-publish] Channel publish non-OK (${r.status}) for ${channelId}:`, await r.text()); }
         } catch (err) {
+          channelsWarn = true;
           console.warn(`[shopify-publish] Channel publish error for ${channelId}:`, err);
         }
       });
+      pushLog('publish_channels', channelsWarn ? 'warn' : 'ok');
     }
 
     // --- Persist to published_products ---
@@ -455,6 +547,10 @@ async function handle(req: Request): Promise<Response> {
       if (insErr) console.error('[shopify-publish] Failed to insert published_products:', insErr);
     }
 
+    // Finalize publication log: partial_success if any non-critical step warned, success otherwise.
+    const hadWarning = logSteps.some((l) => l.status === 'warn');
+    await finalizeLog(hadWarning ? 'partial_success' : 'success', undefined, product.id.toString());
+
     return new Response(JSON.stringify({
       productId: product.id.toString(),
       title: product.title,
@@ -463,9 +559,20 @@ async function handle(req: Request): Promise<Response> {
       steps,
       imageUrl: product.images?.[0]?.src || bodyImageUrl || null,
       totalImages: product.images?.length || 0,
+      publicationLogId,
+      connectionId: conn.id,
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
     console.error('[shopify-publish] Unexpected error:', e);
+    if (__logRef) {
+      try {
+        await __logRef.adminClient.from('publication_logs').update({
+          status: 'failed',
+          steps: __logRef.steps,
+          error_message: (e as Error)?.message?.slice(0, 500) || 'Unexpected error',
+        }).eq('id', __logRef.id);
+      } catch (_) { /* swallow */ }
+    }
     return new Response(JSON.stringify({ error: 'Erro interno. Tente novamente.' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 }
