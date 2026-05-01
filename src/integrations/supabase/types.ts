@@ -553,6 +553,8 @@ export type Database = {
           shopify_product_id: string | null
           shopify_url: string | null
           sizes: string[] | null
+          source_handle: string | null
+          source_origin: string | null
           status: string
           store_domain: string
           title: string
@@ -579,6 +581,8 @@ export type Database = {
           shopify_product_id?: string | null
           shopify_url?: string | null
           sizes?: string[] | null
+          source_handle?: string | null
+          source_origin?: string | null
           status?: string
           store_domain: string
           title: string
@@ -605,6 +609,8 @@ export type Database = {
           shopify_product_id?: string | null
           shopify_url?: string | null
           sizes?: string[] | null
+          source_handle?: string | null
+          source_origin?: string | null
           status?: string
           store_domain?: string
           title?: string
