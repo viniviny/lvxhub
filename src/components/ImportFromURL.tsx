@@ -4,6 +4,14 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Link2, Search, CheckCircle2, X, RotateCcw, Store, AlertCircle } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 interface PreviewProduct {
   handle: string;
@@ -67,6 +75,8 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
   const [allowReimport, setAllowReimport] = useState(false);
   const [productStatus, setProductStatus] = useState<'active' | 'draft'>('active');
   const [inventoryPolicy, setInventoryPolicy] = useState<'continue' | 'deny'>('continue');
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewExclude, setReviewExclude] = useState<Set<string>>(new Set());
 
   // Job state
   const [jobId, setJobId] = useState<string | null>(null);
