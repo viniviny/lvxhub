@@ -640,43 +640,162 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
                     const priceLabel = p.priceSingle === false && p.priceMax && p.priceMax !== p.price
                       ? `${symbol} ${p.price} – ${p.priceMax}`
                       : `${symbol} ${p.price}`;
+                    const expanded = reviewExpanded.has(p.handle);
+                    const raw = p.raw || {};
+                    const descHtml: string = raw.body_html || '';
+                    const descText = descHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+                    const variants: any[] = raw.variants || [];
+                    const minPrice = parseFloat(p.price || '0');
+                    const maxPrice = parseFloat(p.priceMax || p.price || '0');
                     return (
                       <div
                         key={p.handle}
-                        className={`flex items-center gap-3 rounded-lg border p-2 transition-colors ${
+                        className={`rounded-lg border transition-colors ${
                           excluded ? 'border-border opacity-50' : 'border-border bg-card'
                         }`}
                       >
-                        <input
-                          type="checkbox"
-                          checked={!excluded}
-                          onChange={() => {
-                            setReviewExclude(prev => {
-                              const next = new Set(prev);
-                              next.has(p.handle) ? next.delete(p.handle) : next.add(p.handle);
-                              return next;
-                            });
-                          }}
-                          className="h-4 w-4 rounded border-border flex-shrink-0"
-                        />
-                        <div className="w-12 h-12 rounded-md bg-muted overflow-hidden flex-shrink-0">
-                          {p.image ? (
-                            <img src={p.image} alt={p.title} className="w-full h-full object-cover" loading="lazy" />
-                          ) : null}
+                        <div className="flex items-center gap-3 p-2">
+                          <input
+                            type="checkbox"
+                            checked={!excluded}
+                            onChange={() => {
+                              setReviewExclude(prev => {
+                                const next = new Set(prev);
+                                next.has(p.handle) ? next.delete(p.handle) : next.add(p.handle);
+                                return next;
+                              });
+                            }}
+                            className="h-4 w-4 rounded border-border flex-shrink-0"
+                          />
+                          <div className="w-12 h-12 rounded-md bg-muted overflow-hidden flex-shrink-0">
+                            {p.image ? (
+                              <img src={p.image} alt={p.title} className="w-full h-full object-cover" loading="lazy" />
+                            ) : null}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-foreground truncate">{p.title}</div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-2">
+                              <span className="text-primary font-semibold">{priceLabel}</span>
+                              <span>·</span>
+                              <span>{p.imagesCount}img · {p.variantsCount}var</span>
+                              {imported && (
+                                <span className="bg-amber-500/15 text-amber-700 dark:text-amber-400 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                                  Já importado
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReviewExpanded(prev => {
+                                const next = new Set(prev);
+                                next.has(p.handle) ? next.delete(p.handle) : next.add(p.handle);
+                                return next;
+                              });
+                            }}
+                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded-md hover:bg-muted/50 transition-colors flex-shrink-0"
+                          >
+                            {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                            {expanded ? 'Ocultar' : 'Ver detalhes'}
+                          </button>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-foreground truncate">{p.title}</div>
-                          <div className="text-xs text-muted-foreground flex items-center gap-2">
-                            <span className="text-primary font-semibold">{priceLabel}</span>
-                            <span>·</span>
-                            <span>{p.imagesCount}img · {p.variantsCount}var</span>
-                            {imported && (
-                              <span className="ml-auto bg-amber-500/15 text-amber-700 dark:text-amber-400 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
-                                Já importado
-                              </span>
+
+                        {expanded && (
+                          <div className="border-t border-border px-3 py-3 space-y-3 bg-muted/20">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                              <div>
+                                <div className="text-muted-foreground">Preço mín.</div>
+                                <div className="font-semibold text-foreground">{p.currencySymbol || '$'} {minPrice.toFixed(2)}</div>
+                              </div>
+                              <div>
+                                <div className="text-muted-foreground">Preço máx.</div>
+                                <div className="font-semibold text-foreground">{p.currencySymbol || '$'} {maxPrice.toFixed(2)}</div>
+                              </div>
+                              <div>
+                                <div className="text-muted-foreground">Imagens</div>
+                                <div className="font-semibold text-foreground">{p.imagesCount}</div>
+                              </div>
+                              <div>
+                                <div className="text-muted-foreground">Variantes</div>
+                                <div className="font-semibold text-foreground">{p.variantsCount}</div>
+                              </div>
+                              {p.vendor && (
+                                <div>
+                                  <div className="text-muted-foreground">Vendor</div>
+                                  <div className="font-medium text-foreground truncate">{p.vendor}</div>
+                                </div>
+                              )}
+                              {p.productType && (
+                                <div>
+                                  <div className="text-muted-foreground">Tipo</div>
+                                  <div className="font-medium text-foreground truncate">{p.productType}</div>
+                                </div>
+                              )}
+                              <div className="col-span-2">
+                                <div className="text-muted-foreground">Handle</div>
+                                <div className="font-mono text-[11px] text-foreground truncate">{p.handle}</div>
+                              </div>
+                            </div>
+
+                            {descText && (
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">Descrição</div>
+                                <div className="text-xs text-foreground/90 max-h-32 overflow-y-auto rounded-md border border-border bg-card p-2 leading-relaxed">
+                                  {descText}
+                                </div>
+                              </div>
+                            )}
+
+                            {variants.length > 0 && (
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">
+                                  Variantes ({variants.length})
+                                </div>
+                                <div className="max-h-40 overflow-y-auto rounded-md border border-border bg-card divide-y divide-border">
+                                  {variants.slice(0, 50).map((v: any, idx: number) => {
+                                    const opts = [v.option1, v.option2, v.option3].filter(Boolean).join(' / ');
+                                    return (
+                                      <div key={idx} className="flex items-center justify-between gap-2 px-2 py-1 text-[11px]">
+                                        <span className="text-foreground truncate">{opts || `Variante ${idx + 1}`}</span>
+                                        <span className="text-primary font-semibold whitespace-nowrap">
+                                          {p.currencySymbol || '$'} {parseFloat(v.price || '0').toFixed(2)}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                  {variants.length > 50 && (
+                                    <div className="px-2 py-1 text-[11px] text-muted-foreground text-center">
+                                      + {variants.length - 50} variantes adicionais
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {p.imagesCount > 1 && Array.isArray(raw.images) && (
+                              <div>
+                                <div className="text-xs text-muted-foreground mb-1">Imagens ({p.imagesCount})</div>
+                                <div className="flex gap-1.5 overflow-x-auto pb-1">
+                                  {raw.images.slice(0, 10).map((img: any, idx: number) => (
+                                    <img
+                                      key={idx}
+                                      src={img.src}
+                                      alt=""
+                                      loading="lazy"
+                                      className="w-14 h-14 rounded-md object-cover bg-muted flex-shrink-0 border border-border"
+                                    />
+                                  ))}
+                                  {p.imagesCount > 10 && (
+                                    <div className="w-14 h-14 rounded-md bg-muted flex items-center justify-center text-[10px] text-muted-foreground flex-shrink-0 border border-border">
+                                      +{p.imagesCount - 10}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
                             )}
                           </div>
-                        </div>
+                        )}
                       </div>
                     );
                   })}
