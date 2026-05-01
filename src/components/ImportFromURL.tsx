@@ -78,6 +78,8 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewExclude, setReviewExclude] = useState<Set<string>>(new Set());
   const [reviewExpanded, setReviewExpanded] = useState<Set<string>>(new Set());
+  const [variantsShown, setVariantsShown] = useState<Record<string, number>>({});
+  const [imagesShown, setImagesShown] = useState<Record<string, number>>({});
 
   // Job state
   const [jobId, setJobId] = useState<string | null>(null);
@@ -747,53 +749,121 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
                               </div>
                             )}
 
-                            {variants.length > 0 && (
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">
-                                  Variantes ({variants.length})
-                                </div>
-                                <div className="max-h-40 overflow-y-auto rounded-md border border-border bg-card divide-y divide-border">
-                                  {variants.slice(0, 50).map((v: any, idx: number) => {
-                                    const opts = [v.option1, v.option2, v.option3].filter(Boolean).join(' / ');
-                                    return (
-                                      <div key={idx} className="flex items-center justify-between gap-2 px-2 py-1 text-[11px]">
-                                        <span className="text-foreground truncate">{opts || `Variante ${idx + 1}`}</span>
-                                        <span className="text-primary font-semibold whitespace-nowrap">
-                                          {p.currencySymbol || '$'} {parseFloat(v.price || '0').toFixed(2)}
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
-                                  {variants.length > 50 && (
-                                    <div className="px-2 py-1 text-[11px] text-muted-foreground text-center">
-                                      + {variants.length - 50} variantes adicionais
+                            {variants.length > 0 && (() => {
+                              const vStep = 20;
+                              const vShown = variantsShown[p.handle] ?? vStep;
+                              const vVisible = variants.slice(0, vShown);
+                              const vRemaining = variants.length - vShown;
+                              return (
+                                <div>
+                                  <div className="text-xs text-muted-foreground mb-1 flex items-center justify-between">
+                                    <span>Variantes ({variants.length})</span>
+                                    <span className="text-[10px]">{Math.min(vShown, variants.length)}/{variants.length}</span>
+                                  </div>
+                                  <div className="max-h-48 overflow-y-auto rounded-md border border-border bg-card divide-y divide-border">
+                                    {vVisible.map((v: any, idx: number) => {
+                                      const opts = [v.option1, v.option2, v.option3].filter(Boolean).join(' / ');
+                                      return (
+                                        <div key={idx} className="flex items-center justify-between gap-2 px-2 py-1 text-[11px]">
+                                          <span className="text-foreground truncate">{opts || `Variante ${idx + 1}`}</span>
+                                          <span className="text-primary font-semibold whitespace-nowrap">
+                                            {p.currencySymbol || '$'} {parseFloat(v.price || '0').toFixed(2)}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                  {vRemaining > 0 && (
+                                    <div className="flex gap-2 mt-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => setVariantsShown(prev => ({ ...prev, [p.handle]: vShown + vStep }))}
+                                        className="flex-1 text-[11px] font-medium text-primary hover:bg-primary/10 rounded-md py-1 transition-colors"
+                                      >
+                                        Ver mais {Math.min(vStep, vRemaining)}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setVariantsShown(prev => ({ ...prev, [p.handle]: variants.length }))}
+                                        className="flex-1 text-[11px] font-medium text-muted-foreground hover:bg-muted rounded-md py-1 transition-colors"
+                                      >
+                                        Ver todas ({variants.length})
+                                      </button>
                                     </div>
                                   )}
+                                  {vShown > vStep && vRemaining <= 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setVariantsShown(prev => ({ ...prev, [p.handle]: vStep }))}
+                                      className="w-full text-[11px] font-medium text-muted-foreground hover:bg-muted rounded-md py-1 mt-1.5 transition-colors"
+                                    >
+                                      Recolher
+                                    </button>
+                                  )}
                                 </div>
-                              </div>
-                            )}
+                              );
+                            })()}
 
-                            {p.imagesCount > 1 && Array.isArray(raw.images) && (
-                              <div>
-                                <div className="text-xs text-muted-foreground mb-1">Imagens ({p.imagesCount})</div>
-                                <div className="flex gap-1.5 overflow-x-auto pb-1">
-                                  {raw.images.slice(0, 10).map((img: any, idx: number) => (
-                                    <img
-                                      key={idx}
-                                      src={img.src}
-                                      alt=""
-                                      loading="lazy"
-                                      className="w-14 h-14 rounded-md object-cover bg-muted flex-shrink-0 border border-border"
-                                    />
-                                  ))}
-                                  {p.imagesCount > 10 && (
-                                    <div className="w-14 h-14 rounded-md bg-muted flex items-center justify-center text-[10px] text-muted-foreground flex-shrink-0 border border-border">
-                                      +{p.imagesCount - 10}
+                            {p.imagesCount > 1 && Array.isArray(raw.images) && (() => {
+                              const iStep = 12;
+                              const iShown = imagesShown[p.handle] ?? iStep;
+                              const iVisible = raw.images.slice(0, iShown);
+                              const iRemaining = raw.images.length - iShown;
+                              return (
+                                <div>
+                                  <div className="text-xs text-muted-foreground mb-1 flex items-center justify-between">
+                                    <span>Imagens ({p.imagesCount})</span>
+                                    <span className="text-[10px]">{Math.min(iShown, raw.images.length)}/{raw.images.length}</span>
+                                  </div>
+                                  <div className="grid grid-cols-6 sm:grid-cols-8 gap-1.5">
+                                    {iVisible.map((img: any, idx: number) => (
+                                      <a
+                                        key={idx}
+                                        href={img.src}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block aspect-square rounded-md overflow-hidden border border-border hover:border-primary/60 transition-colors"
+                                        title="Abrir em nova aba"
+                                      >
+                                        <img
+                                          src={img.src}
+                                          alt=""
+                                          loading="lazy"
+                                          className="w-full h-full object-cover bg-muted"
+                                        />
+                                      </a>
+                                    ))}
+                                  </div>
+                                  {iRemaining > 0 && (
+                                    <div className="flex gap-2 mt-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => setImagesShown(prev => ({ ...prev, [p.handle]: iShown + iStep }))}
+                                        className="flex-1 text-[11px] font-medium text-primary hover:bg-primary/10 rounded-md py-1 transition-colors"
+                                      >
+                                        Ver mais {Math.min(iStep, iRemaining)}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setImagesShown(prev => ({ ...prev, [p.handle]: raw.images.length }))}
+                                        className="flex-1 text-[11px] font-medium text-muted-foreground hover:bg-muted rounded-md py-1 transition-colors"
+                                      >
+                                        Ver todas ({raw.images.length})
+                                      </button>
                                     </div>
                                   )}
+                                  {iShown > iStep && iRemaining <= 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setImagesShown(prev => ({ ...prev, [p.handle]: iStep }))}
+                                      className="w-full text-[11px] font-medium text-muted-foreground hover:bg-muted rounded-md py-1 mt-1.5 transition-colors"
+                                    >
+                                      Recolher
+                                    </button>
+                                  )}
                                 </div>
-                              </div>
-                            )}
+                              );
+                            })()}
                           </div>
                         )}
                       </div>
