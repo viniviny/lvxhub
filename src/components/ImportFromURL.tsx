@@ -240,13 +240,26 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId]);
 
-  const handleImport = async () => {
+  const openReview = () => {
     if (!preview || selected.size === 0) return;
     if (!targetStoreId) {
       toast.error('Selecione a loja Shopify de destino antes de importar.');
       return;
     }
-    const toImport = preview.products.filter(p => selected.has(p.handle));
+    setReviewExclude(new Set());
+    setReviewOpen(true);
+  };
+
+  const confirmImport = async () => {
+    if (!preview || selected.size === 0 || !targetStoreId) return;
+    const toImport = preview.products.filter(
+      p => selected.has(p.handle) && !reviewExclude.has(p.handle)
+    );
+    if (toImport.length === 0) {
+      toast.error('Nenhum produto restante para importar.');
+      return;
+    }
+    setReviewOpen(false);
     try {
       const { data, error } = await supabase.functions.invoke('import-shopify-direct', {
         body: {
