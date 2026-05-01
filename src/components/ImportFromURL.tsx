@@ -1,15 +1,19 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Link2, Search, CheckCircle2, X, RotateCcw, Store } from 'lucide-react';
+import { Loader2, Link2, Search, CheckCircle2, X, RotateCcw, Store, AlertCircle } from 'lucide-react';
 
 interface PreviewProduct {
   handle: string;
   title: string;
   image: string | null;
   price: string;
+  priceMax?: string;
+  priceSingle?: boolean;
+  currency?: string;
+  currencySymbol?: string;
   imagesCount: number;
   variantsCount: number;
   vendor: string;
@@ -48,7 +52,6 @@ function detectType(url: string): string {
 export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
-  const [importing, setImporting] = useState(false);
   const [preview, setPreview] = useState<{
     type: string;
     origin: string;
@@ -60,6 +63,15 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
   const [search, setSearch] = useState('');
   const [stores, setStores] = useState<ConnectedStore[]>([]);
   const [targetStoreId, setTargetStoreId] = useState<string>('');
+  const [importedHandles, setImportedHandles] = useState<Set<string>>(new Set());
+  const [allowReimport, setAllowReimport] = useState(false);
+  const [productStatus, setProductStatus] = useState<'active' | 'draft'>('active');
+  const [inventoryPolicy, setInventoryPolicy] = useState<'continue' | 'deny'>('continue');
+
+  // Job state
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [jobProgress, setJobProgress] = useState({ done: 0, total: 0, created: 0, failed: 0 });
+  const pollRef = useRef<number | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -74,6 +86,25 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
     })();
   }, []);
 
+  // Carrega handles já importados quando muda loja destino + origin
+  useEffect(() => {
+    if (!targetStoreId || !preview?.origin) {
+      setImportedHandles(new Set());
+      return;
+    }
+    const store = stores.find(s => s.id === targetStoreId);
+    if (!store) return;
+    (async () => {
+      const { data } = await supabase
+        .from('published_products')
+        .select('source_handle')
+        .eq('store_domain', store.store_domain)
+        .eq('source_origin', preview.origin)
+        .not('source_handle', 'is', null);
+      setImportedHandles(new Set((data || []).map((r: any) => r.source_handle).filter(Boolean)));
+    })();
+  }, [targetStoreId, preview?.origin, stores]);
+
   const urlType = detectType(url);
 
   const filtered = useMemo(() => {
@@ -83,25 +114,30 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
     return preview.products.filter(p => p.title.toLowerCase().includes(q));
   }, [preview, search]);
 
-  const allFilteredSelected = filtered.length > 0 && filtered.every(p => selected.has(p.handle));
+  const isImported = (handle: string) => importedHandles.has(handle);
+  const canSelect = (handle: string) => allowReimport || !isImported(handle);
+
+  const selectableFiltered = filtered.filter(p => canSelect(p.handle));
+  const allSelectableSelected = selectableFiltered.length > 0 && selectableFiltered.every(p => selected.has(p.handle));
 
   const toggleAll = () => {
-    if (allFilteredSelected) {
+    if (allSelectableSelected) {
       setSelected(prev => {
         const next = new Set(prev);
-        filtered.forEach(p => next.delete(p.handle));
+        selectableFiltered.forEach(p => next.delete(p.handle));
         return next;
       });
     } else {
       setSelected(prev => {
         const next = new Set(prev);
-        filtered.forEach(p => next.add(p.handle));
+        selectableFiltered.forEach(p => next.add(p.handle));
         return next;
       });
     }
   };
 
   const toggle = (handle: string) => {
+    if (!canSelect(handle)) return;
     setSelected(prev => {
       const next = new Set(prev);
       next.has(handle) ? next.delete(handle) : next.add(handle);
@@ -122,7 +158,6 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Erro ao carregar produtos');
       setPreview(data);
-      // Pré-seleciona se for produto único
       if (data.type === 'product' && data.products?.length === 1) {
         setSelected(new Set([data.products[0].handle]));
       }
@@ -134,6 +169,67 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
     }
   };
 
+  // Polling do job
+  useEffect(() => {
+    if (!jobId) return;
+    let cancelled = false;
+    const poll = async () => {
+      const { data } = await supabase
+        .from('generation_jobs')
+        .select('status, progress, total_steps, result, error_message')
+        .eq('id', jobId)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      const result: any = data.result || {};
+      setJobProgress({
+        done: data.progress || 0,
+        total: data.total_steps || 0,
+        created: result.created_count || 0,
+        failed: result.failed_count || 0,
+      });
+      if (data.status === 'completed') {
+        const store = stores.find(s => s.id === targetStoreId);
+        toast.success(
+          `${result.created_count || 0} produto${result.created_count !== 1 ? 's' : ''} publicado${result.created_count !== 1 ? 's' : ''} em ${store?.store_domain || 'sua loja'}`
+        );
+        if ((result.failed_count || 0) > 0) {
+          toast.error(`${result.failed_count} falharam: ${(result.errors || []).slice(0, 2).join(' | ')}`);
+        }
+        setJobId(null);
+        // Atualiza dedupe local
+        const newHandles = new Set(importedHandles);
+        (result.created || []).forEach((c: any) => {
+          // Não temos handle de origem aqui, mas o useEffect já vai recarregar.
+        });
+        // Refresh dedupe
+        if (preview?.origin && targetStoreId) {
+          const store = stores.find(s => s.id === targetStoreId);
+          if (store) {
+            const { data: refreshed } = await supabase
+              .from('published_products')
+              .select('source_handle')
+              .eq('store_domain', store.store_domain)
+              .eq('source_origin', preview.origin)
+              .not('source_handle', 'is', null);
+            setImportedHandles(new Set((refreshed || []).map((r: any) => r.source_handle).filter(Boolean)));
+          }
+        }
+        setSelected(new Set());
+        onImportComplete?.();
+      } else if (data.status === 'failed') {
+        toast.error(data.error_message || 'Importação falhou');
+        setJobId(null);
+      }
+    };
+    poll();
+    pollRef.current = window.setInterval(poll, 1500);
+    return () => {
+      cancelled = true;
+      if (pollRef.current) window.clearInterval(pollRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobId]);
+
   const handleImport = async () => {
     if (!preview || selected.size === 0) return;
     if (!targetStoreId) {
@@ -141,25 +237,23 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
       return;
     }
     const toImport = preview.products.filter(p => selected.has(p.handle));
-    setImporting(true);
     try {
       const { data, error } = await supabase.functions.invoke('import-shopify-direct', {
-        body: { products: toImport, origin: preview.origin, storeId: targetStoreId },
+        body: {
+          products: toImport,
+          origin: preview.origin,
+          storeId: targetStoreId,
+          productStatus,
+          inventoryPolicy,
+        },
       });
       if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Erro ao importar');
-      const store = stores.find(s => s.id === targetStoreId);
-      toast.success(
-        `${data.created} produto${data.created !== 1 ? 's' : ''} publicado${data.created !== 1 ? 's' : ''} em ${store?.store_domain || 'sua loja'}`
-      );
-      if (data.failed > 0) {
-        toast.error(`${data.failed} falharam: ${(data.errors || []).slice(0, 2).join(' | ')}`);
-      }
-      onImportComplete?.();
+      if (!data?.success || !data.jobId) throw new Error(data?.error || 'Erro ao iniciar importação');
+      setJobProgress({ done: 0, total: data.total, created: 0, failed: 0 });
+      setJobId(data.jobId);
+      toast.info(`Iniciando publicação de ${data.total} produto${data.total !== 1 ? 's' : ''}...`);
     } catch (err: any) {
       toast.error(err.message || 'Erro ao importar produtos');
-    } finally {
-      setImporting(false);
     }
   };
 
@@ -167,7 +261,11 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
     setPreview(null);
     setSelected(new Set());
     setSearch('');
+    setImportedHandles(new Set());
   };
+
+  const importing = jobId !== null;
+  const importedCount = preview ? preview.products.filter(p => isImported(p.handle)).length : 0;
 
   // ── ESTADO 1: Input ──
   if (!preview) {
@@ -181,7 +279,6 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
         </div>
 
         <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-          {/* Seletor de loja destino */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
               <Store className="w-3.5 h-3.5 text-muted-foreground" />
@@ -249,6 +346,8 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
   }
 
   // ── ESTADO 2 e 3: Produtos carregados ──
+  const progressPct = jobProgress.total > 0 ? Math.round((jobProgress.done / jobProgress.total) * 100) : 0;
+
   return (
     <div className="animate-fade-in flex flex-col" style={{ minHeight: 0 }}>
       {/* Toolbar */}
@@ -257,6 +356,11 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
           <span className="text-sm font-medium text-foreground whitespace-nowrap">
             {preview.total} produto{preview.total !== 1 ? 's' : ''} carregados
           </span>
+          {importedCount > 0 && (
+            <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full whitespace-nowrap">
+              {importedCount} já importado{importedCount !== 1 ? 's' : ''}
+            </span>
+          )}
           {preview.title && (
             <span className="text-xs text-muted-foreground truncate">— {preview.title}</span>
           )}
@@ -280,31 +384,52 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
           )}
         </div>
 
-        <Button variant="outline" size="sm" onClick={toggleAll} className="h-8 text-xs whitespace-nowrap">
-          {allFilteredSelected ? 'Desmarcar todos' : 'Selecionar todos'}
+        {importedCount > 0 && (
+          <label className="flex items-center gap-1.5 text-xs text-foreground cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={allowReimport}
+              onChange={e => setAllowReimport(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-border"
+            />
+            Permitir reimportar
+          </label>
+        )}
+
+        <Button variant="outline" size="sm" onClick={toggleAll} className="h-8 text-xs whitespace-nowrap" disabled={selectableFiltered.length === 0}>
+          {allSelectableSelected ? 'Desmarcar todos' : 'Selecionar todos'}
         </Button>
 
-        <Button variant="outline" size="sm" onClick={handleReset} className="h-8">
+        <Button variant="outline" size="sm" onClick={handleReset} className="h-8" disabled={importing}>
           <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
           Nova URL
         </Button>
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 pb-20">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 pb-32">
         {filtered.map(product => {
           const isSelected = selected.has(product.handle);
+          const imported = isImported(product.handle);
+          const disabled = imported && !allowReimport;
+          const symbol = product.currencySymbol || '$';
+          const priceLabel = product.priceSingle === false && product.priceMax && product.priceMax !== product.price
+            ? `${symbol} ${product.price} – ${product.priceMax}`
+            : `${symbol} ${product.price}`;
+
           return (
             <button
               key={product.handle}
               onClick={() => toggle(product.handle)}
+              disabled={disabled}
               className={`relative rounded-xl border-2 overflow-hidden text-left transition-all duration-150 focus:outline-none ${
                 isSelected
                   ? 'border-primary shadow-sm'
+                  : disabled
+                  ? 'border-border opacity-50 cursor-not-allowed'
                   : 'border-border hover:border-primary/40'
               }`}
             >
-              {/* Image */}
               <div className="relative aspect-square bg-muted">
                 {product.image ? (
                   <img
@@ -320,7 +445,6 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
                   </div>
                 )}
 
-                {/* Checkbox overlay */}
                 <div className="absolute top-1.5 left-1.5">
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                     isSelected ? 'bg-primary border-primary' : 'bg-background/80 border-muted-foreground/50'
@@ -329,22 +453,27 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
                   </div>
                 </div>
 
-                {/* Selected overlay */}
+                {imported && (
+                  <div className="absolute top-1.5 right-1.5 bg-foreground/85 text-background text-[10px] font-semibold px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                    <CheckCircle2 className="w-2.5 h-2.5" />
+                    Já importado
+                  </div>
+                )}
+
                 {isSelected && (
                   <div className="absolute inset-0 bg-primary/15 pointer-events-none" />
                 )}
               </div>
 
-              {/* Info */}
               <div className="p-2 bg-card">
                 <div className="text-xs font-medium text-foreground line-clamp-2 leading-tight">
                   {product.title}
                 </div>
                 <div className="flex items-center justify-between mt-1">
-                  <span className="text-xs font-semibold text-primary">
-                    US$ {product.price}
+                  <span className="text-xs font-semibold text-primary truncate">
+                    {priceLabel}
                   </span>
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-[10px] text-muted-foreground whitespace-nowrap ml-1">
                     {product.imagesCount}img · {product.variantsCount}var
                   </span>
                 </div>
@@ -361,30 +490,72 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
       </div>
 
       {/* Footer sticky */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-card border border-border rounded-xl px-5 py-3 shadow-lg z-50">
-        <span className="text-sm text-muted-foreground whitespace-nowrap">
-          <span className="font-semibold text-foreground">{selected.size}</span> de {preview.total} selecionados
-        </span>
-        {stores.length > 1 && (
-          <select
-            value={targetStoreId}
-            onChange={e => setTargetStoreId(e.target.value)}
-            className="h-8 rounded-md border border-input bg-card px-2 text-xs max-w-[180px]"
-          >
-            <option value="">Loja destino...</option>
-            {stores.map(s => (
-              <option key={s.id} value={s.id}>{s.store_domain}</option>
-            ))}
-          </select>
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex flex-col gap-2 bg-card border border-border rounded-xl px-5 py-3 shadow-lg z-50 max-w-[calc(100vw-2rem)]">
+        {importing ? (
+          <div className="flex flex-col gap-2 min-w-[320px]">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium text-foreground">
+                Publicando {jobProgress.done} de {jobProgress.total}
+              </span>
+              <span className="text-muted-foreground">
+                {jobProgress.created} ok{jobProgress.failed > 0 && ` · ${jobProgress.failed} falhas`}
+              </span>
+            </div>
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all duration-300"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm text-muted-foreground whitespace-nowrap">
+              <span className="font-semibold text-foreground">{selected.size}</span> de {preview.total}
+            </span>
+
+            {stores.length > 1 && (
+              <select
+                value={targetStoreId}
+                onChange={e => setTargetStoreId(e.target.value)}
+                className="h-8 rounded-md border border-input bg-card px-2 text-xs max-w-[160px]"
+              >
+                <option value="">Loja...</option>
+                {stores.map(s => (
+                  <option key={s.id} value={s.id}>{s.store_domain}</option>
+                ))}
+              </select>
+            )}
+
+            <select
+              value={productStatus}
+              onChange={e => setProductStatus(e.target.value as 'active' | 'draft')}
+              className="h-8 rounded-md border border-input bg-card px-2 text-xs"
+              title="Status na publicação"
+            >
+              <option value="active">Ativo</option>
+              <option value="draft">Rascunho</option>
+            </select>
+
+            <select
+              value={inventoryPolicy}
+              onChange={e => setInventoryPolicy(e.target.value as 'continue' | 'deny')}
+              className="h-8 rounded-md border border-input bg-card px-2 text-xs"
+              title="Política de estoque esgotado"
+            >
+              <option value="continue">Vende sem estoque</option>
+              <option value="deny">Para se esgotar</option>
+            </select>
+
+            <Button
+              onClick={handleImport}
+              disabled={selected.size === 0 || !targetStoreId}
+              size="sm"
+            >
+              Publicar {selected.size}
+            </Button>
+          </div>
         )}
-        <Button
-          onClick={handleImport}
-          disabled={selected.size === 0 || importing || !targetStoreId}
-          size="sm"
-        >
-          {importing && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
-          {importing ? `Publicando ${selected.size}...` : `Publicar ${selected.size} na Shopify`}
-        </Button>
       </div>
     </div>
   );
