@@ -571,15 +571,134 @@ export function ImportFromURL({ onImportComplete }: ImportFromURLProps) {
             </select>
 
             <Button
-              onClick={handleImport}
+              onClick={openReview}
               disabled={selected.size === 0 || !targetStoreId}
               size="sm"
             >
-              Publicar {selected.size}
+              Revisar e publicar ({selected.size})
             </Button>
           </div>
         )}
       </div>
+
+      {/* Diálogo de revisão pré-importação */}
+      <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Revisar antes de publicar</DialogTitle>
+            <DialogDescription>
+              Confira os produtos abaixo. Desmarque qualquer um que não queira publicar agora.
+            </DialogDescription>
+          </DialogHeader>
+
+          {(() => {
+            const items = preview?.products.filter(p => selected.has(p.handle)) || [];
+            const remaining = items.filter(p => !reviewExclude.has(p.handle));
+            const dupesIncluded = remaining.filter(p => isImported(p.handle)).length;
+            const store = stores.find(s => s.id === targetStoreId);
+
+            return (
+              <>
+                <div className="grid grid-cols-2 gap-2 text-xs bg-muted/40 rounded-lg px-3 py-2.5 border border-border">
+                  <div>
+                    <div className="text-muted-foreground">Loja destino</div>
+                    <div className="font-medium text-foreground truncate">{store?.store_domain || '—'}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Status</div>
+                    <div className="font-medium text-foreground">
+                      {productStatus === 'active' ? 'Ativo (visível na loja)' : 'Rascunho'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Estoque esgotado</div>
+                    <div className="font-medium text-foreground">
+                      {inventoryPolicy === 'continue' ? 'Vende sem estoque' : 'Para de vender'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground">Origem</div>
+                    <div className="font-medium text-foreground truncate">{preview?.origin || '—'}</div>
+                  </div>
+                </div>
+
+                {dupesIncluded > 0 && (
+                  <div className="flex items-start gap-2 text-xs bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 rounded-md px-3 py-2">
+                    <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                    <span>
+                      {dupesIncluded} produto{dupesIncluded !== 1 ? 's' : ''} já {dupesIncluded !== 1 ? 'foram importados' : 'foi importado'} antes desta origem. Ao confirmar, {dupesIncluded !== 1 ? 'serão duplicados' : 'será duplicado'} na loja.
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex-1 overflow-y-auto -mx-1 px-1 space-y-1.5 min-h-0">
+                  {items.map(p => {
+                    const excluded = reviewExclude.has(p.handle);
+                    const imported = isImported(p.handle);
+                    const symbol = p.currencySymbol || '$';
+                    const priceLabel = p.priceSingle === false && p.priceMax && p.priceMax !== p.price
+                      ? `${symbol} ${p.price} – ${p.priceMax}`
+                      : `${symbol} ${p.price}`;
+                    return (
+                      <div
+                        key={p.handle}
+                        className={`flex items-center gap-3 rounded-lg border p-2 transition-colors ${
+                          excluded ? 'border-border opacity-50' : 'border-border bg-card'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!excluded}
+                          onChange={() => {
+                            setReviewExclude(prev => {
+                              const next = new Set(prev);
+                              next.has(p.handle) ? next.delete(p.handle) : next.add(p.handle);
+                              return next;
+                            });
+                          }}
+                          className="h-4 w-4 rounded border-border flex-shrink-0"
+                        />
+                        <div className="w-12 h-12 rounded-md bg-muted overflow-hidden flex-shrink-0">
+                          {p.image ? (
+                            <img src={p.image} alt={p.title} className="w-full h-full object-cover" loading="lazy" />
+                          ) : null}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium text-foreground truncate">{p.title}</div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-2">
+                            <span className="text-primary font-semibold">{priceLabel}</span>
+                            <span>·</span>
+                            <span>{p.imagesCount}img · {p.variantsCount}var</span>
+                            {imported && (
+                              <span className="ml-auto bg-amber-500/15 text-amber-700 dark:text-amber-400 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                                Já importado
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <DialogFooter className="flex-row items-center justify-between gap-2 sm:justify-between border-t border-border pt-3">
+                  <span className="text-xs text-muted-foreground">
+                    {remaining.length} de {items.length} {remaining.length === 1 ? 'será publicado' : 'serão publicados'}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setReviewOpen(false)}>
+                      Voltar
+                    </Button>
+                    <Button size="sm" onClick={confirmImport} disabled={remaining.length === 0}>
+                      Confirmar publicação ({remaining.length})
+                    </Button>
+                  </div>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
