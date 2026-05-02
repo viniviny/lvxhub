@@ -30,23 +30,8 @@ import {
 import { ProductFormData, ProductSize, AVAILABLE_SIZES, COLLECTIONS } from '@/types/product';
 import type { ShopifyStore } from '@/hooks/useStoreManager';
 import type { Project } from '@/types/project';
-
-// Loose typings to avoid coupling to internal hook return shapes.
-type Understanding = {
-  finalProductType?: string | null;
-  aiDetectedProductType?: string | null;
-  manualMaterial: string;
-  manualStyle: string;
-  manualFit: string;
-  manualColor: string;
-  useCase: string;
-  imageInsights: {
-    mainColor?: string;
-    style?: string;
-    materialLook?: string;
-    silhouette?: string;
-  };
-};
+import type { ProductUnderstanding, ProductAIContext } from '@/types/productUnderstanding';
+import type { ProductSpecs } from '@/hooks/useProductSpecs';
 
 type ManualFieldKey = 'manualMaterial' | 'manualStyle' | 'manualFit' | 'manualColor' | 'useCase';
 
@@ -100,18 +85,18 @@ export interface PublishWizardProps {
   activeStoreLangLabel: string;
 
   // AI
-  understanding: Understanding;
+  understanding: ProductUnderstanding;
   isAnalyzing: boolean;
   setManualField: (key: ManualFieldKey, value: string) => void;
   setManualProductType: (v: string) => void;
   analyzeImage: (url: string) => void;
   updateFinalFromTitle: (v: string) => void;
   clearSpecs: () => void;
-  specs: unknown;
+  specs: ProductSpecs | null;
   isGeneratingSpecs: boolean;
   ensureSpecs: () => Promise<void>;
   handleRegenerateSpecs: () => Promise<void>;
-  aiContext: string;
+  aiContext: ProductAIContext;
   aiDisabled: boolean;
 
   // Copy / publish UI state
