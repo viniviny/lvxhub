@@ -14,6 +14,7 @@ import {
   ArrowRight, ImageIcon, X, Info, Eye, GripVertical, Square, RectangleVertical,
   Clock, Check, ChevronLeft, ChevronRight, Camera, BookOpen, Search, ClipboardPaste
 } from 'lucide-react';
+import { logger } from '@/lib/logger';
 import { ModelBackgroundPresets, getModelDescriptor, getBackgroundDescriptor, getModelImage, getBackgroundImage, type CustomPreset } from '@/components/ModelBackgroundPresets';
 import { useCustomPresets } from '@/hooks/useCustomPresets';
 import { useGenerationSession } from '@/hooks/useGenerationSession';
@@ -406,7 +407,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const promises = angles.map(async (angle) => {
       try {
         const enrichedPrompt = enrichedPromptBase(angle);
-        console.log(`FINAL PROMPT [${angle}]:`, enrichedPrompt);
+        logger.debug(`FINAL PROMPT [${angle}]`, { prompt: enrichedPrompt });
         const { data, error } = await supabase.functions.invoke('generate-with-gemini', {
           body: {
             mode: 'generate-image', prompt: enrichedPrompt, angle,
@@ -441,14 +442,14 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
         setGeneratingAngles(prev => { const next = new Set(prev); next.delete(angle); return next; });
         const snapshot = [...existingImages, ...newImages];
         if (snapshot.length > 0 && !snapshot.some(r => r.isCover)) snapshot[0].isCover = true;
-        try { onImagesChange(snapshot); } catch (e) { console.error('onImagesChange error:', e); }
+        try { onImagesChange(snapshot); } catch (e) { logger.error('onImagesChange error', e); }
         return newImage;
       } catch (err) { toast.error(`Erro ao gerar imagem (${angle})`); return null; }
     });
-    try { await Promise.all(promises); } catch (err) { console.error('Promise.all error:', err); }
+    try { await Promise.all(promises); } catch (err) { logger.error('Promise.all error', err); }
     const allFinal = [...existingImages, ...newImages];
     if (allFinal.length > 0 && !allFinal.some(r => r.isCover)) allFinal[0].isCover = true;
-    try { onImagesChange(allFinal.map(r => ({ ...r, justCompleted: false }))); } catch (e) { console.error('Final onImagesChange error:', e); }
+    try { onImagesChange(allFinal.map(r => ({ ...r, justCompleted: false }))); } catch (e) { logger.error('Final onImagesChange error', e); }
     setIsGenerating(false);
     setGeneratingAngles(new Set());
     setGenStartTime(null);
@@ -469,7 +470,7 @@ export function ImageGenerationStep({ images, onImagesChange, onNext, onSkip, as
     const hasPresets = !!(modelDesc || bgDesc);
     const isUserSelectedPrompt = promptMode === 'custom' || !!activePromptId;
     const enrichedPrompt = buildPremiumPrompt(effectivePrompt, modelDesc, bgDesc, ANGLE_OPTIONS.find(o => o.id === target.angle)?.label || target.angle, activeRatio, isUserSelectedPrompt);
-    console.log(`FINAL PROMPT [regenerate ${target.angle}]:`, enrichedPrompt);
+    logger.debug(`FINAL PROMPT [regenerate ${target.angle}]`, { prompt: enrichedPrompt });
     const modelImgUrl = getModelImage(selectedModel, customPresets);
     const bgImgUrl = getBackgroundImage(selectedBackground, customPresets);
     const [modelImageData, bgImageData] = await Promise.all([

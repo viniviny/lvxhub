@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { MarketConfig, ShopifyStore } from '@/hooks/useStoreManager';
+import { logger } from '@/lib/logger';
 
 interface StoreContextType {
   stores: ShopifyStore[];
@@ -127,7 +128,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           }
         }
       } catch (err) {
-        console.error('Error syncing stores from DB:', err);
+        logger.error('Error syncing stores from DB', err);
       } finally {
         setIsLoading(false);
       }
@@ -245,7 +246,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         .eq('user_id', session.session.user.id)
         .eq('is_active', true);
     } catch (err) {
-      console.error('Error persisting store config to DB:', err);
+      logger.error('Error persisting store config to DB', err);
     }
   }, []);
 

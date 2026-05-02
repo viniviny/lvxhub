@@ -3,6 +3,7 @@ import {
   ProductUnderstanding, ImageInsights, EMPTY_UNDERSTANDING,
   resolveFinalProductType, cleanProductType,
 } from '@/types/productUnderstanding';
+import { logger } from '@/lib/logger';
 import { supabase } from '@/integrations/supabase/client';
 import { useApiUsage } from '@/hooks/useApiUsage';
 
@@ -85,7 +86,7 @@ export function useProductUnderstanding() {
         logUsage({ service: 'image-analysis', action: 'Análise de imagem', metadata: { model: 'gemini-2.5-flash', provider: 'Google Gemini Direct' } });
       }
     } catch (e) {
-      console.warn('[ProductUnderstanding] Image analysis failed:', e);
+      logger.warn('[ProductUnderstanding] Image analysis failed', { error: e });
     } finally {
       setIsAnalyzing(false);
     }

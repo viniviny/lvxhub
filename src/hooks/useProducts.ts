@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { Product, ProductFormData } from '@/types/product';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -27,7 +28,7 @@ export function useProducts() {
       toast.success('Imagem gerada com sucesso!');
       return data.imageUrl;
     } catch (err) {
-      console.error('Erro ao gerar imagem:', err);
+      logger.error('Erro ao gerar imagem', err);
       toast.error('Erro ao gerar imagem. Verifique sua API key.');
       return null;
     } finally {
@@ -62,7 +63,7 @@ export function useProducts() {
       toast.success('Produto publicado no Shopify!');
       return newProduct;
     } catch (err) {
-      console.error('Erro ao publicar:', err);
+      logger.error('Erro ao publicar', err);
       toast.error('Erro ao publicar produto. Verifique suas credenciais Shopify.');
       return null;
     } finally {

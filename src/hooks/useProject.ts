@@ -15,6 +15,7 @@ import {
   deleteProjectImage,
   markProjectPublished,
 } from '@/services/projectService';
+import { logger } from '@/lib/logger';
 
 const DEBOUNCE_MS = 1000;
 
@@ -95,7 +96,7 @@ export function useProject() {
         saveProjectLocally(loaded);
         setLastOpenedProjectId(loaded.id);
       } catch (e) {
-        console.error('[useProject] Init error:', e);
+        logger.error('[useProject] Init error', e);
       } finally {
         setIsLoading(false);
       }
@@ -165,7 +166,7 @@ export function useProject() {
       const img = await addProjectImage(project.id, url, storagePath, isCover, project.images.length);
       updateProject(p => ({ ...p, images: [...p.images, img] }));
     } catch (e) {
-      console.error('[useProject] addImage error:', e);
+      logger.error('[useProject] addImage error', e);
     }
   }, [project, updateProject]);
 
@@ -176,7 +177,7 @@ export function useProject() {
       await deleteProjectImage(imageId, img?.storagePath);
       updateProject(p => ({ ...p, images: p.images.filter(i => i.id !== imageId) }));
     } catch (e) {
-      console.error('[useProject] removeImage error:', e);
+      logger.error('[useProject] removeImage error', e);
     }
   }, [project, updateProject]);
 
@@ -187,7 +188,7 @@ export function useProject() {
       await markProjectPublished(project.id);
       updateProject(p => ({ ...p, status: 'published', publishedAt: new Date().toISOString() }));
     } catch (e) {
-      console.error('[useProject] publish error:', e);
+      logger.error('[useProject] publish error', e);
     }
   }, [project, updateProject]);
 
@@ -201,7 +202,7 @@ export function useProject() {
       setLastOpenedProjectId(newProject.id);
       setSaveStatus('idle');
     } catch (e) {
-      console.error('[useProject] create error:', e);
+      logger.error('[useProject] create error', e);
     }
   }, [user?.id]);
 

@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export type ApiService = 'image-generation' | 'text-generation' | 'specs-generation' | 'image-analysis' | 'shopify-publish';
 
@@ -53,7 +54,7 @@ export function useApiUsage() {
         metadata,
       });
     } catch (err) {
-      console.error('Failed to log API usage:', err);
+      logger.error('Failed to log API usage', err);
     }
   }, []);
 

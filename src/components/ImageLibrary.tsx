@@ -11,6 +11,7 @@ import {
   Search, Download, Trash2, Tag, Pencil, Check, X, Image as ImageIcon,
   CheckSquare, Square, Grid3X3, LayoutGrid, ArrowUpDown, Store, Filter, Sparkles, Package
 } from 'lucide-react';
+import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
 
 interface LibraryImage {
@@ -86,7 +87,7 @@ export function ImageLibrary() {
       .order('created_at', { ascending: sortOrder === 'oldest' });
 
     if (error) {
-      console.error('Error fetching library:', error);
+      logger.error('Error fetching library', error);
       toast.error('Erro ao carregar biblioteca');
     } else {
       setImages((data as LibraryImage[]) || []);

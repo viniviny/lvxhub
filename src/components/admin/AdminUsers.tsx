@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import { logger } from '@/lib/logger';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -70,7 +71,7 @@ export function AdminUsers() {
 
     if (error) {
       toast.error('Erro ao carregar usuários.');
-      console.error(error);
+      logger.error('Error loading users', error);
     } else {
       setUsers((data || []) as UserProfile[]);
     }

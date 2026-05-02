@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 interface Profile {
   display_name: string | null;
@@ -82,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
-        console.error('Session error:', error.message);
+        logger.error('Session error', undefined, { message: error.message });
         // Clear invalid session and redirect to login
         supabase.auth.signOut().then(() => {
           setSession(null);

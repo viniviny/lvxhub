@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { enhancePremiumPrompt } from '@/lib/premiumPrompt';
+import { logger } from '@/lib/logger';
 
 export interface BulkColor {
   id: string;
@@ -201,7 +202,7 @@ export function BulkVariantGenerator({
               onVariantGenerated(color.id, newUrl, refLabel);
             }
           } catch (e: any) {
-            console.error('Bulk variant error:', e);
+            logger.error('Bulk variant error', e);
             toast.error(`Falha em ${color.name}: ${e?.message || 'erro'}`);
           } finally {
             done++;
