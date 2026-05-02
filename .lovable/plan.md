@@ -1,87 +1,73 @@
+
+# Sprint 1 — Logger estruturado e remoção de `console.*`
+
 ## Objetivo
+Substituir `src/lib/logger.ts` por uma versão estruturada e migrar todas as 42 ocorrências de `console.*` em `src/` (exceto `src/lib/logger.ts` e `src/test/*`) para `logger.*`.
 
-Tornar a Importação via URL mais rápida, segura e transparente, atacando as 5 dores principais sem reescrever a tela.
+## Tarefa 1 — Reescrever `src/lib/logger.ts`
+Substituir o conteúdo atual pela versão estruturada fornecida (níveis `debug/info/warn/error`, timestamp ISO, formatação de erro com `name/message/stack`).
 
-## Escopo (5 melhorias)
+## Tarefa 2 — Migrar 42 ocorrências em 22 arquivos
 
-### 1. Import paralelo com progresso ao vivo
-- `import-shopify-direct` passa a processar em **lotes de 5 produtos em paralelo** (`Promise.allSettled`).
-- Função retorna um `jobId` imediatamente e grava progresso em `generation_jobs` (já existe a tabela).
-- Tipo do job: `shopify_import`. Campos usados: `progress`, `total_steps`, `result` (lista de criados/falhos).
-- Frontend faz polling a cada 1.5s (ou Realtime) e mostra **barra de progresso + contador "X de Y publicados"** no footer sticky, substituindo o spinner único.
+Mapeamento exato (arquivo → linhas):
 
-### 2. Detecção de duplicados
-- Antes de importar, frontend consulta `published_products` filtrando por `user_id + store_domain` da loja destino e cruza por **handle de origem** (vamos guardar `source_handle` e `source_origin` em `published_products`).
-- Cards já importados ganham:
-  - Badge "Já importado" no canto.
-  - Borda esmaecida e checkbox desabilitado por padrão.
-  - Toggle "Permitir reimportar" no toolbar para casos legítimos.
+**Hooks (8 arquivos, 16 ocorrências)**
+- `src/hooks/useProject.ts` — L98, 168, 179, 190, 204 (todos `error`)
+- `src/hooks/useStoreContext.tsx` — L130, 248 (`error`)
+- `src/hooks/useShopifyConnection.ts` — L32, 69 (`error`)
+- `src/hooks/useProducts.ts` — L30, 65 (`error`)
+- `src/hooks/useCustomPresets.ts` — L58, 81, 110 (`error`)
+- `src/hooks/useProductUnderstanding.ts` — L88 (`warn`)
+- `src/hooks/useProductSpecs.ts` — L59 (`warn`)
+- `src/hooks/usePublishedProducts.ts` — L63 (`error`)
+- `src/hooks/useAuth.tsx` — L85 (`error`)
+- `src/hooks/useApiUsage.ts` — L56 (`error`)
 
-### 3. Opção status + estoque
-- Acima do botão "Publicar N" no footer, adicionar dois selects compactos:
-  - **Status**: Ativo (default) / Rascunho.
-  - **Estoque esgotado**: Continuar vendendo (default atual) / Parar de vender.
-- Ambos enviados no body da função e aplicados no payload Shopify (`status`, `inventory_policy`).
+**Services / lib (2 arquivos, 6 ocorrências)**
+- `src/services/projectService.ts` — L15 (`warn`), L77 (`warn`), L86 (`error`), L152 (`warn`)
+- `src/lib/imageOptimization.ts` — L41, L107 (`warn`)
 
-### 4. Moeda correta
-- `load-shopify-products` passa a extrair `presentment_prices[0].price.currency_code` quando disponível, caindo para detecção por TLD (`.com.br` → BRL, `.co.uk` → GBP) e default USD.
-- Retorna `currency` e `currencySymbol` por produto.
-- UI substitui o `US$` hardcoded pelo símbolo real e mostra range `min–max` quando há variantes com preços diferentes.
+**Components (9 arquivos, 16 ocorrências)**
+- `src/components/ColorManager.tsx` — L40 (`error`), L70 (`warn`), L141 (`error`)
+- `src/components/BulkVariantGenerator.tsx` — L204 (`error`)
+- `src/components/ImageLibrary.tsx` — L89 (`error`)
+- `src/components/ImageGeneratorModule.tsx` — L149, L248 (`error`)
+- `src/components/ErrorBoundary.tsx` — L15 (`error`)
+- `src/components/ImageGenerationStep.tsx` — L409 (`log`→`debug`), L444, L448, L451 (`error`), L472 (`log`→`debug`)
+- `src/components/ProductHistory.tsx` — L38 (`error`)
+- `src/components/admin/AdminUsers.tsx` — L73 (`error`)
 
-### 5. Retry + timeout + erros claros
-- `load-shopify-products` ganha:
-  - `AbortController` com timeout de 15s por página.
-  - Retry simples (2 tentativas, backoff 1s/2s) em 429/5xx.
-  - Mensagens específicas: "Loja bloqueia importação pública", "Timeout", "URL não é Shopify".
-- `import-shopify-direct` já tem `shopifyFetch` com retry — estender para incluir timeout e propagar erro por produto no `result` do job.
+**Pages (2 arquivos, 2 ocorrências)**
+- `src/pages/NotFound.tsx` — L8 (`error`)
+- `src/pages/Callback.tsx` — L126 (`error`)
 
-## Mudanças técnicas
+### Regras de transformação
+- `console.log(msg, obj)` → `logger.debug(msg, { context: obj })`; sem segundo arg → `logger.debug(msg)`
+- `console.warn(msg, err)` → `logger.warn(msg, { error: err })`; sem segundo arg → `logger.warn(msg)`
+- `console.error(msg, err)` → `logger.error(msg, err)` (a nova assinatura `error` aceita Error como segundo argumento)
+- `console.error(msg)` sem segundo arg → `logger.error(msg)`
+- Caso especial `ErrorBoundary.tsx` L15 (`console.error('ErrorBoundary caught:', error, info.componentStack)`) → `logger.error('ErrorBoundary caught', error, { componentStack: info.componentStack })`
+- Adicionar `import { logger } from '@/lib/logger';` em todo arquivo modificado (se ainda não houver)
+- Manter prefixos existentes do tipo `[ProjectService]` no texto da mensagem
 
-**Migration**
-- `published_products`: adicionar colunas `source_handle text`, `source_origin text` (nullable, indexed juntos com `user_id, store_domain`).
+## Tarefa 3 — Validação
+Rodar lint e typecheck após as substituições:
+- `npm run lint`
+- `tsc --noEmit`
+Reportar erros (se houver) e ajustar.
 
-**Edge Functions**
-- `load-shopify-products/index.ts`: timeout, retry, extração de moeda, suporte a `presentment_prices`.
-- `import-shopify-direct/index.ts`: criar job → responder com `jobId` → processar em background com `EdgeRuntime.waitUntil`, lotes de 5, atualizar `generation_jobs.progress` a cada lote, gravar `source_handle` + `source_origin` em `published_products`.
-
-**Frontend** (`src/components/ImportFromURL.tsx`)
-- Hook novo `useImportJob(jobId)` para polling em `generation_jobs`.
-- Query inicial dos handles já importados para a `storeId` selecionada.
-- Footer sticky redesenhado: selects de status/estoque + barra de progresso quando job ativo.
-- Cards: badge "Já importado", símbolo de moeda dinâmico, range de preço.
-
-## Diagrama de fluxo
-
-```text
-Usuário cola URL
-   │
-   ▼
-load-shopify-products (timeout+retry, moeda real)
-   │
-   ▼
-UI mostra grid com badges "Já importado" + preço correto
-   │
-   ▼
-Usuário escolhe Status/Estoque → clica Publicar
-   │
-   ▼
-import-shopify-direct cria job, retorna jobId
-   │
-   ├──> background: lotes de 5 paralelos
-   │       atualiza generation_jobs.progress
-   │
-   ▼
-UI faz polling → barra "12 de 30 publicados"
-   │
-   ▼
-Job done → toast final + lista de erros (se houver)
+## Tarefa 4 — Verificação final
+Executar:
 ```
+rg -n "console\." src --glob '!src/lib/logger.ts' --glob '!src/test/**' | wc -l
+```
+Resultado esperado: `0`.
 
-## Fora de escopo (ficam para depois)
+## Entrega
+Lista final dos arquivos modificados (23 no total: logger.ts + 22 arquivos migrados) antes do commit `refactor(logger): complete migration from console.* to structured logger`.
 
-- Filtros avançados (vendor, faixa de preço).
-- Modal de preview detalhado.
-- Persistência de sessão (sessionStorage).
-- Suporte a CSV/lista de URLs.
-- Importar como Collections do Shopify destino.
-- Histórico de importações na própria tela.
+## Detalhes técnicos
+- Nova assinatura de `logger.error(message, error?, context?)` casa com a maioria dos `console.error(msg, err)` existentes — substituição quase 1:1.
+- `import.meta.env.DEV` mantém `debug/info` silenciosos em produção; `warn/error` sempre logam.
+- Nenhuma mudança em `supabase/functions/**` (Deno) nem em `src/test/**`.
+- Sem mudanças de comportamento funcional — apenas formatação dos logs.
