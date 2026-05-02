@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { useNavigate } from 'react-router-dom';
-import { ImageGenerationStep, GeneratedImage, ImageAngle } from '@/components/ImageGenerationStep';
+import { GeneratedImage, ImageAngle } from '@/components/ImageGenerationStep';
 import { useProject } from '@/hooks/useProject';
 import { SaveStatusIndicator } from '@/components/SaveStatusIndicator';
 import { useDraftSave } from '@/hooks/useDraftSave';
@@ -10,7 +10,7 @@ import { AliExpressImportToast } from '@/components/AliExpressImportToast';
 import { ImportedProducts } from '@/components/ImportedProducts';
 import { ImportFromURL } from '@/components/ImportFromURL';
 import { DraftSavedIndicator } from '@/components/DraftSavedIndicator';
-import { ProductFormData, ProductSize, ProductGender, AVAILABLE_SIZES, COLLECTIONS, VariantData, WeightUnit } from '@/types/product';
+import { ProductFormData, ProductSize, ProductGender, VariantData, WeightUnit } from '@/types/product';
 import { useProductUnderstanding } from '@/hooks/useProductUnderstanding';
 import { useProductSpecs } from '@/hooks/useProductSpecs';
 import { ProductHistory } from '@/components/ProductHistory';
@@ -29,45 +29,22 @@ import { RegionGroupManager } from '@/components/RegionGroupManager';
 import { HomePage } from '@/components/HomePage';
 import { GlobalPublishFlow } from '@/components/GlobalPublishFlow';
 import { DashboardSidebar, DashboardView } from '@/components/DashboardSidebar';
-import { RichTextEditor } from '@/components/RichTextEditor';
-import { PriceSection } from '@/components/PriceSection';
-import { PricingEngine } from '@/components/PricingEngine';
-import { VariantsTable } from '@/components/VariantsTable';
-import { ShippingCard } from '@/components/ShippingCard';
-import { SalesChannels } from '@/components/SalesChannels';
-import { ReviewChecklist, getCanPublish } from '@/components/ReviewChecklist';
-import { ImageOptimizationCard, ImageQualityPreset, getQualityValue } from '@/components/ImageOptimizationCard';
+import { getCanPublish } from '@/components/ReviewChecklist';
+import { ImageQualityPreset, getQualityValue } from '@/components/ImageOptimizationCard';
 import { convertBase64ToWebP } from '@/lib/imageOptimization';
-import { ShopifyProductPreview } from '@/components/ShopifyProductPreview';
-import { SEOCard } from '@/components/SEOCard';
-import { ColorManager, ProductColor } from '@/components/ColorManager';
-import { AddCustomSize } from '@/components/AddCustomSize';
-import { AIFieldButtons } from '@/components/AIFieldButtons';
-import { AIProductUnderstandingPanel } from '@/components/AIProductUnderstandingPanel';
+import { ProductColor } from '@/components/ColorManager';
 import { buildProductAIContext } from '@/types/productUnderstanding';
-import { ProductTypeCombobox } from '@/components/ProductTypeCombobox';
 import { UsageDashboard } from '@/components/UsageDashboard';
 import { supabase } from '@/integrations/supabase/client';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { UserMenu } from '@/components/UserMenu';
 import { CommandPalette } from '@/components/CommandPalette';
 import { SpotlightHeader } from '@/components/SpotlightHeader';
-import { WizardStepTabs } from '@/components/WizardStepTabs';
 import { getAILanguageByCode } from '@/data/languages';
 import { PublishView } from '@/features/publish';
-import {
-  Send, Loader2, Upload, CheckCircle2, ExternalLink,
-  Package, XCircle, Zap, HelpCircle, Store, Settings, Globe, Layers,
-  ArrowLeft, ArrowRight, Eye, ClipboardList, Check, ChevronDown, Pencil, X
-} from 'lucide-react';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Zap, HelpCircle, Store, Settings, Globe, Layers } from 'lucide-react';
 
 const initialForm: ProductFormData = {
   title: '',
