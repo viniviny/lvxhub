@@ -1,11 +1,13 @@
+import type { ReactNode } from 'react';
 import { motion, LayoutGroup } from 'framer-motion';
-import { useAuth } from '@/hooks/useAuth';
+import { Zap } from 'lucide-react';
 
 export type TopNavView = 'home' | 'create' | 'products' | 'stores';
 
 interface TopNavProps {
   currentView: TopNavView;
   onViewChange: (view: TopNavView) => void;
+  rightSlot?: ReactNode;
 }
 
 const navItems: { id: TopNavView; label: string }[] = [
@@ -15,21 +17,15 @@ const navItems: { id: TopNavView; label: string }[] = [
   { id: 'stores',   label: 'Lojas' },
 ];
 
-export function TopNav({ currentView, onViewChange }: TopNavProps) {
-  const { profile, user } = useAuth();
-  const userName = profile?.display_name || profile?.email || user?.email || '';
-  const userInitials = userName
-    ? userName.split(/[\s@]/)[0].slice(0, 2).toUpperCase()
-    : '';
-
+export function TopNav({ currentView, onViewChange, rightSlot }: TopNavProps) {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-popover/70 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 h-[52px] flex items-center justify-between">
         {/* Left: brand + nav */}
         <div className="flex items-center gap-6">
-          <span className="font-display text-[15px] font-semibold tracking-tight text-foreground">
-            Publify
-          </span>
+          <h1 className="font-display text-[15px] font-semibold tracking-tight text-foreground flex items-center gap-1.5">
+            <Zap className="w-4 h-4" />Publify
+          </h1>
           <LayoutGroup id="topnav">
             <nav className="flex items-center gap-0.5">
               {navItems.map((item) => {
@@ -57,20 +53,8 @@ export function TopNav({ currentView, onViewChange }: TopNavProps) {
           </LayoutGroup>
         </div>
 
-        {/* Right: shortcut hint + avatar */}
-        <div className="flex items-center gap-3">
-          <kbd className="hidden md:inline-flex items-center px-2 py-1 rounded-md bg-secondary/60 text-[11px] text-muted-foreground font-mono">
-            ⌘K busca
-          </kbd>
-          {userInitials && (
-            <div
-              className="w-7 h-7 rounded-full bg-primary/15 text-primary flex items-center justify-center text-[11px] font-medium"
-              title={userName}
-            >
-              {userInitials}
-            </div>
-          )}
-        </div>
+        {/* Right slot: status, store selector, user menu, etc */}
+        <div className="flex items-center gap-2">{rightSlot}</div>
       </div>
     </header>
   );

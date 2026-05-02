@@ -42,7 +42,6 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { UserMenu } from '@/components/UserMenu';
 import { CommandPalette } from '@/components/CommandPalette';
-import { SpotlightHeader } from '@/components/SpotlightHeader';
 import { getAILanguageByCode } from '@/data/languages';
 import { PublishView } from '@/features/publish';
 import { CreateView } from '@/features/create/CreateView';
@@ -1083,40 +1082,6 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background hero-radial flex flex-col">
       {/* Header */}
-      <SpotlightHeader className="border-b border-border bg-background grid-bg sticky top-0 z-10 h-[52px]">
-        <div className="w-full h-full px-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="font-display text-base font-semibold text-foreground flex items-center gap-1.5">
-              <Zap className="w-4.5 h-4.5" />Publify
-            </h1>
-            <span className="inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded-full border border-border bg-secondary text-muted-foreground">
-              beta
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <SaveStatusIndicator status={saveStatus} />
-            <DraftSavedIndicator status={draftStatus} />
-            {publishedCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-foreground">
-                <Zap className="w-3 h-3" />{publishedCount}
-              </span>
-            )}
-            {/* Store selector in header */}
-            {stores.length > 0 && (
-              <StoreSelector
-                stores={stores}
-                activeStoreId={activeStore?.id || null}
-                onSelectStore={setActiveStore}
-                onAddStore={handleAddStore}
-              />
-            )}
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => setShowOnboarding(true)} title="Como funciona?"><HelpCircle className="w-4 h-4" /></Button>
-            {stores.length > 0 && <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => setShowManagement(true)} title="Gerenciar lojas"><Settings className="w-4 h-4" /></Button>}
-            <UserMenu />
-          </div>
-        </div>
-      </SpotlightHeader>
-
       {/* Dialogs */}
       <CommandPalette onNavigate={handleViewChange} onNewProduct={handleNewProduct} />
       <SettingsDialog open={showSettings} onOpenChange={setShowSettings} onSaveAndConnect={handleCredentialsSubmit} />
@@ -1146,6 +1111,28 @@ const Index = () => {
         <TopNav
           currentView={mapToTopNavView(currentView)}
           onViewChange={(v) => handleViewChange(mapFromTopNavView(v))}
+          rightSlot={
+            <>
+              <SaveStatusIndicator status={saveStatus} />
+              <DraftSavedIndicator status={draftStatus} />
+              {publishedCount > 0 && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-foreground">
+                  <Zap className="w-3 h-3" />{publishedCount}
+                </span>
+              )}
+              {stores.length > 0 && (
+                <StoreSelector
+                  stores={stores}
+                  activeStoreId={activeStore?.id || null}
+                  onSelectStore={setActiveStore}
+                  onAddStore={handleAddStore}
+                />
+              )}
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => setShowOnboarding(true)} title="Como funciona?"><HelpCircle className="w-4 h-4" /></Button>
+              {stores.length > 0 && <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" onClick={() => setShowManagement(true)} title="Gerenciar lojas"><Settings className="w-4 h-4" /></Button>}
+              <UserMenu />
+            </>
+          }
         />
 
         <main className="flex-1 overflow-y-auto">
