@@ -1141,717 +1141,90 @@ const Index = () => {
               <HomePage onNavigate={(view) => setCurrentView(view as DashboardView)} />
             )}
 
-            {/* PUBLISH VIEW — No store connected */}
-            {currentView === 'publish' && !publishResult && !isPublishing && !hasConnectedStore && (
-              <div className="animate-fade-in py-10">
-                <div className="glass-card p-10 text-center max-w-lg mx-auto">
-                  <div className="w-16 h-16 mx-auto rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center mb-6">
-                    <Zap className="w-8 h-8 text-primary" />
-                  </div>
-                  <h2 className="font-display text-2xl font-bold text-foreground mb-2">Conecte sua loja</h2>
-                  <p className="text-muted-foreground text-sm mb-6 max-w-sm mx-auto">Conecte uma loja Shopify para começar a publicar produtos.</p>
-                  <Button onClick={handleAddStore} size="lg" className="w-full font-display font-semibold text-base mb-4">
-                    <Globe className="w-4 h-4 mr-2" />Conectar ao Shopify
-                  </Button>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg bg-secondary/40"><span className="text-base">🌍</span><span className="text-[11px] text-muted-foreground font-medium">195 países</span></div>
-                    <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg bg-secondary/40"><span className="text-base">🏪</span><span className="text-[11px] text-muted-foreground font-medium">Múltiplas lojas</span></div>
-                    <div className="flex flex-col items-center gap-1.5 p-2.5 rounded-lg bg-secondary/40"><span className="text-base">💱</span><span className="text-[11px] text-muted-foreground font-medium">Câmbio automático</span></div>
-                  </div>
-                </div>
-              </div>
+            {currentView === 'publish' && (
+              <PublishView
+                isPublishing={isPublishing}
+                publishResult={publishResult}
+                publishStep={publishStep}
+                publishSteps={PUBLISH_STEPS}
+                imageUploadProgress={imageUploadProgress}
+                hasConnectedStore={hasConnectedStore}
+                onAddStore={handleAddStore}
+                onNewProduct={handleNewProduct}
+                onViewHistory={() => { setPublishResult(null); setCurrentView('history'); }}
+                successForm={form}
+                successCurrencySymbol={currencySymbol}
+
+                wizardStep={wizardStep}
+                setWizardStep={setWizardStep}
+                completedSteps={completedSteps}
+                stepLabels={STEP_LABELS}
+                goToStep={goToStep}
+                markStepComplete={markStepComplete}
+
+                editingShopifyProductId={editingShopifyProductId}
+                onExitEditing={handleNewProduct}
+
+                form={form}
+                setFormWithSave={setFormWithSave}
+                toggleSize={toggleSize}
+
+                seoTitle={seoTitle}
+                seoDescription={seoDescription}
+                setSeoTitleWithSave={setSeoTitleWithSave}
+                setSeoDescriptionWithSave={setSeoDescriptionWithSave}
+
+                colors={colors}
+                setColors={setColors}
+
+                imageFile={imageFile}
+                setImageFile={setImageFile}
+                imagePreview={imagePreview}
+                setImagePreview={setImagePreview}
+                generatedImages={generatedImages}
+                setGeneratedImages={setGeneratedImages}
+                savedToLibraryRef={savedToLibraryRef}
+                savedToProjectRef={savedToProjectRef}
+                deletedProjectImageUrlsRef={deletedProjectImageUrlsRef}
+
+                project={project}
+                addImage={addImage}
+                removeProjectImage={removeProjectImage}
+                updateStep={updateStep}
+                activeStore={activeStore}
+                currencySymbol={currencySymbol}
+                activeStoreLangLabel={activeStoreLang?.label || 'English'}
+
+                understanding={understanding}
+                isAnalyzing={isAnalyzing}
+                setManualField={setManualField}
+                setManualProductType={setManualProductType}
+                analyzeImage={analyzeImage}
+                updateFinalFromTitle={updateFinalFromTitle}
+                clearSpecs={clearSpecs}
+                specs={specs}
+                isGeneratingSpecs={isGeneratingSpecs}
+                ensureSpecs={ensureSpecs}
+                handleRegenerateSpecs={handleRegenerateSpecs}
+                aiContext={aiContext}
+                aiDisabled={aiDisabled}
+
+                copyTone={copyTone}
+                usedTitleNames={usedTitleNames}
+                setUsedTitleNames={setUsedTitleNames}
+                publishStatus={publishStatus}
+                setPublishStatus={setPublishStatus}
+                pubOpen={pubOpen}
+                setPubOpen={setPubOpen}
+                optimizeImages={optimizeImages}
+                setOptimizeImages={setOptimizeImages}
+                imageQualityPreset={imageQualityPreset}
+                setImageQualityPreset={setImageQualityPreset}
+                canPublish={canPublish}
+                handlePublish={handlePublish}
+              />
             )}
 
-            {/* PUBLISH VIEW — With store */}
-            {currentView === 'publish' && !publishResult && !isPublishing && hasConnectedStore && (
-              <div className="animate-fade-in flex flex-col" style={{ minHeight: 'calc(100vh - 120px)' }}>
-                <div className="mb-2 flex items-center gap-3">
-                  <h2 className="font-display text-lg font-bold text-foreground leading-tight">Publicar Produto</h2>
-                  {editingShopifyProductId && (
-                    <div className="inline-flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.3)]">
-                        <Pencil className="w-3 h-3" />
-                        Editando produto existente
-                      </span>
-                      <button
-                        onClick={handleNewProduct}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-secondary border border-border transition-colors"
-                      >
-                        <X className="w-3 h-3" />
-                        Sair da edição
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Step tabs with completion states */}
-                <WizardStepTabs
-                  steps={STEP_LABELS}
-                  current={wizardStep}
-                  completed={completedSteps}
-                  onSelect={goToStep}
-                />
-
-                {/* Step content */}
-                <div className="flex-1">
-                  {/* ═══ STEP 1: IMAGE ═══ */}
-                  {wizardStep === 1 && (
-                    <ImageGenerationStep
-                      images={generatedImages}
-                    onImagesChange={(imgs) => {
-                        try {
-                        // Detect removed images and delete from backend
-                        const removedImages = generatedImages.filter(
-                          old => !imgs.some(n => n.id === old.id)
-                        );
-                        if (removedImages.length > 0) {
-                          // Delete from project_images by matching URL
-                          if (project) {
-                            removedImages.forEach(img => {
-                              // Clear from savedToProjectRef so it won't block future re-adds
-                              if (img.url) savedToProjectRef.current.delete(img.url);
-                              if (img.url && !img.url.startsWith('data:')) {
-                                deletedProjectImageUrlsRef.current.add(img.url);
-                              }
-                              const dbImage = project.images.find(pi => pi.url === img.url);
-                              if (dbImage) {
-                                removeProjectImage(dbImage.id);
-                              }
-                            });
-                          }
-                          // Delete from image_library by URL
-                          supabase.auth.getUser().then(({ data: { user: u } }) => {
-                            if (!u) return;
-                            removedImages.forEach(img => {
-                              if (img.url && !img.url.startsWith('data:')) {
-                                supabase.from('image_library').delete()
-                                  .eq('user_id', u.id)
-                                  .eq('url', img.url)
-                                  .then(() => {});
-                              }
-                            });
-                          });
-                        }
-
-                        setGeneratedImages(imgs);
-
-                        // Auto-save ALL new images to project_images (not just cover)
-                        if (project) {
-                          const newImgs = imgs.filter(i =>
-                            i.url && !i.url.startsWith('data:') &&
-                            !savedToProjectRef.current.has(i.url!) &&
-                            !deletedProjectImageUrlsRef.current.has(i.url!) &&
-                            !project.images.some(pi => pi.url === i.url)
-                          );
-                          newImgs.forEach((i) => {
-                            const isCover = !imageFile && (imgs.indexOf(i) === 0 || i.isCover);
-                            deletedProjectImageUrlsRef.current.delete(i.url!);
-                            savedToProjectRef.current.add(i.url!);
-                            addImage(i.url!, null, isCover);
-                          });
-                        }
-
-                        // Auto-save new images to library
-                        const newImgs = imgs.filter(i => i.url && !i.url.startsWith('data:') && !savedToLibraryRef.current.has(i.id));
-                        if (newImgs.length > 0) {
-                          supabase.auth.getUser().then(({ data: { user: u } }) => {
-                            if (!u) return;
-                            const rows = newImgs.map(i => ({
-                              user_id: u.id,
-                              name: i.angle || 'imagem',
-                              url: i.url!,
-                              angle: i.angle,
-                              product_name: form.title || null,
-                              tags: [] as string[],
-                            }));
-                            supabase.from('image_library').insert(rows).then(() => {
-                              newImgs.forEach(i => savedToLibraryRef.current.add(i.id));
-                            });
-                          });
-                        }
-
-                        const cover = imgs.find(i => i.isCover) || imgs[0];
-                        if (cover) {
-                          setImagePreview(cover.url);
-                          if (cover.url && !cover.url.startsWith('data:')) {
-                            analyzeImage(cover.url);
-                          }
-                          if (cover.url && cover.url.startsWith('data:')) {
-                            fetch(cover.url).then(r => r.blob()).then(blob => {
-                              const file = new File([blob], 'product-image.png', { type: 'image/png' });
-                              setImageFile(file);
-                            }).catch(e => logger.error('Fetch cover error', e));
-                          }
-                        }
-                        } catch (err) {
-                          logger.error('onImagesChange crashed', err);
-                        }
-                      }}
-                      onNext={() => { markStepComplete(1); setWizardStep(2); updateStep(2); }}
-                      onSkip={() => { markStepComplete(1); setWizardStep(2); updateStep(2); }}
-                      initialPrompt={(() => {
-                        const insights = project?.aiData?.imageInsights as any;
-                        if (insights?.importedFrom === 'aliexpress') {
-                          return project?.productData?.title || '';
-                        }
-                        return '';
-                      })()}
-                      aliSourceImages={(() => {
-                        const insights = project?.aiData?.imageInsights as any;
-                        if (insights?.importedFrom === 'aliexpress') {
-                          return insights?.sourceImages || [];
-                        }
-                        return [];
-                      })()}
-                      onAliVariantsSelected={(urls) => {
-                        const newColors: ProductColor[] = urls.map((url, i) => ({
-                          id: crypto.randomUUID(),
-                          name: `Variante ${colors.length + i + 1}`,
-                          hex: '#cccccc',
-                          imageUrl: url,
-                        }));
-                        setColors(prev => [...prev, ...newColors]);
-                        toast.success(`${newColors.length} variante${newColors.length > 1 ? 's' : ''} adicionada${newColors.length > 1 ? 's' : ''}. Edite no Step 3.`);
-                      }}
-                    />
-                  )}
-
-                  {/* ═══ STEP 2: DETAILS ═══ */}
-                  {wizardStep === 2 && (
-                    <div className="grid grid-cols-[260px_1fr] gap-3">
-                      {/* LEFT — SEO (secondary) */}
-                      <SEOCard
-                        title={seoTitle}
-                        description={seoDescription}
-                        storeDomain={activeStore?.domain || ''}
-                        productTitle={form.title}
-                        onTitleChange={setSeoTitleWithSave}
-                        onDescriptionChange={setSeoDescriptionWithSave}
-                        compact
-                        language={activeStoreLang?.label || 'English'}
-                        languageCode={activeStore?.marketConfig?.language || 'en-US'}
-                        countryName={activeStore?.marketConfig?.marketName || ''}
-                        productContext={aiContext}
-                        aiDisabled={aiDisabled}
-                      />
-
-                      {/* RIGHT — Product Details (main) */}
-                      <div className="glass-card p-5 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-display font-semibold text-[13px] text-foreground">Detalhes do produto</h3>
-                          <button
-                            onClick={() => {
-                              setFormWithSave(prev => ({
-                                ...prev,
-                                title: '',
-                                description: '',
-                                collection: '',
-                                productType: '',
-                                gender: '',
-                                tags: '',
-                              }));
-                              setManualField('manualMaterial', '');
-                              setManualField('manualStyle', '');
-                              setManualField('manualFit', '');
-                              setManualField('manualColor', '');
-                              setManualField('useCase', '');
-                              setManualProductType('');
-                              clearSpecs();
-                              setSeoTitleWithSave('');
-                              setSeoDescriptionWithSave('');
-                            }}
-                            className="text-[10px] text-muted-foreground hover:text-destructive transition-colors flex items-center gap-1"
-                          >
-                            <X className="w-3 h-3" />
-                            Limpar campos
-                          </button>
-                        </div>
-
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <Label className="text-xs font-medium text-muted-foreground">Título *</Label>
-                            <AIFieldButtons
-                              type="title"
-                              brief={understanding.finalProductType || form.productType || form.description || form.title || ''}
-                              language={activeStoreLang?.label || 'English'}
-                              languageCode={activeStore?.marketConfig?.language || 'en-US'}
-                              countryName={activeStore?.marketConfig?.marketName || ''}
-                              countryFlag={activeStore?.marketConfig?.countryFlag || ''}
-                              currentValue={form.title}
-                              onGenerated={content => {
-                                const clean = content.slice(0, 255);
-                                setFormWithSave(prev => ({ ...prev, title: clean }));
-                                setUsedTitleNames(prev => [...prev, clean]);
-                                updateFinalFromTitle(clean);
-                              }}
-                              usedNames={usedTitleNames}
-                              productContext={aiContext}
-                              gender={form.gender}
-                              productSpecs={specs}
-                              onBeforeGenerate={ensureSpecs}
-                              disabled={aiDisabled}
-                            />
-                          </div>
-                          <Input value={form.title} onChange={e => {
-                            const val = e.target.value.slice(0, 255);
-                            setFormWithSave(prev => ({ ...prev, title: val }));
-                            updateFinalFromTitle(val);
-                          }} placeholder="Ex: Camiseta Urban Flow" className="bg-secondary border-border text-[13px] h-10" maxLength={255} />
-                        </div>
-
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <Label className="text-xs font-medium text-muted-foreground">Descrição</Label>
-                            <AIFieldButtons
-                              type="description"
-                              brief={understanding.finalProductType || form.productType || form.title || ''}
-                              title={form.title}
-                              language={activeStoreLang?.label || 'English'}
-                              languageCode={activeStore?.marketConfig?.language || 'en-US'}
-                              countryName={activeStore?.marketConfig?.marketName || ''}
-                              countryFlag={activeStore?.marketConfig?.countryFlag || ''}
-                              currentValue={form.description}
-                              onGenerated={html => setFormWithSave(prev => ({ ...prev, description: html }))}
-                              tone={copyTone}
-                              productContext={aiContext}
-                              gender={form.gender}
-                              productSpecs={specs}
-                              onBeforeGenerate={ensureSpecs}
-                              disabled={aiDisabled}
-                            />
-                          </div>
-                          <div className="[&_.ProseMirror]:min-h-[160px]">
-                            <RichTextEditor content={form.description} onChange={html => setFormWithSave(prev => ({ ...prev, description: html }))} placeholder="Descreva o produto..." />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-4 gap-2">
-                          <div>
-                            <Label className="text-xs font-medium text-muted-foreground">Coleção</Label>
-                            <Select value={form.collection} onValueChange={v => setFormWithSave(prev => ({ ...prev, collection: v }))}>
-                              <SelectTrigger className="mt-1 bg-secondary border-border text-xs h-8"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                              <SelectContent>{COLLECTIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label className="text-xs font-medium text-muted-foreground">Tipo de produto</Label>
-                            <ProductTypeCombobox
-                              value={form.productType}
-                              onChange={v => {
-                                setFormWithSave(prev => ({ ...prev, productType: v }));
-                                setManualProductType(v);
-                              }}
-                              aiSuggestion={understanding.aiDetectedProductType ? {
-                                productType: understanding.aiDetectedProductType,
-                                mainColor: understanding.imageInsights.mainColor,
-                                style: understanding.imageInsights.style,
-                              } : null}
-                              isAnalyzing={isAnalyzing}
-                              onAcceptAI={() => {
-                                if (understanding.aiDetectedProductType) {
-                                  setFormWithSave(prev => ({ ...prev, productType: understanding.aiDetectedProductType! }));
-                                  setManualProductType(understanding.aiDetectedProductType!);
-                                }
-                              }}
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs font-medium text-muted-foreground">Gênero</Label>
-                            <Select value={form.gender} onValueChange={v => setFormWithSave(prev => ({ ...prev, gender: v as any }))}>
-                              <SelectTrigger className="mt-1 bg-secondary border-border text-xs h-8"><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="masculino">Masculino</SelectItem>
-                                <SelectItem value="feminino">Feminino</SelectItem>
-                                <SelectItem value="unissex">Unissex</SelectItem>
-                                <SelectItem value="infantil">Infantil</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label className="text-xs font-medium text-muted-foreground">Tags</Label>
-                            <Input value={form.tags} onChange={e => setFormWithSave(prev => ({ ...prev, tags: e.target.value }))} placeholder="streetwear, summer" className="mt-1 bg-secondary border-border text-xs h-8" />
-                          </div>
-                        </div>
-
-                        {/* AI structured inputs */}
-                        <div className="grid grid-cols-5 gap-2">
-                          <div>
-                            <Label className="text-[10px] font-medium text-muted-foreground">Material</Label>
-                            <Input
-                              value={understanding.manualMaterial}
-                              onChange={e => setManualField('manualMaterial', e.target.value)}
-                              placeholder={understanding.imageInsights.materialLook || 'Ex: Algodão'}
-                              className="mt-0.5 bg-secondary border-border text-xs h-7"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-[10px] font-medium text-muted-foreground">Estilo</Label>
-                            <Input
-                              value={understanding.manualStyle}
-                              onChange={e => setManualField('manualStyle', e.target.value)}
-                              placeholder={understanding.imageInsights.style || 'Ex: Minimal'}
-                              className="mt-0.5 bg-secondary border-border text-xs h-7"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-[10px] font-medium text-muted-foreground">Fit / Estrutura</Label>
-                            <Input
-                              value={understanding.manualFit}
-                              onChange={e => setManualField('manualFit', e.target.value)}
-                              placeholder={understanding.imageInsights.silhouette || 'Ex: Regular'}
-                              className="mt-0.5 bg-secondary border-border text-xs h-7"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-[10px] font-medium text-muted-foreground">Cor principal</Label>
-                            <Input
-                              value={understanding.manualColor}
-                              onChange={e => setManualField('manualColor', e.target.value)}
-                              placeholder={understanding.imageInsights.mainColor || 'Ex: Preto'}
-                              className="mt-0.5 bg-secondary border-border text-xs h-7"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-[10px] font-medium text-muted-foreground">Uso</Label>
-                            <Input
-                              value={understanding.useCase}
-                              onChange={e => setManualField('useCase', e.target.value)}
-                              placeholder="Ex: Trabalho"
-                              className="mt-0.5 bg-secondary border-border text-xs h-7"
-                            />
-                          </div>
-                        </div>
-
-                        {/* AI Product Understanding (premium panel) */}
-                        {!aiDisabled && (
-                          <AIProductUnderstandingPanel
-                            understanding={understanding}
-                            gender={form.gender}
-                            specs={specs}
-                            isGeneratingSpecs={isGeneratingSpecs}
-                            onRegenerateSpecs={handleRegenerateSpecs}
-                          />
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ═══ STEP 3: PRICING, VARIANTS & SHIPPING ═══ */}
-                  {wizardStep === 3 && (
-                    <div className="grid grid-cols-[1fr_320px] gap-3">
-                      {/* LEFT COLUMN — Main content */}
-                      <div className="space-y-3">
-                        {/* Pricing row */}
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="glass-card p-4 space-y-3">
-                            <h3 className="font-display font-semibold text-[13px] text-foreground">Preço</h3>
-                            <PriceSection
-                              price={form.price}
-                              compareAtPrice={form.compareAtPrice}
-                              cost={form.cost}
-                              currencySymbol={currencySymbol}
-                              onPriceChange={v => setFormWithSave(prev => ({ ...prev, price: v }))}
-                              onCompareAtPriceChange={v => setFormWithSave(prev => ({ ...prev, compareAtPrice: v }))}
-                              onCostChange={v => setFormWithSave(prev => ({ ...prev, cost: v }))}
-                            />
-                          </div>
-                          <PricingEngine
-                            cost={form.cost}
-                            currency={form.pricingCurrency}
-                            cpa={form.pricingCpa}
-                            marginTarget={form.pricingMargin}
-                            shippingCost={form.pricingShipping}
-                            platform={form.pricingPlatform}
-                            onCostChange={v => setFormWithSave(prev => ({ ...prev, cost: v }))}
-                            onCurrencyChange={v => setFormWithSave(prev => ({ ...prev, pricingCurrency: v }))}
-                            onCpaChange={v => setFormWithSave(prev => ({ ...prev, pricingCpa: v }))}
-                            onMarginChange={v => setFormWithSave(prev => ({ ...prev, pricingMargin: v }))}
-                            onShippingChange={v => setFormWithSave(prev => ({ ...prev, pricingShipping: v }))}
-                            onPlatformChange={v => setFormWithSave(prev => ({ ...prev, pricingPlatform: v }))}
-                            onApplyPrice={v => setFormWithSave(prev => ({ ...prev, price: v }))}
-                          />
-                        </div>
-
-                        {/* Sizes & Variants */}
-                        <div className="glass-card p-4 space-y-3">
-                          <h3 className="font-display font-semibold text-[13px] text-foreground">Sizes & Variants</h3>
-                          <div className="flex flex-wrap gap-1.5 items-center">
-                            {AVAILABLE_SIZES.map(size => (
-                              <button key={size} type="button" onClick={() => toggleSize(size)} className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${form.sizes.includes(size) ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'}`}>{size}</button>
-                            ))}
-                            {form.sizes.filter(s => !AVAILABLE_SIZES.includes(s)).map(size => (
-                              <button key={size} type="button" onClick={() => toggleSize(size)} className="px-2.5 py-1 rounded-md text-xs font-medium bg-primary text-primary-foreground flex items-center gap-1">
-                                {size}
-                                <XCircle className="w-3 h-3" />
-                              </button>
-                            ))}
-                            <AddCustomSize onAdd={(s) => {
-                              if (!form.sizes.includes(s)) {
-                                toggleSize(s);
-                              }
-                            }} />
-                          </div>
-
-                          <VariantsTable
-                            variants={form.variants}
-                            onChange={v => setFormWithSave(prev => ({ ...prev, variants: v }))}
-                            inventoryPolicy={form.inventoryPolicy}
-                            onInventoryPolicyChange={p => setFormWithSave(prev => ({ ...prev, inventoryPolicy: p }))}
-                            productType={form.collection || form.title}
-                            currencySymbol={currencySymbol}
-                          />
-                        </div>
-                      </div>
-
-                      {/* RIGHT COLUMN — Shipping + Colors */}
-                      <div className="space-y-3">
-                        <ShippingCard
-                          requiresShipping={form.requiresShipping}
-                          onRequiresShippingChange={v => setFormWithSave(prev => ({ ...prev, requiresShipping: v }))}
-                          weight={form.weight}
-                          onWeightChange={v => setFormWithSave(prev => ({ ...prev, weight: v }))}
-                          weightUnit={form.weightUnit}
-                          onWeightUnitChange={v => setFormWithSave(prev => ({ ...prev, weightUnit: v }))}
-                          countryOfOrigin={form.countryOfOrigin}
-                          onCountryOfOriginChange={v => setFormWithSave(prev => ({ ...prev, countryOfOrigin: v }))}
-                        />
-                        <ColorManager colors={colors} onColorsChange={setColors} generatedImages={generatedImages} />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ═══ STEP 4: REVIEW ═══ */}
-                  {wizardStep === 4 && (
-                    <div className="grid grid-cols-[340px_1fr] gap-3">
-                      {/* LEFT — Checklist + Publish */}
-                      <div className="space-y-3">
-                        <div className="glass-card p-4">
-                          <ReviewChecklist
-                            form={form}
-                            hasImage={!!imageFile || generatedImages.some(i => i.url)}
-                            imageCount={(imageFile ? 1 : 0) + generatedImages.filter(i => i.url).length}
-                            storeConnected={hasConnectedStore}
-                          />
-                        </div>
-
-                        {/* Publicação accordion */}
-                        <Collapsible open={pubOpen} onOpenChange={setPubOpen}>
-                          <div className="glass-card">
-                            <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-secondary/30 transition-colors rounded-lg">
-                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Publicação</span>
-                              <div className="flex items-center gap-2">
-                                <span className="text-[11px] text-muted-foreground">
-                                  {publishStatus === 'draft' ? 'Rascunho' : publishStatus === 'active' ? 'Ativo' : 'Agendar'}
-                                  {' · '}
-                                  {form.selectedChannels.includes('online') ? 'Online Store' : form.selectedChannels[0] || 'Nenhum'}
-                                </span>
-                                <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${pubOpen ? 'rotate-180' : ''}`} />
-                              </div>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="px-3 pb-3 space-y-3">
-                              <div>
-                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Status</span>
-                                <div className="flex gap-1 mt-1.5">
-                                  {(['draft', 'active', 'scheduled'] as const).map(status => (
-                                    <button
-                                      key={status}
-                                      onClick={() => setPublishStatus(status)}
-                                      className={`px-3 h-7 rounded-full text-[11px] font-medium transition-all border ${
-                                        publishStatus === status
-                                          ? 'bg-primary text-primary-foreground border-primary'
-                                          : 'border-border text-muted-foreground hover:text-foreground'
-                                      }`}
-                                    >
-                                      {status === 'draft' ? 'Rascunho' : status === 'active' ? 'Ativo' : 'Agendar'}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                              <div>
-                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Canais de venda</span>
-                                <div className="flex gap-1.5 mt-1.5 flex-wrap">
-                                  {[
-                                    { id: 'online', icon: '🖥', label: 'Online Store' },
-                                    { id: 'pos', icon: '📦', label: 'POS' },
-                                    { id: 'google', icon: 'G', label: 'Google' },
-                                  ].map(ch => {
-                                    const isOn = form.selectedChannels.includes(ch.id);
-                                    return (
-                                      <button
-                                        key={ch.id}
-                                        onClick={() => {
-                                          const next = isOn
-                                            ? form.selectedChannels.filter(c => c !== ch.id)
-                                            : [...form.selectedChannels, ch.id];
-                                          setFormWithSave(prev => ({ ...prev, selectedChannels: next }));
-                                        }}
-                                        className={`flex items-center gap-1 px-2.5 h-[26px] rounded-full text-[10px] font-medium transition-all border ${
-                                          isOn
-                                            ? 'border-foreground bg-foreground/5 text-foreground'
-                                            : 'border-border bg-card text-muted-foreground hover:text-foreground hover:border-primary/30'
-                                        }`}
-                                      >
-                                        <span>{ch.icon}</span>
-                                        {ch.label}
-                                        {isOn && <Check className="w-2.5 h-2.5" />}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            </CollapsibleContent>
-                          </div>
-                        </Collapsible>
-
-                        {/* Image Optimization card — between Publicação and Publish button */}
-                        <ImageOptimizationCard
-                          enabled={optimizeImages}
-                          onEnabledChange={setOptimizeImages}
-                          qualityPreset={imageQualityPreset}
-                          onQualityPresetChange={setImageQualityPreset}
-                        />
-
-                        {canPublish ? (
-                          <Button className="w-full" onClick={handlePublish}>
-                            <Zap className="w-4 h-4 mr-1.5" />Publicar agora
-                          </Button>
-                        ) : (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="w-full">
-                                  <Button className="w-full" disabled>
-                                    <Zap className="w-4 h-4 mr-1.5" />Publicar agora
-                                  </Button>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="max-w-[240px] text-xs">
-                                <p className="font-medium mb-1">Campos obrigatórios faltando:</p>
-                                <ul className="space-y-0.5 text-muted-foreground">
-                                  {!form.title.trim() && <li>• Título do produto</li>}
-                                  {!(!!imageFile || generatedImages.some(i => i.url)) && <li>• Pelo menos 1 imagem</li>}
-                                  {form.price <= 0 && <li>• Preço maior que 0</li>}
-                                  {form.variants.length === 0 && form.sizes.length === 0 && <li>• Pelo menos 1 variante</li>}
-                                </ul>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </div>
-
-                      {/* RIGHT — Shopify Preview */}
-                      <ShopifyProductPreview
-                        form={form}
-                        images={generatedImages}
-                        imagePreview={imagePreview}
-                        storeDomain={activeStore?.domain || ''}
-                        currencySymbol={currencySymbol}
-                        storeLogo={activeStore?.logoUrl}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {/* ═══ BOTTOM NAVIGATION BAR ═══ */}
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-border h-[52px]">
-                  <div>
-                    {wizardStep === 1 ? (
-                      <button onClick={() => { markStepComplete(1); setWizardStep(2); }} className="text-[11px] text-muted-foreground hover:text-foreground transition-colors">
-                        Pular por agora
-                      </button>
-                    ) : (
-                      <Button variant="ghost" size="sm" className="text-xs h-8" onClick={() => setWizardStep(wizardStep - 1)}>
-                        <ArrowLeft className="w-3.5 h-3.5 mr-1" />Voltar
-                      </Button>
-                    )}
-                  </div>
-
-                  {wizardStep === 4 ? (
-                    <span className="text-[11px] text-muted-foreground">Step 4 de 4</span>
-                  ) : (
-                    <>
-                      <span className="text-[11px] text-muted-foreground">
-                        Step {wizardStep} de 4
-                      </span>
-                      <Button size="sm" className="text-xs h-8" onClick={() => { markStepComplete(wizardStep); setWizardStep(wizardStep + 1); }}>
-                        Próximo <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* PUBLISHING PROGRESS */}
-            {currentView === 'publish' && isPublishing && (
-              <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
-                <div className="glass-card p-10 text-center max-w-md w-full">
-                  <Loader2 className="w-12 h-12 mx-auto animate-spin text-primary mb-6" />
-                  <h2 className="font-display text-xl font-bold text-foreground mb-2">Publicando no Shopify</h2>
-
-                  {imageUploadProgress ? (
-                    <>
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Preparando imagens... {imageUploadProgress.current}/{imageUploadProgress.total}
-                      </p>
-                      <div className="space-y-2">
-                        <Progress value={(imageUploadProgress.current / imageUploadProgress.total) * 100} className="h-2" />
-                        <p className="text-[10px] text-muted-foreground">
-                          {imageUploadProgress.current < imageUploadProgress.total
-                            ? `Processando imagem ${imageUploadProgress.current + 1} de ${imageUploadProgress.total}...`
-                            : 'Todas as imagens processadas!'}
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-sm text-muted-foreground mb-4">{PUBLISH_STEPS[publishStep]} ({publishStep + 1}/{PUBLISH_STEPS.length})</p>
-                      <Progress value={((publishStep + 1) / PUBLISH_STEPS.length) * 100} className="h-2" />
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* PUBLISH SUCCESS */}
-            {currentView === 'publish' && publishResult && !isPublishing && (
-              <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
-                <div className="glass-card p-10 text-center max-w-md w-full">
-                  <div className="w-20 h-20 mx-auto rounded-full bg-[hsl(var(--success))]/10 flex items-center justify-center mb-6 animate-bounce">
-                    <CheckCircle2 className="w-10 h-10 text-[hsl(var(--success))]" />
-                  </div>
-                  <h2 className="font-display text-2xl font-bold text-foreground mb-2">Produto Publicado!</h2>
-
-                  {publishResult.imageUrl && (
-                    <img src={publishResult.imageUrl} alt={publishResult.title} className="w-24 h-24 mx-auto rounded-lg border border-border object-contain my-4" />
-                  )}
-
-                  <p className="text-foreground font-semibold text-lg">{publishResult.title}</p>
-                  <div className="flex items-center justify-center gap-2 mt-2">
-                    <span className="text-primary font-bold">{currencySymbol}{form.price.toFixed(2)}</span>
-                    {form.compareAtPrice && form.compareAtPrice > form.price && (
-                      <Badge className="bg-[hsl(var(--success))]/15 text-[hsl(var(--success))] border-[hsl(var(--success))]/30">
-                        {Math.round(((form.compareAtPrice - form.price) / form.compareAtPrice) * 100)}% off
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-2 mt-6">
-                    <Button asChild>
-                      <a href={publishResult.shopifyUrl} target="_blank" rel="noopener noreferrer">
-                        Ver produto no Shopify <ExternalLink className="w-4 h-4 ml-1" />
-                      </a>
-                    </Button>
-                    <Button variant="secondary" onClick={handleNewProduct}>
-                      <Package className="w-4 h-4 mr-2" />Publicar outro produto
-                    </Button>
-                    <Button variant="ghost" onClick={() => { setPublishResult(null); setCurrentView('history'); }}>
-                      <ClipboardList className="w-4 h-4 mr-2" />Ver histórico
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* HISTORY VIEW */}
             {currentView === 'history' && <ProductHistory onEditProduct={handleEditPublishedProduct} />}
