@@ -29,6 +29,7 @@ import { RegionGroupManager } from '@/components/RegionGroupManager';
 import { HomePage } from '@/components/HomePage';
 import { GlobalPublishFlow } from '@/components/GlobalPublishFlow';
 import { DashboardSidebar, DashboardView } from '@/components/DashboardSidebar';
+import { TopNav, type TopNavView } from '@/components/TopNav';
 import { getCanPublish } from '@/components/ReviewChecklist';
 import { ImageQualityPreset, getQualityValue } from '@/components/ImageOptimizationCard';
 import { convertBase64ToWebP } from '@/lib/imageOptimization';
@@ -86,6 +87,32 @@ const PUBLISH_STEPS = [
 ];
 
 const STEP_LABELS = ['Imagem', 'Detalhes', 'Variantes & Envio', 'Revisão'];
+
+function mapToTopNavView(view: DashboardView): TopNavView {
+  switch (view) {
+    case 'home': return 'home';
+    case 'publish':
+    case 'import-url':       return 'create';
+    case 'imported':
+    case 'history':
+    case 'library':
+    case 'image-generator':
+    case 'prompts':          return 'products';
+    case 'stores':
+    case 'regions':
+    case 'settings':         return 'stores';
+    default:                  return 'home';
+  }
+}
+
+function mapFromTopNavView(view: TopNavView): DashboardView {
+  switch (view) {
+    case 'home':     return 'home';
+    case 'create':   return 'publish';
+    case 'products': return 'history';
+    case 'stores':   return 'stores';
+  }
+}
 
 const Index = () => {
   const USE_NEW_CREATE = import.meta.env.VITE_NEW_CREATE_FLOW === 'true';
@@ -1115,11 +1142,14 @@ const Index = () => {
         onDismiss={() => setAliImport(prev => ({ ...prev, open: false }))}
       />
 
-      <div className="flex-1 flex">
-        <DashboardSidebar currentView={currentView} onViewChange={handleViewChange} />
+      <div className="flex-1 flex flex-col">
+        <TopNav
+          currentView={mapToTopNavView(currentView)}
+          onViewChange={(v) => handleViewChange(mapFromTopNavView(v))}
+        />
 
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="max-w-7xl mx-auto px-4 py-5">
 
             {/* HOME VIEW */}
             {currentView === 'home' && (
