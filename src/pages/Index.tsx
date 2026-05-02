@@ -44,6 +44,8 @@ import { CommandPalette } from '@/components/CommandPalette';
 import { SpotlightHeader } from '@/components/SpotlightHeader';
 import { getAILanguageByCode } from '@/data/languages';
 import { PublishView } from '@/features/publish';
+import { CreateView } from '@/features/create/CreateView';
+import type { CreateInput, CreateOptions } from '@/features/create/types';
 import { Zap, HelpCircle, Store, Settings, Globe, Layers } from 'lucide-react';
 
 const initialForm: ProductFormData = {
@@ -86,6 +88,7 @@ const PUBLISH_STEPS = [
 const STEP_LABELS = ['Imagem', 'Detalhes', 'Variantes & Envio', 'Revisão'];
 
 const Index = () => {
+  const USE_NEW_CREATE = import.meta.env.VITE_NEW_CREATE_FLOW === 'true';
   const navigate = useNavigate();
   const {
     stores, activeStore, activeStoreId, hasConnectedStore, publishedCount,
@@ -985,6 +988,11 @@ const Index = () => {
   };
 
   const handleAddStore = () => { stores.length > 0 ? setShowConnect(true) : setShowOnboarding(true); };
+  const handleCreateSubmit = (input: CreateInput, options: CreateOptions) => {
+    toast.info(`Modo: ${input.mode} · Preset: ${options.stylePreset}`);
+    logger.info('CreateView submit', { mode: input.mode, preset: options.stylePreset, storeId: options.storeId });
+    // TODO PR 3: conectar ao processamento real
+  };
 
   const handleCredentialsSubmit = (data: { domain: string; clientId: string; clientSecret: string; apiVersion: string; redirectUri: string; }) => {
     const store = addStore(data); setShowSettings(false); startOAuth(store);
@@ -1119,6 +1127,12 @@ const Index = () => {
             )}
 
             {currentView === 'publish' && (
+              USE_NEW_CREATE ? (
+                <CreateView
+                  onSubmit={handleCreateSubmit}
+                  onAddStore={handleAddStore}
+                />
+              ) : (
               <PublishView
                 isPublishing={isPublishing}
                 publishResult={publishResult}
@@ -1200,6 +1214,7 @@ const Index = () => {
                 canPublish={canPublish}
                 handlePublish={handlePublish}
               />
+              )
             )}
 
 
