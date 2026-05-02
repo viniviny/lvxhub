@@ -1142,11 +1142,14 @@ const Index = () => {
         onDismiss={() => setAliImport(prev => ({ ...prev, open: false }))}
       />
 
-      <div className="flex-1 flex">
-        <DashboardSidebar currentView={currentView} onViewChange={handleViewChange} />
+      <div className="flex-1 flex flex-col">
+        <TopNav
+          currentView={mapToTopNavView(currentView)}
+          onViewChange={(v) => handleViewChange(mapFromTopNavView(v))}
+        />
 
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="max-w-7xl mx-auto px-4 py-5">
 
             {/* HOME VIEW */}
             {currentView === 'home' && (
