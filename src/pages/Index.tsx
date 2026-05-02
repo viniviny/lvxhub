@@ -29,6 +29,7 @@ import { RegionGroupManager } from '@/components/RegionGroupManager';
 import { HomePage } from '@/components/HomePage';
 import { GlobalPublishFlow } from '@/components/GlobalPublishFlow';
 import { DashboardSidebar, DashboardView } from '@/components/DashboardSidebar';
+import { TopNav, type TopNavView } from '@/components/TopNav';
 import { getCanPublish } from '@/components/ReviewChecklist';
 import { ImageQualityPreset, getQualityValue } from '@/components/ImageOptimizationCard';
 import { convertBase64ToWebP } from '@/lib/imageOptimization';
