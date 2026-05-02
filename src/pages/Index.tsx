@@ -60,6 +60,7 @@ import { CommandPalette } from '@/components/CommandPalette';
 import { SpotlightHeader } from '@/components/SpotlightHeader';
 import { WizardStepTabs } from '@/components/WizardStepTabs';
 import { getAILanguageByCode } from '@/data/languages';
+import { PublishView } from '@/features/publish';
 import {
   Send, Loader2, Upload, CheckCircle2, ExternalLink,
   Package, XCircle, Zap, HelpCircle, Store, Settings, Globe, Layers,
