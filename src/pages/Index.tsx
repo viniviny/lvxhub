@@ -42,7 +42,6 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { UserMenu } from '@/components/UserMenu';
 import { CommandPalette } from '@/components/CommandPalette';
-import { SpotlightHeader } from '@/components/SpotlightHeader';
 import { getAILanguageByCode } from '@/data/languages';
 import { PublishView } from '@/features/publish';
 import { CreateView } from '@/features/create/CreateView';
