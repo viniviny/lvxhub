@@ -7,6 +7,7 @@ import { Plus, X, ImageIcon, Check, Sparkles, Loader2, Layers } from 'lucide-rea
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { BulkVariantGenerator } from './BulkVariantGenerator';
+import { logger } from '@/lib/logger';
 
 export interface ProductColor {
   id: string;
@@ -37,7 +38,7 @@ async function urlToBase64(url: string): Promise<{ base64: string; mimeType: str
     const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
     return { base64, mimeType };
   } catch (e) {
-    console.error('[ColorManager] urlToBase64 failed:', e);
+    logger.error('[ColorManager] urlToBase64 failed', e);
     return null;
   }
 }
@@ -67,7 +68,7 @@ export function ColorManager({ colors, onColorsChange, generatedImages = [], asp
         status: 'rascunho',
       });
     } catch (e) {
-      console.warn('lib save failed', e);
+      logger.warn('lib save failed', { error: e });
     }
   };
 
@@ -138,7 +139,7 @@ export function ColorManager({ colors, onColorsChange, generatedImages = [], asp
       onColorsChange(colors.map(c => c.id === color.id ? { ...c, imageUrl: newUrl } : c));
       toast.success(`Variante "${color.name}" gerada!`);
     } catch (e) {
-      console.error('[ColorManager] generateVariant error:', e);
+      logger.error('[ColorManager] generateVariant error', e);
       toast.error('Erro ao gerar variante.');
     } finally {
       setGeneratingId(null);

@@ -26,6 +26,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { enhancePremiumPrompt } from '@/lib/premiumPrompt';
@@ -146,7 +147,7 @@ export function ImageGeneratorModule() {
       setEnhancedPrompt(data.enhancedPrompt || null);
       toast.success(`${data.images?.length || 0} imagem(ns) gerada(s)!`);
     } catch (err: any) {
-      console.error(err);
+      logger.error('Image generation error', err);
       toast.error(err?.message || 'Erro ao gerar imagem');
     } finally {
       setLoading(false);
@@ -245,7 +246,7 @@ export function ImageGeneratorModule() {
       if (insErr) throw insErr;
       toast.success('Salvo na biblioteca!');
     } catch (err: any) {
-      console.error(err);
+      logger.error('Save to library error', err);
       toast.error(err?.message || 'Erro ao salvar');
     } finally {
       setSavingIdx(null);

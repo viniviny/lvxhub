@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export interface PublishedProduct {
   id: string;
@@ -60,7 +61,7 @@ export function usePublishedProducts() {
       if (error) throw error;
       setProducts((data as PublishedProduct[]) || []);
     } catch (err) {
-      console.error('Error fetching published products:', err);
+      logger.error('Error fetching published products', err);
     } finally {
       setLoading(false);
     }

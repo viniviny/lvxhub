@@ -1,3 +1,4 @@
+import { logger } from '@/lib/logger';
 /**
  * convertToWebP — Client-side image optimization using the browser Canvas API.
  * Converts an image File or base64 string to WebP format at a given quality.
@@ -38,7 +39,7 @@ export async function convertFileToWebP(
 
     return { file: webpFile, converted: true };
   } catch (err) {
-    console.warn('[ImageOptimization] WebP conversion failed, using original:', err);
+    logger.warn('[ImageOptimization] WebP conversion failed, using original', { error: err });
     return { file, converted: false };
   }
 }
@@ -104,7 +105,7 @@ export async function convertBase64ToWebP(
       optimizedSize: Math.ceil((webpBase64.length * 3) / 4),
     };
   } catch (err) {
-    console.warn('[ImageOptimization] Base64 WebP conversion failed, using original:', err);
+    logger.warn('[ImageOptimization] Base64 WebP conversion failed, using original', { error: err });
     return {
       base64,
       fileName: 'product-image.jpg',

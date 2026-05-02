@@ -9,6 +9,7 @@ import { ExternalLink, Package, Search, Loader2, Filter, MoreVertical, Pencil, T
 import { useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 interface ProductHistoryProps {
   onEditProduct?: (product: PublishedProduct) => void;
@@ -35,7 +36,7 @@ export function ProductHistory({ onEditProduct }: ProductHistoryProps) {
       setDeleteProduct(null);
       refetch();
     } catch (err) {
-      console.error(err);
+      logger.error('Error deleting product from history', err);
       toast.error('Erro ao remover produto');
     } finally {
       setDeleting(false);

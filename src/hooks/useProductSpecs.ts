@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useApiUsage } from '@/hooks/useApiUsage';
+import { logger } from '@/lib/logger';
 
 export interface ProductSpecs {
   material: string;
@@ -56,7 +57,7 @@ export function useProductSpecs() {
       }
       return null;
     } catch (e: any) {
-      console.warn('[ProductSpecs] Generation failed:', e);
+      logger.warn('[ProductSpecs] Generation failed', { error: e });
       // Silent fail — don't break flow
       return null;
     } finally {

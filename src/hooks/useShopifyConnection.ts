@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 interface ShopifyConnection {
   id: string;
@@ -29,7 +30,7 @@ export function useShopifyConnection() {
           });
         }
       } catch (err) {
-        console.error('Error fetching shopify connection:', err);
+        logger.error('Error fetching shopify connection', err);
       } finally {
         setIsLoading(false);
       }
@@ -66,7 +67,7 @@ export function useShopifyConnection() {
         .eq('is_active', true);
       setConnection(null);
     } catch (err) {
-      console.error('Error disconnecting:', err);
+      logger.error('Error disconnecting', err);
     }
   }, [connection]);
 

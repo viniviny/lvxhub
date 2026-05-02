@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useStoreContext } from '@/hooks/useStoreContext';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { logger } from '@/lib/logger';
 
 const STORES_KEY = 'publify_stores';
 
@@ -123,7 +124,7 @@ const Callback = () => {
         // Step 6: Redirect after 2 seconds
         setTimeout(() => navigate('/dashboard', { replace: true }), 2000);
       } catch (err: any) {
-        console.error('Token exchange error:', err);
+        logger.error('Token exchange error', err);
         setStatus('error');
         setErrorMsg(err.message || 'Erro ao conectar com Shopify.');
       }

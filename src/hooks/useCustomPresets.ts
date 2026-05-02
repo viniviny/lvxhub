@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import type { CustomPreset } from '@/components/ModelBackgroundPresets';
+import { logger } from '@/lib/logger';
 
 export function useCustomPresets() {
   const { user } = useAuth();
@@ -55,7 +56,7 @@ export function useCustomPresets() {
           .upload(fileName, bytes, { contentType: mimeType, upsert: false });
 
         if (uploadError) {
-          console.error('Upload error:', uploadError);
+          logger.error('Upload error', uploadError);
           toast.error('Erro ao salvar imagem do preset');
           return;
         }
@@ -78,7 +79,7 @@ export function useCustomPresets() {
       .single();
 
     if (error) {
-      console.error('Insert error:', error);
+      logger.error('Insert error', error);
       toast.error('Erro ao salvar preset');
       return;
     }
@@ -107,7 +108,7 @@ export function useCustomPresets() {
       .eq('id', id);
 
     if (error) {
-      console.error('Delete error:', error);
+      logger.error('Delete error', error);
       toast.error('Erro ao remover preset');
       // Restore on error
       setPresets(prev => [...prev, removed]);

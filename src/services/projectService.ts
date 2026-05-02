@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { Project, ProjectImage, ProjectProductData, ProjectAIData, ProjectSEOData } from '@/types/project';
 import { EMPTY_PRODUCT_DATA, EMPTY_AI_DATA, EMPTY_SEO_DATA } from '@/types/project';
+import { logger } from '@/lib/logger';
 
 const LOCAL_PREFIX = 'project:';
 const LAST_OPENED_KEY = 'lastOpenedProjectId';
@@ -12,7 +13,7 @@ export function saveProjectLocally(project: Project): void {
     localStorage.setItem(`${LOCAL_PREFIX}${project.id}`, JSON.stringify(project));
     localStorage.setItem(LAST_OPENED_KEY, project.id);
   } catch (e) {
-    console.warn('[ProjectService] Failed to save locally:', e);
+    logger.warn('[ProjectService] Failed to save locally', { error: e });
   }
 }
 
@@ -74,7 +75,7 @@ export async function saveProjectToBackend(project: Project): Promise<void> {
   if (error && (error.code === 'PGRST303' || /jwt/i.test(error.message))) {
     const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
     if (refreshError || !refreshed.session) {
-      console.warn('[ProjectService] Session expired, redirecting to login');
+      logger.warn('[ProjectService] Session expired, redirecting to login');
       window.location.href = '/login';
       return;
     }
@@ -83,7 +84,7 @@ export async function saveProjectToBackend(project: Project): Promise<void> {
   }
 
   if (error) {
-    console.error('[ProjectService] Backend save failed:', error);
+    logger.error('[ProjectService] Backend save failed', error);
     throw error;
   }
 }
@@ -149,7 +150,7 @@ export async function addProjectImage(
   if (error) {
     // Ignore duplicate key violations (UNIQUE constraint on project_id + url)
     if (error.code === '23505') {
-      console.warn('[ProjectService] Duplicate image ignored:', url);
+      logger.warn('[ProjectService] Duplicate image ignored', { url });
       // Return a minimal image object so callers don't crash
       return { id: crypto.randomUUID(), url, storagePath, isCover, sortOrder, createdAt: new Date().toISOString() };
     }
