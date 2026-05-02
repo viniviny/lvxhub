@@ -88,6 +88,32 @@ const PUBLISH_STEPS = [
 
 const STEP_LABELS = ['Imagem', 'Detalhes', 'Variantes & Envio', 'Revisão'];
 
+function mapToTopNavView(view: DashboardView): TopNavView {
+  switch (view) {
+    case 'home': return 'home';
+    case 'publish':
+    case 'import-url':       return 'create';
+    case 'imported':
+    case 'history':
+    case 'library':
+    case 'image-generator':
+    case 'prompts':          return 'products';
+    case 'stores':
+    case 'regions':
+    case 'settings':         return 'stores';
+    default:                  return 'home';
+  }
+}
+
+function mapFromTopNavView(view: TopNavView): DashboardView {
+  switch (view) {
+    case 'home':     return 'home';
+    case 'create':   return 'publish';
+    case 'products': return 'history';
+    case 'stores':   return 'stores';
+  }
+}
+
 const Index = () => {
   const USE_NEW_CREATE = import.meta.env.VITE_NEW_CREATE_FLOW === 'true';
   const navigate = useNavigate();
