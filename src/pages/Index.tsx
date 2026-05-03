@@ -45,6 +45,9 @@ import { CommandPalette } from '@/components/CommandPalette';
 import { getAILanguageByCode } from '@/data/languages';
 import { PublishView } from '@/features/publish';
 import { CreateView } from '@/features/create/CreateView';
+import { ProcessingView } from '@/features/create/ProcessingView';
+import { useCreateJob } from '@/features/create/hooks/useCreateJob';
+import { IMAGE_STYLE_PRESETS, DEFAULT_PRESET } from '@/features/create/presets';
 import type { CreateInput, CreateOptions } from '@/features/create/types';
 import { Zap, HelpCircle, Store, Settings, Globe, Layers } from 'lucide-react';
 
