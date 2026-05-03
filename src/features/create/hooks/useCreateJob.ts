@@ -149,6 +149,10 @@ export function useCreateJob() {
             { type: 'size', values: ['S', 'M', 'L', 'XL'] },
           ],
           pricing: { suggestedPrice: 89, multiplier: 3.2 },
+          seoTitle: 'Sweater Aurel Layer — Premium Knitwear',
+          seoDescription: 'Discover the Sweater Aurel Layer, a refined cable-knit half-zip crafted for effortless layering.',
+          tags: ['knitwear', 'half-zip', 'merino', 'layer'],
+          collection: 'Mens Knitwear → Sweaters',
         };
 
         setJob(prev =>
