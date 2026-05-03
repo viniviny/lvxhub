@@ -115,6 +115,9 @@ function mapFromTopNavView(view: TopNavView): DashboardView {
 
 const Index = () => {
   const USE_NEW_CREATE = import.meta.env.VITE_NEW_CREATE_FLOW === 'true';
+  const createJob = useCreateJob();
+  const [createPhase, setCreatePhase] = useState<'input' | 'processing'>('input');
+  const [lastUsedPreset, setLastUsedPreset] = useState<keyof typeof IMAGE_STYLE_PRESETS>(DEFAULT_PRESET);
   const navigate = useNavigate();
   const {
     stores, activeStore, activeStoreId, hasConnectedStore, publishedCount,
@@ -1015,10 +1018,25 @@ const Index = () => {
 
   const handleAddStore = () => { stores.length > 0 ? setShowConnect(true) : setShowOnboarding(true); };
   const handleCreateSubmit = (input: CreateInput, options: CreateOptions) => {
-    toast.info(`Modo: ${input.mode} · Preset: ${options.stylePreset}`);
-    logger.info('CreateView submit', { mode: input.mode, preset: options.stylePreset, storeId: options.storeId });
-    // TODO PR 3: conectar ao processamento real
+    setLastUsedPreset(options.stylePreset);
+    setCreatePhase('processing');
+    logger.info('Starting create job', { mode: input.mode, preset: options.stylePreset });
+    createJob.run(input, options);
   };
+
+  useEffect(() => {
+    if (!createJob.job) return;
+    const { status } = createJob.job;
+    if (status === 'success') {
+      toast.success('Produto criado! (revisão visual chega no PR 4)');
+      setCreatePhase('input');
+      createJob.reset();
+    } else if (status === 'cancelled') {
+      toast.info('Criação cancelada');
+      setCreatePhase('input');
+      createJob.reset();
+    }
+  }, [createJob.job?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCredentialsSubmit = (data: { domain: string; clientId: string; clientSecret: string; apiVersion: string; redirectUri: string; }) => {
     const store = addStore(data); setShowSettings(false); startOAuth(store);
@@ -1145,10 +1163,18 @@ const Index = () => {
 
             {currentView === 'publish' && (
               USE_NEW_CREATE ? (
-                <CreateView
-                  onSubmit={handleCreateSubmit}
-                  onAddStore={handleAddStore}
-                />
+                createPhase === 'processing' && createJob.job ? (
+                  <ProcessingView
+                    job={createJob.job}
+                    presetLabel={IMAGE_STYLE_PRESETS[lastUsedPreset]?.label ?? 'estilo selecionado'}
+                    onCancel={() => createJob.cancel()}
+                  />
+                ) : (
+                  <CreateView
+                    onSubmit={handleCreateSubmit}
+                    onAddStore={handleAddStore}
+                  />
+                )
               ) : (
               <PublishView
                 isPublishing={isPublishing}
