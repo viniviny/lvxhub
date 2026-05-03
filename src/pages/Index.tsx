@@ -46,6 +46,7 @@ import { getAILanguageByCode } from '@/data/languages';
 import { PublishView } from '@/features/publish';
 import { CreateView } from '@/features/create/CreateView';
 import { ProcessingView } from '@/features/create/ProcessingView';
+import { ReadyView } from '@/features/create/ReadyView';
 import { useCreateJob } from '@/features/create/hooks/useCreateJob';
 import { IMAGE_STYLE_PRESETS, DEFAULT_PRESET } from '@/features/create/presets';
 import type { CreateInput, CreateOptions } from '@/features/create/types';
@@ -119,7 +120,7 @@ function mapFromTopNavView(view: TopNavView): DashboardView {
 const Index = () => {
   const USE_NEW_CREATE = import.meta.env.VITE_NEW_CREATE_FLOW === 'true';
   const createJob = useCreateJob();
-  const [createPhase, setCreatePhase] = useState<'input' | 'processing'>('input');
+  const [createPhase, setCreatePhase] = useState<'input' | 'processing' | 'ready'>('input');
   const [lastUsedPreset, setLastUsedPreset] = useState<keyof typeof IMAGE_STYLE_PRESETS>(DEFAULT_PRESET);
   const navigate = useNavigate();
   const {
@@ -1027,13 +1028,24 @@ const Index = () => {
     createJob.run(input, options);
   };
 
+  const handlePublishProduct = (edited: CreateJobResult) => {
+    // TODO: PR 4b — chamar shopify-publish edge function de verdade
+    toast.success('Produto pronto pra publicar! (integração Shopify chega no PR 4b)');
+    logger.info('Publish requested', { title: edited.title });
+    setCreatePhase('input');
+    createJob.reset();
+  };
+
+  const handleBackToCreate = () => {
+    setCreatePhase('input');
+    createJob.reset();
+  };
+
   useEffect(() => {
     if (!createJob.job) return;
     const { status } = createJob.job;
     if (status === 'success') {
-      toast.success('Produto criado! (revisão visual chega no PR 4)');
-      setCreatePhase('input');
-      createJob.reset();
+      setCreatePhase('ready');
     } else if (status === 'cancelled') {
       toast.info('Criação cancelada');
       setCreatePhase('input');
@@ -1166,7 +1178,14 @@ const Index = () => {
 
             {currentView === 'publish' && (
               USE_NEW_CREATE ? (
-                createPhase === 'processing' && createJob.job ? (
+                createPhase === 'ready' && createJob.job?.result ? (
+                  <ReadyView
+                    result={createJob.job.result}
+                    presetId={lastUsedPreset}
+                    onPublish={handlePublishProduct}
+                    onBack={handleBackToCreate}
+                  />
+                ) : createPhase === 'processing' && createJob.job ? (
                   <ProcessingView
                     job={createJob.job}
                     presetLabel={IMAGE_STYLE_PRESETS[lastUsedPreset]?.label ?? 'estilo selecionado'}
